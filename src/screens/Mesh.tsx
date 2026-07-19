@@ -12,8 +12,13 @@ import {
 } from "../mesh";
 import { ago } from "../fmt";
 
-/** Layout dirigido por fuerzas, iteraciones fijas (sin animación).
- *  ponytail: O(n²) por iteración; con ~100 nodos sobra y evita un quadtree. */
+/** Layout Fruchterman-Reingold, iteraciones fijas (sin animación).
+ *  ponytail: O(n²) por iteración; con ~100 nodos sobra y evita un quadtree.
+ *
+ *  Las dos fuerzas tienen que estar en la misma escala: repulsión k²/d entre
+ *  todos los pares y atracción d²/k por enlace. Con una atracción más floja
+ *  (p.ej. proporcional a d) la repulsión de 90 nodos gana siempre y el grafo
+ *  se despliega contra los bordes del lienzo. */
 function layout(
   ids: number[],
   edges: Edge[],
@@ -24,59 +29,83 @@ function layout(
   const idx = new Map<number, number>();
   ids.forEach((id, i) => {
     idx.set(id, i);
-    // arranque en círculo: evita el colapso inicial de posiciones aleatorias
-    const ang = (i / ids.length) * Math.PI * 2;
-    pos.set(id, {
-      x: w / 2 + (Math.cos(ang) * w) / 3,
-      y: h / 2 + (Math.sin(ang) * h) / 3,
-    });
+    // arranque en espiral: reparte mejor que un círculo cuando hay muchos
+    const ang = i * 2.399963; // ángulo áureo
+    const rad = (Math.min(w, h) / 2.5) * Math.sqrt(i / Math.max(1, ids.length));
+    pos.set(id, { x: w / 2 + Math.cos(ang) * rad, y: h / 2 + Math.sin(ang) * rad });
   });
   const links = edges
     .map((e) => [idx.get(e.a), idx.get(e.b)] as [number?, number?])
     .filter((l): l is [number, number] => l[0] !== undefined && l[1] !== undefined);
   const arr = ids.map((id) => pos.get(id)!);
-  const k = Math.sqrt((w * h) / Math.max(1, ids.length)); // distancia ideal
+  const n = arr.length;
+  const k = Math.sqrt((w * h) / Math.max(1, n)); // distancia ideal entre nodos
+  const ITERS = 400;
+  let temp = w / 8; // desplazamiento máximo por iteración, se enfría a 0
 
-  for (let iter = 0; iter < 300; iter++) {
-    const cool = 1 - iter / 300;
-    const dx = new Float64Array(arr.length);
-    const dy = new Float64Array(arr.length);
-    for (let i = 0; i < arr.length; i++) {
-      for (let j = i + 1; j < arr.length; j++) {
+  for (let iter = 0; iter < ITERS; iter++) {
+    const dx = new Float64Array(n);
+    const dy = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
         let vx = arr[i].x - arr[j].x;
         let vy = arr[i].y - arr[j].y;
-        let d2 = vx * vx + vy * vy;
-        if (d2 < 0.01) {
-          vx = Math.random() - 0.5;
-          vy = Math.random() - 0.5;
-          d2 = 0.01;
+        let d = Math.hypot(vx, vy);
+        if (d < 0.01) {
+          // superpuestos: separarlos por una dirección estable, no aleatoria,
+          // para que el dibujo siga siendo el mismo en cada render
+          vx = ((i * 37 + j) % 17) - 8;
+          vy = ((i * 53 + j) % 13) - 6;
+          d = Math.hypot(vx, vy) || 1;
         }
-        const rep = (k * k) / d2;
-        dx[i] += vx * rep;
-        dy[i] += vy * rep;
-        dx[j] -= vx * rep;
-        dy[j] -= vy * rep;
+        const rep = (k * k) / d; // magnitud
+        dx[i] += (vx / d) * rep;
+        dy[i] += (vy / d) * rep;
+        dx[j] -= (vx / d) * rep;
+        dy[j] -= (vy / d) * rep;
       }
     }
     for (const [i, j] of links) {
       const vx = arr[i].x - arr[j].x;
       const vy = arr[i].y - arr[j].y;
       const d = Math.hypot(vx, vy) || 0.01;
-      const att = d / k;
-      dx[i] -= (vx / d) * att * k * 0.5;
-      dy[i] -= (vy / d) * att * k * 0.5;
-      dx[j] += (vx / d) * att * k * 0.5;
-      dy[j] += (vy / d) * att * k * 0.5;
+      const att = (d * d) / k; // magnitud
+      dx[i] -= (vx / d) * att;
+      dy[i] -= (vy / d) * att;
+      dx[j] += (vx / d) * att;
+      dy[j] += (vy / d) * att;
     }
-    for (let i = 0; i < arr.length; i++) {
-      // gravedad al centro: mantiene juntos los subgrafos sin enlaces entre sí
-      dx[i] += (w / 2 - arr[i].x) * 0.01;
-      dy[i] += (h / 2 - arr[i].y) * 0.01;
+    for (let i = 0; i < n; i++) {
+      // gravedad al centro: junta los subgrafos que no tienen enlaces entre sí
+      dx[i] += (w / 2 - arr[i].x) * 0.03;
+      dy[i] += (h / 2 - arr[i].y) * 0.03;
       const d = Math.hypot(dx[i], dy[i]) || 1;
-      const step = Math.min(d, k * 0.5 * cool);
-      arr[i].x = Math.max(20, Math.min(w - 20, arr[i].x + (dx[i] / d) * step));
-      arr[i].y = Math.max(20, Math.min(h - 20, arr[i].y + (dy[i] / d) * step));
+      const step = Math.min(d, temp);
+      arr[i].x += (dx[i] / d) * step;
+      arr[i].y += (dy[i] / d) * step;
     }
+    temp = (w / 8) * (1 - (iter + 1) / ITERS);
+  }
+
+  // Encajar el resultado en el lienzo escalando, en vez de recortar contra el
+  // borde: recortar amontona nodos en los laterales y miente sobre la forma.
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const p of arr) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const pad = 60; // sitio para las etiquetas, que van a la derecha del nodo
+  const sc = Math.min(
+    (w - pad * 2) / Math.max(1, maxX - minX),
+    (h - pad * 2) / Math.max(1, maxY - minY),
+  );
+  const offX = (w - (maxX - minX) * sc) / 2 - minX * sc;
+  const offY = (h - (maxY - minY) * sc) / 2 - minY * sc;
+  for (const p of arr) {
+    p.x = p.x * sc + offX;
+    p.y = p.y * sc + offY;
   }
   return pos;
 }
@@ -136,6 +165,7 @@ export default function Mesh() {
   };
 
   const selEdges = sel !== undefined ? edges.filter((e) => e.a === sel || e.b === sel) : [];
+  const vecinosSel = new Set(selEdges.map((e) => (e.a === sel ? e.b : e.a)));
 
   // s.version cambia con cada paquete: recalcular la foto es barato
   const sum = useMemo(() => summarize(s.nodes.values()), [s]);
@@ -301,6 +331,13 @@ export default function Mesh() {
                   if (!p) return null;
                   const isMe = id === s.myNodeNum;
                   const dim = sel !== undefined && id !== sel ? 0.35 : 1;
+                  // con muchos nodos las etiquetas se pisan: solo el nodo
+                  // propio, el seleccionado y sus vecinos llevan nombre
+                  const label =
+                    ids.length <= 45 ||
+                    isMe ||
+                    id === sel ||
+                    vecinosSel.has(id);
                   return (
                     <g
                       key={id}
@@ -316,15 +353,17 @@ export default function Mesh() {
                         stroke={id === sel ? ACCENT : "none"}
                         strokeWidth={2}
                       />
-                      <text
-                        x={p.x + 11}
-                        y={p.y + 4}
-                        fill={fg()}
-                        fontSize={12}
-                        fontFamily="JetBrains Mono, monospace"
-                      >
-                        {short(id)}
-                      </text>
+                      {label && (
+                        <text
+                          x={p.x + 11}
+                          y={p.y + 4}
+                          fill={fg()}
+                          fontSize={12}
+                          fontFamily="JetBrains Mono, monospace"
+                        >
+                          {short(id)}
+                        </text>
+                      )}
                     </g>
                   );
                 })}
@@ -396,6 +435,9 @@ export default function Mesh() {
             <>
               <span>{t("LÍNEA CONTINUA = VECINO DIRECTO")}</span>
               <span style={{ flex: 1 }} />
+              {ids.length > 45 && (
+                <span className="dim">{t("CLIC EN UN NODO PARA VER NOMBRES")} · </span>
+              )}
               <span>{t("DISCONTINUA = TRAMO DE TRACEROUTE")}</span>
             </>
           )}

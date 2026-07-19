@@ -169,6 +169,7 @@ const en: Record<string, string> = {
   "Enlaces inventados sobre tus nodos reales para ver cómo queda el grafo. No se guarda nada.":
     "Made-up links over your real nodes to see how the graph looks. Nothing is saved.",
   "DATOS FALSOS": "FAKE DATA",
+  "CLIC EN UN NODO PARA VER NOMBRES": "CLICK A NODE TO SEE NAMES",
   "Para ver cómo quedaría el grafo, prueba VISTA PREVIA.":
     "To see how the graph would look, try PREVIEW.",
   "VISTA PREVIA: enlaces inventados, no hay nada de esto en la base":
