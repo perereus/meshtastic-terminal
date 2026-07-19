@@ -142,6 +142,8 @@ function App() {
   const [chatConvo, setChatConvo] = useState("ch:0");
   // nodo a preseleccionar al saltar MAPA → NODOS con [+INFO]
   const [nodeFocus, setNodeFocus] = useState<number | undefined>();
+  // contador: cada incremento le pide al chat que enfoque su caja de búsqueda
+  const [focusSearch, setFocusSearch] = useState(0);
   const [mode, setMode] = useState<Mode>("serie");
   const [ports, setPorts] = useState<string[]>([]);
   const [selected, setSelected] = useState("");
@@ -170,6 +172,25 @@ function App() {
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  // Ctrl+1…7 cambia de pestaña · Ctrl+F busca en el chat
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.ctrlKey || e.altKey || e.metaKey) return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= TABS.length) {
+        e.preventDefault();
+        setNodeFocus(undefined);
+        setTab(TABS[n - 1]);
+      } else if (e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setTab("CHAT");
+        setFocusSearch((v) => v + 1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   // Alertas de nodos favoritos (batería baja / sin señal). Cada minuto basta:
@@ -376,10 +397,11 @@ function App() {
           <span>MESH·NET TERMINAL</span>
         </div>
         <nav>
-          {TABS.map((tb) => (
+          {TABS.map((tb, i) => (
             <button
               key={tb}
               className={`tab ${tb === tab ? "active" : ""}`}
+              title={`Ctrl+${i + 1}`}
               onClick={() => {
                 setNodeFocus(undefined);
                 setTab(tb);
@@ -499,7 +521,13 @@ function App() {
       {error && <p className="error">{error}</p>}
 
       <ScreenBoundary key={tab}>
-      {tab === "CHAT" && <Chat convo={chatConvo} setConvo={setChatConvo} />}
+      {tab === "CHAT" && (
+        <Chat
+          convo={chatConvo}
+          setConvo={setChatConvo}
+          focusSearch={focusSearch}
+        />
+      )}
       {tab === "NODOS" && (
         <Nodes
           initialSelected={nodeFocus}

@@ -20,15 +20,23 @@ function ts(ms: number): string {
 export default function Chat({
   convo,
   setConvo,
+  focusSearch,
 }: {
   convo: string;
   setConvo: (c: string) => void;
+  // cambia cada vez que se pulsa Ctrl+F, también si el chat ya estaba abierto
+  focusSearch?: number;
 }) {
   const s = useSyncExternalStore(subscribe, getSnapshot);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (focusSearch) searchRef.current?.select();
+  }, [focusSearch]);
 
   // Buscar recorre TODAS las conversaciones: encontrar un mensaje viejo suele
   // importar más que en qué canal estaba. Cada resultado dice de dónde sale.
@@ -146,9 +154,17 @@ export default function Chat({
           </span>
           <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <input
+              ref={searchRef}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setSearch("");
+                  e.currentTarget.blur();
+                }
+              }}
               placeholder={t("buscar en todo el historial_")}
+              title="Ctrl+F · ESC limpia"
               style={{ width: 190, fontSize: 11 }}
             />
             <button
