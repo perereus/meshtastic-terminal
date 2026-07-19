@@ -4,6 +4,13 @@ import { retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
 import { t } from "../i18n";
 
+// en resultados de búsqueda la hora sola no basta: pueden ser de otro día
+function fecha(ms: number): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}`;
+}
+
 function ts(ms: number): string {
   const d = new Date(ms);
   const p = (n: number) => String(n).padStart(2, "0");
@@ -20,13 +27,19 @@ export default function Chat({
   const s = useSyncExternalStore(subscribe, getSnapshot);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
-  const msgs = s.messages.filter((m) => m.convo === convo);
+  // Buscar recorre TODAS las conversaciones: encontrar un mensaje viejo suele
+  // importar más que en qué canal estaba. Cada resultado dice de dónde sale.
+  const q = search.trim().toLowerCase();
+  const msgs = q
+    ? s.messages.filter((m) => m.text.toLowerCase().includes(q))
+    : s.messages.filter((m) => m.convo === convo);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [msgs.length]);
+    if (!q) endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs.length, q]);
 
   // Al ver una conversación (o llegar mensaje mientras está abierta), sin leer=0
   useEffect(() => {
@@ -53,8 +66,12 @@ export default function Chat({
       ? t("YO")
       : (s.nodes.get(num)?.shortName ?? num.toString(16).slice(-4));
 
-  const convoLabel =
-    [...channelConvos, ...dmConvos].find((c) => c.key === convo)?.label ?? convo;
+  const labelOf = (key: string) =>
+    [...channelConvos, ...dmConvos].find((c) => c.key === key)?.label ??
+    (key.startsWith("dm:")
+      ? `@${s.nodes.get(Number(key.slice(3)))?.shortName ?? key.slice(3)}`
+      : key);
+  const convoLabel = labelOf(convo);
 
   const onSend = async () => {
     const text = draft.trim();
@@ -128,6 +145,12 @@ export default function Chat({
               ))}
           </span>
           <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("buscar en todo el historial_")}
+              style={{ width: 190, fontSize: 11 }}
+            />
             <button
               style={{ fontSize: 10, padding: "0 6px" }}
               title={t("Exportar esta conversación a un archivo de texto")}
@@ -166,14 +189,36 @@ export default function Chat({
         >
           {msgs.length === 0 && (
             <div className="dim" style={{ fontSize: 11 }}>
-              {t("──── SIN MENSAJES EN {0} — AWAITING SIGNAL_ ────", convoLabel)}
+              {q
+                ? t('SIN RESULTADOS PARA "{0}"_', search)
+                : t("──── SIN MENSAJES EN {0} — AWAITING SIGNAL_ ────", convoLabel)}
+            </div>
+          )}
+          {q && msgs.length > 0 && (
+            <div className="dim" style={{ fontSize: 11, marginBottom: 4 }}>
+              {t("{0} RESULTADOS · CLIC PARA IR A LA CONVERSACIÓN", msgs.length)}
             </div>
           )}
           {msgs.map((m) => (
             <div
               key={`${m.id}-${m.ts}`}
               className={m.mine ? `msg-mine ${m.state === "failed" ? "failed" : ""}` : ""}
+              style={q ? { cursor: "pointer" } : undefined}
+              onClick={
+                q
+                  ? () => {
+                      setConvo(m.convo);
+                      setSearch("");
+                    }
+                  : undefined
+              }
             >
+              {q && (
+                <>
+                  <span className="dim">{fecha(m.ts)}</span>{" "}
+                  <span className="warn">{labelOf(m.convo)}</span>{" "}
+                </>
+              )}
               <span className="dim">[{ts(m.ts)}]</span>{" "}
               <span
                 className={m.mine ? "" : "warn"}
