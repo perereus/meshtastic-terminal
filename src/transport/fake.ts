@@ -1,6 +1,7 @@
 import { Protobuf, Types } from "@meshtastic/core";
 import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
-import { makeTransport } from "./bridge";
+// extensión explícita para que el arnés de Node pueda importar este módulo
+import { makeTransport } from "./bridge.ts";
 
 /**
  * Radio simulada: habla el mismo protocolo por bytes que una de verdad, así
