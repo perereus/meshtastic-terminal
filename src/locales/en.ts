@@ -154,6 +154,100 @@ const en: Record<string, string> = {
   "{0} LÍNEAS": "{0} LINES",
   REGIÓN: "REGION",
   CANAL: "CHANNEL",
+
+  // Config
+  "SIN POSICIÓN": "NO POSITION",
+  EXACTA: "EXACT",
+  "GUARDANDO…": "SAVING…",
+  "sin respuesta de la radio (20 s)": "no response from the radio (20 s)",
+  "Guardado ✓": "Saved ✓",
+  "NO LINK — conecta un dispositivo para ver su configuración_":
+    "NO LINK — connect a device to see its configuration_",
+  "pulsa otra vez para confirmar": "press again to confirm",
+  "{0} filas borradas": "{0} rows deleted",
+  "config LoRa aún no recibida": "LoRa config not received yet",
+  "PSK de {0} bytes; debe ser 1, 16 o 32":
+    "PSK is {0} bytes; must be 1, 16 or 32",
+  "Backup descargado ✓": "Backup downloaded ✓",
+  "{0} mensajes de config aplicados ✓ (el nodo puede reiniciar)":
+    "{0} config messages applied ✓ (the node may reboot)",
+  "Canal {0} guardado ✓": "Channel {0} saved ✓",
+  "CONFIG // USUARIO": "CONFIG // USER",
+  "NOMBRE LARGO": "LONG NAME",
+  "NOMBRE CORTO": "SHORT NAME",
+  "ID NODO": "NODE ID",
+  "SOLO LECTURA": "READ ONLY",
+  IDIOMA: "LANGUAGE",
+  "TX ACTIVADO": "TX ENABLED",
+  "CONFIG // DISPOSITIVO": "CONFIG // DEVICE",
+  ROL: "ROLE",
+  "BROADCAST POSICIÓN (s)": "POSITION BROADCAST (s)",
+  "PANTALLA ON (s)": "SCREEN ON (s)",
+  "AHORRO ENERGÍA": "POWER SAVING",
+  "CONFIG // POSICIÓN FIJA": "CONFIG // FIXED POSITION",
+  "Para nodos sin GPS: el firmware difunde esta posición al mesh.":
+    "For nodes without GPS: the firmware broadcasts this position to the mesh.",
+  "ERROR: coordenadas inválidas": "ERROR: invalid coordinates",
+  "Posición fija enviada ✓": "Fixed position sent ✓",
+  "Posición fija eliminada ✓": "Fixed position cleared ✓",
+  FIJAR: "SET",
+  QUITAR: "CLEAR",
+  "CONFIG // CANALES": "CONFIG // CHANNELS",
+  "PEGA URL meshtastic.org/e/#…": "PASTE URL meshtastic.org/e/#…",
+  Principal: "Primary",
+  "Canal {0}": "Channel {0}",
+  "Sobrescribirá {0} canales ({1})": "Will overwrite {0} channels ({1})",
+  " + config LoRa": " + LoRa config",
+  ". Pulsa CONFIRMAR.": ". Press CONFIRM.",
+  "{0} canales importados ✓": "{0} channels imported ✓",
+  CONFIRMAR: "CONFIRM",
+  IMPORTAR: "IMPORT",
+  "EXPORTAR URL": "EXPORT URL",
+  "COPIADO ✓": "COPIED ✓",
+  COPIAR: "COPY",
+  "— aún no se han recibido canales —": "— no channels received yet —",
+  GUARDAR: "SAVE",
+  "— sin cifrado —": "— no encryption —",
+  "Generar clave AES-256 aleatoria": "Generate a random AES-256 key",
+  "Los gateways MQTT suben los mensajes de este canal a internet":
+    "MQTT gateways upload this channel's messages to the internet",
+  "Los mensajes vistos en internet se reenvían a la malla":
+    "Messages seen on the internet are forwarded to the mesh",
+  "Silenciar: la app no notifica los mensajes de este canal":
+    "Mute: the app does not notify messages from this channel",
+  "Precisión de la posición difundida por este canal":
+    "Precision of the position broadcast on this channel",
+  ACTIVADO: "ENABLED",
+  SERVIDOR: "SERVER",
+  USUARIO: "USERNAME",
+  CONTRASEÑA: "PASSWORD",
+  CIFRADO: "ENCRYPTION",
+  "INTERVALO (s)": "INTERVAL (s)",
+  "EMITIR CADA (s)": "SEND EVERY (s)",
+  "GUARDAR EN SD": "SAVE TO SD",
+  "0 en EMITIR = sólo recibe. Emitir satura el canal: úsalo en pruebas cortas y vuelve a 0. Los paquetes recibidos salen en el LOG.":
+    "0 in SEND = receive only. Sending saturates the channel: use it for short tests and set it back to 0. Received packets show up in the LOG.",
+  "Config completa del nodo (radio, módulos y canales con PSK) a JSON.":
+    "Full node config (radio, modules and channels with PSK) to JSON.",
+  "GUARDAR BACKUP": "SAVE BACKUP",
+  "RESTAURAR…": "RESTORE…",
+  "CONFIG // BASE DE DATOS": "CONFIG // DATABASE",
+  "{0} mensajes · {1} muestras de telemetría · {2} nodos":
+    "{0} messages · {1} telemetry samples · {2} nodes",
+  "leyendo…": "reading…",
+  "borrar lo anterior a": "delete anything older than",
+  días: "days",
+  "[ ¿SEGURO? ]": "[ SURE? ]",
+  "[ PURGAR ]": "[ PURGE ]",
+  "afecta a mensajes y telemetría · los nodos no se tocan":
+    "affects messages and telemetry · nodes are untouched",
+  "CONFIG // MANTENIMIENTO": "CONFIG // MAINTENANCE",
+  "REBOOT enviado · ~8 s offline": "REBOOT sent · ~8 s offline",
+  "reinicia el dispositivo · ~8 s offline":
+    "reboots the device · ~8 s offline",
+  "SHUTDOWN enviado": "SHUTDOWN sent",
+  "apaga el nodo · requiere encendido manual":
+    "powers off the node · requires manual power-on",
 };
 
 export default en;

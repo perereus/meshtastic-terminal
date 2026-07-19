@@ -14,6 +14,7 @@ import { dbStats, purgeOlderThan } from "../db";
 import { mutate } from "../store";
 import { parseChannelSetUrl } from "../channelUrl";
 import { buildChannelSetUrl } from "../channelUrl";
+import { getLang, setLang, t, type Lang } from "../i18n";
 
 type LoRa = Protobuf.Config.Config_LoRaConfig;
 type Dev = Protobuf.Config.Config_DeviceConfig;
@@ -27,7 +28,7 @@ type RangeT = Protobuf.ModuleConfig.ModuleConfig_RangeTestConfig;
 // Precisión de posición por canal, mismos escalones que la app oficial.
 // Bits de precisión → radio aproximado del área difundida.
 const PRECISION_OPTS: [number, string][] = [
-  [0, "SIN POSICIÓN"],
+  [0, t("SIN POSICIÓN")],
   [10, "±23 km"],
   [11, "±12 km"],
   [12, "±5,8 km"],
@@ -38,7 +39,7 @@ const PRECISION_OPTS: [number, string][] = [
   [17, "±175 m"],
   [18, "±90 m"],
   [19, "±45 m"],
-  [32, "EXACTA"],
+  [32, t("EXACTA")],
 ];
 
 function enumOptions(schema: {
@@ -65,7 +66,7 @@ function Section(props: {
             className="primary"
             disabled={busy}
             onClick={async () => {
-              setMsg("GUARDANDO…");
+              setMsg(t("GUARDANDO…"));
               setCls("warn");
               setBusy(true);
               try {
@@ -74,12 +75,12 @@ function Section(props: {
                   props.onSave?.(),
                   new Promise((_, rej) =>
                     setTimeout(
-                      () => rej(new Error("sin respuesta de la radio (20 s)")),
+                      () => rej(new Error(t("sin respuesta de la radio (20 s)"))),
                       20_000,
                     ),
                   ),
                 ]);
-                setMsg("Guardado ✓");
+                setMsg(t("Guardado ✓"));
                 setCls("");
               } catch (e) {
                 setMsg(`ERROR: ${e instanceof Error ? e.message : e}`);
@@ -246,7 +247,7 @@ export default function Config() {
     return (
       <main>
         <p className="dim" style={{ padding: 16 }}>
-          NO LINK — conecta un dispositivo para ver su configuración_
+          {t("NO LINK — conecta un dispositivo para ver su configuración_")}
         </p>
       </main>
     );
@@ -255,7 +256,7 @@ export default function Config() {
   const onPurge = async () => {
     if (!purgeArm) {
       setPurgeArm(true);
-      setPurgeMsg("pulsa otra vez para confirmar");
+      setPurgeMsg(t("pulsa otra vez para confirmar"));
       setTimeout(() => setPurgeArm(false), 3000);
       return;
     }
@@ -267,7 +268,7 @@ export default function Config() {
       mutate((st) => {
         st.messages = st.messages.filter((m) => m.ts >= cut);
       });
-      setPurgeMsg(`${n} filas borradas`);
+      setPurgeMsg(t("{0} filas borradas", n));
       setStats(await dbStats());
     } catch (e) {
       setPurgeMsg(`ERROR: ${e instanceof Error ? e.message : e}`);
@@ -282,7 +283,7 @@ export default function Config() {
   };
 
   const saveLora = async () => {
-    if (!lora) throw new Error("config LoRa aún no recibida");
+    if (!lora) throw new Error(t("config LoRa aún no recibida"));
     await device?.setConfig(
       create(Protobuf.Config.ConfigSchema, {
         payloadVariant: {
@@ -305,11 +306,11 @@ export default function Config() {
   const pskToB64 = (b?: Uint8Array) =>
     b && b.length ? btoa(String.fromCharCode(...b)) : "";
   const pskFromB64 = (str: string): Uint8Array => {
-    const t = str.trim();
-    if (!t) return new Uint8Array(0);
-    const bytes = Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+    const b64 = str.trim();
+    if (!b64) return new Uint8Array(0);
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
     if (![1, 16, 32].includes(bytes.length)) {
-      throw new Error(`PSK de ${bytes.length} bytes; debe ser 1, 16 o 32`);
+      throw new Error(t("PSK de {0} bytes; debe ser 1, 16 o 32", bytes.length));
     }
     return bytes;
   };
@@ -346,7 +347,7 @@ export default function Config() {
       a.download = `meshtastic-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
-      setBkMsg("Backup descargado ✓");
+      setBkMsg(t("Backup descargado ✓"));
       setBkCls("");
     } catch (e) {
       setBkMsg(`ERROR: ${e}`);
@@ -358,7 +359,7 @@ export default function Config() {
     setBkMsg("");
     try {
       const n = await importConfigJson(await file.text());
-      setBkMsg(`${n} mensajes de config aplicados ✓ (el nodo puede reiniciar)`);
+      setBkMsg(t("{0} mensajes de config aplicados ✓ (el nodo puede reiniciar)", n));
       setBkCls("");
     } catch (e) {
       setBkMsg(`ERROR: ${e}`);
@@ -445,7 +446,7 @@ export default function Config() {
         }),
       );
       await device?.commitEditSettings();
-      setChMsg(`Canal ${index} guardado ✓`);
+      setChMsg(t("Canal {0} guardado ✓", index));
       setChCls("");
     } catch (e) {
       setChMsg(`ERROR: ${e}`);
@@ -484,33 +485,42 @@ export default function Config() {
     <main style={{ overflowY: "auto", alignItems: "start" }}>
       <div className="cfg-grid">
         <div className="cfg-col">
-        <Section title="CONFIG // USUARIO" onSave={saveOwner}>
+        <Section title={t("CONFIG // USUARIO")} onSave={saveOwner}>
           <div className="form-grid">
-            <label>NOMBRE LARGO</label>
+            <label>{t("NOMBRE LARGO")}</label>
             <input
               value={longName}
               maxLength={39}
               onChange={(e) => setLongName(e.target.value)}
             />
-            <label>NOMBRE CORTO</label>
+            <label>{t("NOMBRE CORTO")}</label>
             <input
               value={shortName}
               maxLength={4}
               style={{ width: 90 }}
               onChange={(e) => setShortName(e.target.value)}
             />
-            <label>ID NODO</label>
+            <label>{t("ID NODO")}</label>
             <span className="dim">
               {s.myNodeNum !== undefined
-                ? `!${s.myNodeNum.toString(16)} · SOLO LECTURA`
+                ? `!${s.myNodeNum.toString(16)} · ${t("SOLO LECTURA")}`
                 : "—"}
             </span>
+            <label>{t("IDIOMA")}</label>
+            <select
+              value={getLang()}
+              style={{ width: 140 }}
+              onChange={(e) => setLang(e.target.value as Lang)}
+            >
+              <option value="es">ESPAÑOL</option>
+              <option value="en">ENGLISH</option>
+            </select>
           </div>
         </Section>
 
         <Section title="CONFIG // LORA" onSave={saveLora}>
           <div className="form-grid">
-            <label>REGIÓN</label>
+            <label>{t("REGIÓN")}</label>
             <select
               value={region}
               onChange={(e) => setRegion(Number(e.target.value))}
@@ -545,7 +555,7 @@ export default function Config() {
               style={{ width: 70 }}
               onChange={(e) => setHopLimit(Number(e.target.value))}
             />
-            <label>TX ACTIVADO</label>
+            <label>{t("TX ACTIVADO")}</label>
             <input
               type="checkbox"
               checked={txEnabled}
@@ -555,9 +565,9 @@ export default function Config() {
           </div>
         </Section>
 
-        <Section title="CONFIG // DISPOSITIVO" onSave={saveDevice}>
+        <Section title={t("CONFIG // DISPOSITIVO")} onSave={saveDevice}>
           <div className="form-grid">
-            <label>ROL</label>
+            <label>{t("ROL")}</label>
             <select
               value={devRole}
               onChange={(e) => setDevRole(Number(e.target.value))}
@@ -570,7 +580,7 @@ export default function Config() {
                 ),
               )}
             </select>
-            <label>BROADCAST POSICIÓN (s)</label>
+            <label>{t("BROADCAST POSICIÓN (s)")}</label>
             <input
               type="number"
               min={0}
@@ -585,7 +595,7 @@ export default function Config() {
               style={{ justifySelf: "start", width: "auto" }}
               onChange={(e) => setPosSmart(e.target.checked)}
             />
-            <label>PANTALLA ON (s)</label>
+            <label>{t("PANTALLA ON (s)")}</label>
             <input
               type="number"
               min={0}
@@ -593,7 +603,7 @@ export default function Config() {
               style={{ width: 100 }}
               onChange={(e) => setDispSecs(Number(e.target.value))}
             />
-            <label>AHORRO ENERGÍA</label>
+            <label>{t("AHORRO ENERGÍA")}</label>
             <input
               type="checkbox"
               checked={pwrSave}
@@ -603,7 +613,7 @@ export default function Config() {
           </div>
         </Section>
 
-        <Section title="CONFIG // POSICIÓN FIJA">
+        <Section title={t("CONFIG // POSICIÓN FIJA")}>
           <div
             style={{
               padding: 14,
@@ -614,7 +624,7 @@ export default function Config() {
             }}
           >
             <span className="dim">
-              Para nodos sin GPS: el firmware difunde esta posición al mesh.
+              {t("Para nodos sin GPS: el firmware difunde esta posición al mesh.")}
             </span>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <label>LAT</label>
@@ -644,13 +654,13 @@ export default function Config() {
                     Math.abs(lat) > 90 ||
                     Math.abs(lon) > 180
                   ) {
-                    setPosMsg("ERROR: coordenadas inválidas");
+                    setPosMsg(t("ERROR: coordenadas inválidas"));
                     setPosCls("err");
                     return;
                   }
                   try {
                     await setFixedPosition(lat, lon);
-                    setPosMsg("Posición fija enviada ✓");
+                    setPosMsg(t("Posición fija enviada ✓"));
                     setPosCls("");
                   } catch (e) {
                     setPosMsg(`ERROR: ${e}`);
@@ -658,14 +668,14 @@ export default function Config() {
                   }
                 }}
               >
-                FIJAR
+                {t("FIJAR")}
               </button>
               <button
                 onClick={async () => {
                   setPosMsg("");
                   try {
                     await clearFixedPosition();
-                    setPosMsg("Posición fija eliminada ✓");
+                    setPosMsg(t("Posición fija eliminada ✓"));
                     setPosCls("");
                   } catch (e) {
                     setPosMsg(`ERROR: ${e}`);
@@ -673,7 +683,7 @@ export default function Config() {
                   }
                 }}
               >
-                QUITAR
+                {t("QUITAR")}
               </button>
             </div>
             {posMsg && (
@@ -686,7 +696,7 @@ export default function Config() {
 
         </div>
         <div className="cfg-col">
-        <Section title="CONFIG // CANALES">
+        <Section title={t("CONFIG // CANALES")}>
           <div
             style={{
               padding: 14,
@@ -707,7 +717,7 @@ export default function Config() {
               }}
             >
               <input
-                placeholder="PEGA URL meshtastic.org/e/#…"
+                placeholder={t("PEGA URL meshtastic.org/e/#…")}
                 value={chUrl}
                 style={{ flex: 1 }}
                 onChange={(e) => {
@@ -727,12 +737,14 @@ export default function Config() {
                       const names = set.settings
                         .map(
                           (c: Protobuf.Channel.ChannelSettings, i: number) =>
-                            c.name || (i === 0 ? "Principal" : `Canal ${i}`),
+                            c.name || (i === 0 ? t("Principal") : t("Canal {0}", i)),
                         )
                         .join(", ");
                       setImportPending(chUrl);
                       setImportMsg(
-                        `Sobrescribirá ${set.settings.length} canales (${names})${set.loraConfig ? " + config LoRa" : ""}. Pulsa CONFIRMAR.`,
+                        t("Sobrescribirá {0} canales ({1})", set.settings.length, names) +
+                          (set.loraConfig ? t(" + config LoRa") : "") +
+                          t(". Pulsa CONFIRMAR."),
                       );
                       setImportCls("warn");
                     } catch (e) {
@@ -743,7 +755,7 @@ export default function Config() {
                   }
                   try {
                     const n = await importChannelSet(importPending);
-                    setImportMsg(`${n} canales importados ✓`);
+                    setImportMsg(t("{0} canales importados ✓", n));
                     setImportCls("");
                     setChUrl("");
                   } catch (e) {
@@ -754,7 +766,7 @@ export default function Config() {
                   }
                 }}
               >
-                {importPending ? "CONFIRMAR" : "IMPORTAR"}
+                {importPending ? t("CONFIRMAR") : t("IMPORTAR")}
               </button>
             </div>
             {importMsg && (
@@ -777,7 +789,7 @@ export default function Config() {
                 disabled={s.channels.size === 0}
                 onClick={onExport}
               >
-                EXPORTAR URL
+                {t("EXPORTAR URL")}
               </button>
               {exportUrl && (
                 <>
@@ -795,13 +807,13 @@ export default function Config() {
                       );
                     }}
                   >
-                    {copied ? "COPIADO ✓" : "COPIAR"}
+                    {copied ? t("COPIADO ✓") : t("COPIAR")}
                   </button>
                 </>
               )}
             </div>
             {channels.length === 0 && (
-              <span className="dim">— aún no se han recibido canales —</span>
+              <span className="dim">{t("— aún no se han recibido canales —")}</span>
             )}
             {chMsg && (
               <span className={chCls || "warn"} style={{ fontSize: 11 }}>
@@ -851,7 +863,7 @@ export default function Config() {
                       </option>
                     ))}
                   </select>
-                  <button onClick={() => saveChannel(ch.index)}>GUARDAR</button>
+                  <button onClick={() => saveChannel(ch.index)}>{t("GUARDAR")}</button>
                 </div>
                 {roleNow !== 0 && (
                 <>
@@ -860,7 +872,7 @@ export default function Config() {
                     PSK
                   </span>
                   <input
-                    placeholder="— sin cifrado —"
+                    placeholder={t("— sin cifrado —")}
                     value={chPsks[ch.index] ?? pskToB64(ch.settings?.psk)}
                     style={{ flex: 1, fontFamily: "inherit", fontSize: 11 }}
                     onChange={(e) =>
@@ -868,7 +880,7 @@ export default function Config() {
                     }
                   />
                   <button
-                    title="Generar clave AES-256 aleatoria"
+                    title={t("Generar clave AES-256 aleatoria")}
                     onClick={() => genPsk(ch.index)}
                   >
                     GEN
@@ -885,7 +897,7 @@ export default function Config() {
                 >
                   <label
                     style={{ display: "flex", alignItems: "center", gap: 4 }}
-                    title="Los gateways MQTT suben los mensajes de este canal a internet"
+                    title={t("Los gateways MQTT suben los mensajes de este canal a internet")}
                   >
                     <input
                       type="checkbox"
@@ -908,7 +920,7 @@ export default function Config() {
                   </label>
                   <label
                     style={{ display: "flex", alignItems: "center", gap: 4 }}
-                    title="Los mensajes vistos en internet se reenvían a la malla"
+                    title={t("Los mensajes vistos en internet se reenvían a la malla")}
                   >
                     <input
                       type="checkbox"
@@ -931,7 +943,7 @@ export default function Config() {
                   </label>
                   <label
                     style={{ display: "flex", alignItems: "center", gap: 4 }}
-                    title="Silenciar: la app no notifica los mensajes de este canal"
+                    title={t("Silenciar: la app no notifica los mensajes de este canal")}
                   >
                     <input
                       type="checkbox"
@@ -954,7 +966,7 @@ export default function Config() {
                   </label>
                   <label
                     style={{ display: "flex", alignItems: "center", gap: 4 }}
-                    title="Precisión de la posición difundida por este canal"
+                    title={t("Precisión de la posición difundida por este canal")}
                   >
                     <span className="dim" style={{ letterSpacing: 1 }}>POS</span>
                     <select
@@ -992,28 +1004,28 @@ export default function Config() {
 
         <Section title="MÓDULO // MQTT" onSave={saveMqtt}>
           <div className="form-grid">
-            <label>ACTIVADO</label>
+            <label>{t("ACTIVADO")}</label>
             <input
               type="checkbox"
               checked={mqEnabled}
               style={{ justifySelf: "start", width: "auto" }}
               onChange={(e) => setMqEnabled(e.target.checked)}
             />
-            <label>SERVIDOR</label>
+            <label>{t("SERVIDOR")}</label>
             <input
               placeholder="mqtt.meshtastic.org"
               value={mqAddress}
               onChange={(e) => setMqAddress(e.target.value)}
             />
-            <label>USUARIO</label>
+            <label>{t("USUARIO")}</label>
             <input value={mqUser} onChange={(e) => setMqUser(e.target.value)} />
-            <label>CONTRASEÑA</label>
+            <label>{t("CONTRASEÑA")}</label>
             <input
               type="password"
               value={mqPass}
               onChange={(e) => setMqPass(e.target.value)}
             />
-            <label>CIFRADO</label>
+            <label>{t("CIFRADO")}</label>
             <input
               type="checkbox"
               checked={mqEnc}
@@ -1033,14 +1045,14 @@ export default function Config() {
         <div className="cfg-col">
         <Section title="MÓDULO // NEIGHBOR INFO" onSave={saveNeigh}>
           <div className="form-grid">
-            <label>ACTIVADO</label>
+            <label>{t("ACTIVADO")}</label>
             <input
               type="checkbox"
               checked={nbOn}
               style={{ justifySelf: "start", width: "auto" }}
               onChange={(e) => setNbOn(e.target.checked)}
             />
-            <label>INTERVALO (s)</label>
+            <label>{t("INTERVALO (s)")}</label>
             <input
               type="number"
               min={0}
@@ -1053,14 +1065,14 @@ export default function Config() {
 
         <Section title="MÓDULO // RANGE TEST" onSave={saveRangeTest}>
           <div className="form-grid">
-            <label>ACTIVADO</label>
+            <label>{t("ACTIVADO")}</label>
             <input
               type="checkbox"
               checked={rtOn}
               style={{ justifySelf: "start", width: "auto" }}
               onChange={(e) => setRtOn(e.target.checked)}
             />
-            <label>EMITIR CADA (s)</label>
+            <label>{t("EMITIR CADA (s)")}</label>
             <input
               type="number"
               min={0}
@@ -1068,7 +1080,7 @@ export default function Config() {
               style={{ width: 100 }}
               onChange={(e) => setRtSender(Number(e.target.value))}
             />
-            <label>GUARDAR EN SD</label>
+            <label>{t("GUARDAR EN SD")}</label>
             <input
               type="checkbox"
               checked={rtSave}
@@ -1077,12 +1089,13 @@ export default function Config() {
             />
           </div>
           <p className="dim" style={{ padding: "0 14px 12px", fontSize: 11 }}>
-            0 en EMITIR = sólo recibe. Emitir satura el canal: úsalo en pruebas
-            cortas y vuelve a 0. Los paquetes recibidos salen en el LOG.
+            {t(
+              "0 en EMITIR = sólo recibe. Emitir satura el canal: úsalo en pruebas cortas y vuelve a 0. Los paquetes recibidos salen en el LOG.",
+            )}
           </p>
         </Section>
 
-        <Section title="CONFIG // BACKUP">
+        <Section title={t("CONFIG // BACKUP")}>
           <div
             style={{
               padding: 14,
@@ -1093,11 +1106,11 @@ export default function Config() {
             }}
           >
             <span className="dim">
-              Config completa del nodo (radio, módulos y canales con PSK) a JSON.
+              {t("Config completa del nodo (radio, módulos y canales con PSK) a JSON.")}
             </span>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <button className="primary" onClick={onBackup}>
-                GUARDAR BACKUP
+                {t("GUARDAR BACKUP")}
               </button>
               <label
                 className="btn"
@@ -1107,7 +1120,7 @@ export default function Config() {
                   cursor: "pointer",
                 }}
               >
-                RESTAURAR…
+                {t("RESTAURAR…")}
                 <input
                   type="file"
                   accept=".json,application/json"
@@ -1128,7 +1141,7 @@ export default function Config() {
           </div>
         </Section>
 
-        <Section title="CONFIG // BASE DE DATOS">
+        <Section title={t("CONFIG // BASE DE DATOS")}>
           <div
             style={{
               padding: 14,
@@ -1140,11 +1153,16 @@ export default function Config() {
           >
             <span className="dim">
               {stats
-                ? `${stats.messages} mensajes · ${stats.telemetry} muestras de telemetría · ${stats.nodes} nodos`
-                : "leyendo…"}
+                ? t(
+                    "{0} mensajes · {1} muestras de telemetría · {2} nodos",
+                    stats.messages,
+                    stats.telemetry,
+                    stats.nodes,
+                  )
+                : t("leyendo…")}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span>borrar lo anterior a</span>
+              <span>{t("borrar lo anterior a")}</span>
               <input
                 type="number"
                 min={1}
@@ -1155,23 +1173,23 @@ export default function Config() {
                   setPurgeArm(false);
                 }}
               />
-              <span>días</span>
+              <span>{t("días")}</span>
               <button
                 className="danger"
                 style={{ width: 180 }}
                 onClick={onPurge}
               >
-                {purgeArm ? "[ ¿SEGURO? ]" : "[ PURGAR ]"}
+                {purgeArm ? t("[ ¿SEGURO? ]") : t("[ PURGAR ]")}
               </button>
             </div>
             <span className="dim">
-              afecta a mensajes y telemetría · los nodos no se tocan
+              {t("afecta a mensajes y telemetría · los nodos no se tocan")}
             </span>
             {purgeMsg && <span className="warn">{purgeMsg}</span>}
           </div>
         </Section>
 
-        <Section title="CONFIG // MANTENIMIENTO">
+        <Section title={t("CONFIG // MANTENIMIENTO")}>
           <div
             style={{
               padding: 14,
@@ -1187,12 +1205,12 @@ export default function Config() {
                 style={{ width: 180 }}
                 onClick={() => {
                   device?.reboot(5);
-                  setMaint("REBOOT enviado · ~8 s offline");
+                  setMaint(t("REBOOT enviado · ~8 s offline"));
                 }}
               >
                 [ REBOOT ]
               </button>
-              <span className="dim">reinicia el dispositivo · ~8 s offline</span>
+              <span className="dim">{t("reinicia el dispositivo · ~8 s offline")}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <button
@@ -1200,12 +1218,12 @@ export default function Config() {
                 style={{ width: 180 }}
                 onClick={() => {
                   device?.shutdown(5);
-                  setMaint("SHUTDOWN enviado");
+                  setMaint(t("SHUTDOWN enviado"));
                 }}
               >
                 [ SHUTDOWN ]
               </button>
-              <span className="dim">apaga el nodo · requiere encendido manual</span>
+              <span className="dim">{t("apaga el nodo · requiere encendido manual")}</span>
             </div>
             {maint && <span className="warn">{maint}</span>}
           </div>
