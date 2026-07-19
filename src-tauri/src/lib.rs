@@ -3,6 +3,7 @@ mod tcp;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Manager, WindowEvent};
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
 // La app sigue recibiendo paquetes de la malla con la ventana cerrada, asi que
 // cerrar la esconde en la bandeja. Salir de verdad: menu de la bandeja.
@@ -16,6 +17,7 @@ fn show_main(app: &tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -54,6 +56,10 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
+                // Cerrar solo esconde, asi que el plugin no ve un cierre real:
+                // guardamos aqui, con la ventana aun visible y con medidas
+                // validas, en vez de fiarlo al evento de salida.
+                let _ = window.app_handle().save_window_state(StateFlags::all());
                 let _ = window.hide();
             }
         })
