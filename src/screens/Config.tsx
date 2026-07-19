@@ -495,30 +495,6 @@ export default function Config() {
     <main style={{ overflowY: "auto", alignItems: "start" }}>
       <div className="cfg-grid">
         <div className="cfg-col">
-        <Section title={t("CONFIG // USUARIO")} onSave={saveOwner}>
-          <div className="form-grid">
-            <label>{t("NOMBRE LARGO")}</label>
-            <input
-              value={longName}
-              maxLength={39}
-              onChange={(e) => setLongName(e.target.value)}
-            />
-            <label>{t("NOMBRE CORTO")}</label>
-            <input
-              value={shortName}
-              maxLength={4}
-              style={{ width: 90 }}
-              onChange={(e) => setShortName(e.target.value)}
-            />
-            <label>{t("ID NODO")}</label>
-            <span className="dim">
-              {s.myNodeNum !== undefined
-                ? `!${s.myNodeNum.toString(16)} · ${t("SOLO LECTURA")}`
-                : "—"}
-            </span>
-          </div>
-        </Section>
-
         <Section title={t("CONFIG // APLICACIÓN")}>
           <div className="form-grid">
             <label>{t("IDIOMA")}</label>
@@ -546,6 +522,30 @@ export default function Config() {
                 </option>
               ))}
             </select>
+          </div>
+        </Section>
+
+        <Section title={t("CONFIG // USUARIO")} onSave={saveOwner}>
+          <div className="form-grid">
+            <label>{t("NOMBRE LARGO")}</label>
+            <input
+              value={longName}
+              maxLength={39}
+              onChange={(e) => setLongName(e.target.value)}
+            />
+            <label>{t("NOMBRE CORTO")}</label>
+            <input
+              value={shortName}
+              maxLength={4}
+              style={{ width: 90 }}
+              onChange={(e) => setShortName(e.target.value)}
+            />
+            <label>{t("ID NODO")}</label>
+            <span className="dim">
+              {s.myNodeNum !== undefined
+                ? `!${s.myNodeNum.toString(16)} · ${t("SOLO LECTURA")}`
+                : "—"}
+            </span>
           </div>
         </Section>
 
