@@ -48,6 +48,31 @@ const en: Record<string, string> = {
   "MUESTREO PASIVO —": "PASSIVE SAMPLING —",
   "SE GUARDA TODO LO": "EVERYTHING THE MESH",
   "QUE EMITE LA MALLA": "TRANSMITS IS STORED",
+
+  // Mapa
+  NODO: "NODE",
+  VISTO: "SEEN",
+  "hace {0}": "{0} ago",
+  "(sin nombre)": "(unnamed)",
+  "de {0}": "from {0}",
+  "caduca {0}": "expires {0}",
+  "sin caducidad": "no expiry",
+  "[ EDITAR ]": "[ EDIT ]",
+  "[ BORRAR ]": "[ DELETE ]",
+  "PANEL // MAPA TÁCTICO": "PANEL // TACTICAL MAP",
+  "{0} NODOS": "{0} NODES",
+  "{0} CON FIX": "{0} WITH FIX",
+  "{0} DESCARTADOS (0,0)": "{0} DISCARDED (0,0)",
+  "CAPA: OSCURA": "LAYER: DARK",
+  "CLIC DERECHO = NUEVO WAYPOINT": "RIGHT CLICK = NEW WAYPOINT",
+  "EDITAR WAYPOINT": "EDIT WAYPOINT",
+  "NUEVO WAYPOINT": "NEW WAYPOINT",
+  nombre: "name",
+  descripción: "description",
+  "h (0 = nunca)": "h (0 = never)",
+  "WAYPOINT EMITIDO ✓": "WAYPOINT SENT ✓",
+  "[ EMITIR ]": "[ SEND ]",
+  "[ CANCELAR ]": "[ CANCEL ]",
 };
 
 export default en;

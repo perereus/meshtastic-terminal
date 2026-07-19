@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { addLog, getSnapshot, subscribe } from "../store";
 import { deleteWaypoint, sendWaypoint } from "../radio";
 import { ago, asciiBattery } from "../fmt";
+import { t } from "../i18n";
 
 interface Draft {
   id?: number; // definido = edición
@@ -85,14 +86,14 @@ export default function MapView({
 
     const nodeRows = (n: (typeof positioned)[number]) =>
       `<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 2px;">` +
-      `<span style="font-size:10px;letter-spacing:2px;opacity:.6;">NODO // ${n.shortName}</span>` +
+      `<span style="font-size:10px;letter-spacing:2px;opacity:.6;">${t("NODO")} // ${n.shortName}</span>` +
       `<button data-num="${n.num}" style="font-size:10px;padding:0 6px;">[ +INFO ]</button>` +
       `</div>` +
       `<div style="display:grid;grid-template-columns:auto 1fr;gap:2px 12px;">` +
       `<span style="opacity:.6;">ID</span><span>!${n.num.toString(16)}</span>` +
       `<span style="opacity:.6;">SNR</span><span>${n.snr !== undefined ? `${n.snr.toFixed(2)} dB` : "—"}</span>` +
       `<span style="opacity:.6;">BAT</span><span>${asciiBattery(n.batteryLevel)}</span>` +
-      `<span style="opacity:.6;">VISTO</span><span>hace ${ago(n.lastHeard)}</span>` +
+      `<span style="opacity:.6;">${t("VISTO")}</span><span>${t("hace {0}", ago(n.lastHeard))}</span>` +
       `</div>`;
 
     for (const group of byCoord.values()) {
@@ -107,7 +108,7 @@ export default function MapView({
       // Popup en DOM (no string) para poder colgar el onclick de [+INFO]
       const box = document.createElement("div");
       box.innerHTML =
-        `<div style="font-size:10px;letter-spacing:2px;opacity:.6;">POS ${lat.toFixed(4)}N ${lon.toFixed(4)}E · ${group.length} NODO${group.length > 1 ? "S" : ""}</div>` +
+        `<div style="font-size:10px;letter-spacing:2px;opacity:.6;">POS ${lat.toFixed(4)}N ${lon.toFixed(4)}E · ${group.length} ${t("NODO")}${group.length > 1 ? "S" : ""}</div>` +
         group.map(nodeRows).join("");
       for (const btn of box.querySelectorAll<HTMLButtonElement>("button[data-num]")) {
         btn.onclick = () => onOpenNode(Number(btn.dataset.num));
@@ -131,17 +132,17 @@ export default function MapView({
       const box = document.createElement("div");
       box.innerHTML =
         `<div style="font-size:10px;letter-spacing:2px;opacity:.6;">WAYPOINT · ${w.lat.toFixed(4)}N ${w.lon.toFixed(4)}E</div>` +
-        `<div style="font-weight:700;margin:4px 0;">${emoji} ${w.name || "(sin nombre)"}</div>` +
+        `<div style="font-weight:700;margin:4px 0;">${emoji} ${w.name || t("(sin nombre)")}</div>` +
         (w.description ? `<div style="margin-bottom:4px;">${w.description}</div>` : "") +
-        `<div style="opacity:.6;font-size:11px;">de ${getSnapshot().nodes.get(w.from)?.shortName ?? w.from.toString(16)}` +
+        `<div style="opacity:.6;font-size:11px;">${t("de {0}", getSnapshot().nodes.get(w.from)?.shortName ?? w.from.toString(16))}` +
         (w.expire
-          ? ` · caduca ${new Date(w.expire * 1000).toLocaleString()}`
-          : " · sin caducidad") +
+          ? ` · ${t("caduca {0}", new Date(w.expire * 1000).toLocaleString())}`
+          : ` · ${t("sin caducidad")}`) +
         `</div>`;
       const row = document.createElement("div");
       row.style.cssText = "display:flex;gap:8px;margin-top:8px;";
       const edit = document.createElement("button");
-      edit.textContent = "[ EDITAR ]";
+      edit.textContent = t("[ EDITAR ]");
       edit.onclick = () => {
         map.closePopup();
         setWpMsg("");
@@ -157,7 +158,7 @@ export default function MapView({
       };
       const del = document.createElement("button");
       del.className = "danger";
-      del.textContent = "[ BORRAR ]";
+      del.textContent = t("[ BORRAR ]");
       del.onclick = () => {
         map.closePopup();
         deleteWaypoint(w.id).catch((e: unknown) => setWpMsg(`ERROR: ${e}`));
@@ -215,11 +216,12 @@ export default function MapView({
       <div className="panel" style={{ flex: 1 }}>
         <div className="panel-title">
           <span>
-            PANEL // MAPA TÁCTICO · {s.nodes.size} NODOS · {withFix} CON FIX
-            {junk > 0 && ` · ${junk} DESCARTADOS (0,0)`}
+            {t("PANEL // MAPA TÁCTICO")} · {t("{0} NODOS", s.nodes.size)} ·{" "}
+            {t("{0} CON FIX", withFix)}
+            {junk > 0 && ` · ${t("{0} DESCARTADOS (0,0)", junk)}`}
             {s.waypoints.size > 0 && ` · ${s.waypoints.size} WAYPOINTS`}
           </span>
-          <span>CAPA: OSCURA</span>
+          <span>{t("CAPA: OSCURA")}</span>
         </div>
         <div className="map-wrap">
           <div ref={divRef} style={{ height: "100%" }} />
@@ -227,7 +229,7 @@ export default function MapView({
             TILES © OSM
           </div>
           <div className="map-hud" style={{ left: 10, bottom: 10 }}>
-            {wpMsg || "CLIC DERECHO = NUEVO WAYPOINT"}
+            {wpMsg || t("CLIC DERECHO = NUEVO WAYPOINT")}
           </div>
           {draft && (
             <div
@@ -242,7 +244,7 @@ export default function MapView({
               }}
             >
               <div className="panel-title">
-                {draft.id ? "EDITAR WAYPOINT" : "NUEVO WAYPOINT"}
+                {draft.id ? t("EDITAR WAYPOINT") : t("NUEVO WAYPOINT")}
               </div>
               <div
                 style={{
@@ -256,13 +258,13 @@ export default function MapView({
                   {draft.lat.toFixed(5)}N {draft.lon.toFixed(5)}E
                 </span>
                 <input
-                  placeholder="nombre"
+                  placeholder={t("nombre")}
                   maxLength={30}
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 />
                 <input
-                  placeholder="descripción"
+                  placeholder={t("descripción")}
                   maxLength={100}
                   value={draft.desc}
                   onChange={(e) => setDraft({ ...draft, desc: e.target.value })}
@@ -284,7 +286,7 @@ export default function MapView({
                       setDraft({ ...draft, expireH: Number(e.target.value) })
                     }
                   />
-                  <span className="dim">h (0 = nunca)</span>
+                  <span className="dim">{t("h (0 = nunca)")}</span>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -304,16 +306,18 @@ export default function MapView({
                             : 0,
                           lockedTo: 0,
                         });
-                        setWpMsg("WAYPOINT EMITIDO ✓");
+                        setWpMsg(t("WAYPOINT EMITIDO ✓"));
                         setDraft(undefined);
                       } catch (e) {
                         setWpMsg(`ERROR: ${e}`);
                       }
                     }}
                   >
-                    [ EMITIR ]
+                    {t("[ EMITIR ]")}
                   </button>
-                  <button onClick={() => setDraft(undefined)}>[ CANCELAR ]</button>
+                  <button onClick={() => setDraft(undefined)}>
+                    {t("[ CANCELAR ]")}
+                  </button>
                 </div>
               </div>
             </div>
