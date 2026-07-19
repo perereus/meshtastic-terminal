@@ -39,5 +39,5 @@
     "vite": "^7.0.4"
   },
   "license": "MIT",
-  "description": "Cliente de escritorio para redes Meshtastic con historial local, grafo de malla y previsión de autonomía"
+  "description": "Desktop client for Meshtastic mesh networks with local history, mesh graph and battery runtime forecast"
 }

@@ -1,183 +1,186 @@
 # Meshtastic Terminal
 
-Cliente de escritorio para redes [Meshtastic](https://meshtastic.org), con
-estética de terminal fosforescente. Windows, construido con Tauri 2, React 19 y
-TypeScript.
+*[Versión en español](README.es.md)*
 
-Se conecta a un nodo por **serie (USB)**, **BLE** o **TCP**, y guarda en SQLite
-local todo lo que oye: mensajes, telemetría, traceroutes, vecinos y escuchas.
-Ese historial local es la diferencia de fondo con las apps oficiales, que
-muestran el estado actual de la malla y poco más: aquí la malla tiene memoria,
-y sobre esa memoria se construye casi todo lo que sigue.
+A desktop client for [Meshtastic](https://meshtastic.org) mesh networks, with a
+phosphor-terminal look. Windows, built with Tauri 2, React 19 and TypeScript.
 
----
-
-## Lo que no vas a encontrar en otros clientes
-
-### Previsión de autonomía de batería
-
-En vez de avisar cuando la batería ya está al 20 %, ajusta una **regresión
-lineal por mínimos cuadrados** sobre las últimas 6 horas de descarga y dice
-cuándo se agota: *"SE AGOTA EN ~35 h"*. Con un día de margen todavía puedes
-hacer algo.
-
-Detalles que hacen que la cifra signifique algo:
-
-- **Ventana corta a propósito.** Un nodo solar sube de día y baja de noche;
-  ajustar sobre varios días daría pendiente ~0 y una previsión inútil. Con 6 h
-  se predice el tramo actual, que es lo accionable.
-- **Calcula el R² y se calla si es malo.** Si la serie no sigue una recta,
-  muestra *"BATERÍA IRREGULAR · sin previsión fiable"* en lugar de un número
-  inventado. Una previsión mal ajustada es peor que ninguna.
-- **Descarta los valores > 100 %**, que en Meshtastic significan alimentación
-  externa y falsearían la pendiente.
-
-### Alertas predictivas, no solo de umbral
-
-Las alertas clásicas (batería baja, nodo sin señal) están, pero se suma una que
-dispara sobre la **previsión**: avisa cuando a un nodo favorito le quedan menos
-de N horas de autonomía. Solo vigila los nodos marcados con ★ —con ~100 nodos
-en la malla, avisar de todos sería ruido— y aplica un antirrepetición de 6 h por
-nodo y motivo.
-
-### Grafo de la malla
-
-Reconstruye la topología combinando dos fuentes: los paquetes **NeighborInfo**
-(enlace directo real, línea continua) y los tramos deducidos de los
-**traceroutes** guardados (línea discontinua). Cuando un par aparece por ambas
-vías gana NeighborInfo, que mide el enlace y no una ruta.
-
-El dibujo usa un layout dirigido por fuerzas **Fruchterman-Reingold** con
-repulsión k²/d y atracción d²/k, temperatura que se enfría y escalado final
-para encajar en el lienzo. El grosor y la opacidad de cada enlace salen del
-SNR. Pulsando un nodo se aíslan sus enlaces y se listan sus vecinos ordenados
-por calidad.
-
-Incluye un modo **vista previa** que genera enlaces plausibles sobre los nodos
-reales —deterministas, en memoria, sin tocar la base— para poder juzgar el
-dibujo antes de que la malla emita NeighborInfo, que puede tardar horas.
-
-### Mapa de actividad temporal
-
-Una rejilla de nodos × horas donde cada celda se ilumina según cuánto se oyó
-ese nodo esa hora. Enseña patrones que de otro modo son invisibles: el nodo que
-solo aparece de noche, el repetidor que calló el martes, el que va a rachas.
-
-Se apoya en una tabla de escuchas propia (contador por nodo y hora) porque la
-telemetría no sirve de prueba de vida: en una malla real la envían unos pocos
-nodos. Al registrar solo con la radio ya configurada, el volcado inicial de la
-NodeDB no se confunde con actividad real.
-
-### Detección de cambios de topología
-
-Cuando un nodo cambia de distancia —de directo a dos saltos, por ejemplo— se
-registra el cambio, se anota en el log y, si es favorito, se notifica. Es la
-señal temprana de que un repetidor ha caído o de que alguien ha movido una
-antena. Solo se guardan los cambios, no el valor de cada paquete, así que la
-tabla queda minúscula.
-
-### Radio simulada
-
-Un transporte que **habla el mismo protocolo por bytes** que una radio real
-—framing `0x94 0xc3`, protobuf, handshake de `wantConfigId`— y entra por la
-misma puerta que serie/TCP/BLE. No es un mock que se salte la pila: ejercita
-decodificación, eventos y persistencia igual que el hardware.
-
-Responde a los traceroutes con ruta e intermedios, emite NeighborInfo, cambia
-un nodo de distancia periódicamente, manda telemetría con una batería que baja
-de verdad y contesta con ACK. Permite probar sin hardware y sin vecinos justo
-lo que de otro modo es imposible verificar.
-
-### Historial de traceroutes
-
-El traceroute no es un resultado de usar y tirar: cada ejecución se guarda con
-su ruta, sus SNR por tramo y su fecha, y el detalle del nodo muestra la serie
-completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
-
-### Otros detalles poco habituales
-
-- **Configuración de canales completa**: rol, PSK con generador AES-256,
-  uplink/downlink MQTT, silencio y precisión de posición por canal, con los
-  mismos escalones que la app oficial. Importa y exporta URLs
-  `meshtastic.org/e/#…`.
-- **Avisos de las restricciones del firmware** donde suelen morder: NeighborInfo
-  exige un intervalo mínimo de 4 h y su emisión por LoRa no funciona en canales
-  con nombre y clave por defecto. La interfaz lo dice en vez de dejar que el
-  cambio se rechace en silencio.
-- **Backup completo a JSON** de la configuración del nodo, canales con PSK
-  incluidos, y restauración desde archivo.
-- **Bandeja del sistema**: cerrar la ventana no cierra la app, que sigue
-  registrando lo que oye la malla.
-- **Bilingüe (ES/EN) con verificación automática**: un self-check recorre las
-  llamadas de traducción del código y falla si alguna cadena no está en el
-  diccionario, porque una clave sin traducir cae al español en silencio.
-- **Cinco temas de color** sobrios; el color se propaga incluso a las gráficas y
-  a los marcadores del mapa.
-- **Purga automática opcional** al arrancar, con retención configurable.
+It connects to a node over **serial (USB)**, **BLE** or **TCP**, and stores
+everything it hears in a local SQLite database: messages, telemetry,
+traceroutes, neighbors and sightings. That local history is the underlying
+difference with the official apps, which show the current state of the mesh and
+little else: here the mesh has a memory, and almost everything below is built
+on top of it.
 
 ---
 
-## Pantallas
+## What you won't find in other clients
 
-- **CHAT** — canales y mensajes directos, estado de envío (en cola / enviado /
-  entregado / fallo) con reintento, y búsqueda sobre todo el historial que
-  salta a la conversación del resultado.
-- **NODOS** — lista ordenable y filtrable, detalle con traceroute e historial,
-  previsión de batería, petición de posición, favoritos, ignorados, y reboot y
-  apagado remotos por canal admin.
-- **MAPA** — nodos y waypoints sobre OpenStreetMap. El firmware reduce la
-  precisión de las posiciones, así que los nodos que comparten coordenada se
-  agrupan en un marcador con su lista.
-- **MALLA** — resumen de la red (activos en 1 h y 24 h, reparto de saltos,
-  favoritos callados, batería baja) más las vistas de grafo y de actividad.
-- **CONFIG** — usuario, LoRa, dispositivo, canales, módulos, posición fija,
-  backup y mantenimiento de la base.
-- **TELEMETRÍA** — gráficas con rangos de 6 h a 30 días, **comparación de varios
-  nodos en la misma gráfica** (alineando series que no comparten instantes de
-  muestreo) y exportación a CSV.
+### Battery runtime forecast
 
-Atajos: `Ctrl+1…7` para las pestañas, `Ctrl+F` para buscar.
+Instead of warning once the battery is already at 20 %, it fits a **least
+squares linear regression** over the last 6 hours of discharge and tells you
+when it will run out: *"EMPTY IN ~35 h"*. A day's notice is enough to still do
+something about it.
 
-## Desarrollo
+Details that make the number mean something:
+
+- **A deliberately short window.** A solar node charges by day and drains by
+  night; fitting over several days would yield a slope near zero and a useless
+  forecast. Six hours predicts the current leg, which is the actionable part.
+- **It computes R² and stays quiet when it's poor.** If the series doesn't
+  follow a line, it shows *"IRREGULAR BATTERY · no reliable forecast"* rather
+  than a made-up number. A badly fitted forecast is worse than none.
+- **It discards values above 100 %**, which in Meshtastic mean external power
+  and would skew the slope.
+
+### Predictive alerts, not just thresholds
+
+The classic alerts (low battery, node gone silent) are there, but one more
+fires on the **forecast**: it warns when a favorite node has less than N hours
+of runtime left. It only watches nodes marked ★ —with ~100 nodes in the mesh,
+warning about all of them would be noise— and applies a 6 h cooldown per node
+and reason.
+
+### Mesh graph
+
+It reconstructs the topology from two sources: **NeighborInfo** packets (a real
+direct link, solid line) and the hops inferred from stored **traceroutes**
+(dashed line). When a pair shows up through both, NeighborInfo wins, since it
+measures the link rather than a route.
+
+The drawing uses a **Fruchterman-Reingold** force-directed layout with k²/d
+repulsion and d²/k attraction, a cooling temperature and a final rescale to fit
+the canvas. Each link's width and opacity come from its SNR. Clicking a node
+isolates its links and lists its neighbors sorted by quality.
+
+It includes a **preview mode** that generates plausible links over the real
+nodes —deterministic, in memory, never touching the database— so the layout can
+be judged before the mesh emits any NeighborInfo, which may take hours.
+
+### Activity heatmap
+
+A grid of nodes × hours where each cell lights up according to how much that
+node was heard in that hour. It surfaces patterns that are otherwise invisible:
+the node that only shows up at night, the repeater that went quiet on Tuesday,
+the one that comes and goes.
+
+It relies on a dedicated sightings table (a counter per node and hour) because
+telemetry is not proof of life: in a real mesh only a handful of nodes send it.
+By recording only once the radio is configured, the initial NodeDB dump is
+never mistaken for real activity.
+
+### Topology change detection
+
+When a node changes distance —from direct to two hops, say— the change is
+recorded, logged, and notified if the node is a favorite. It's the early sign
+that a repeater went down or somebody moved an antenna. Only changes are
+stored, not the value of every packet, so the table stays tiny.
+
+### Simulated radio
+
+A transport that **speaks the same byte protocol** as a real radio —`0x94 0xc3`
+framing, protobuf, the `wantConfigId` handshake— and comes in through the same
+door as serial/TCP/BLE. It isn't a mock that bypasses the stack: it exercises
+decoding, events and persistence exactly like hardware does.
+
+It answers traceroutes with a route and intermediate hops, emits NeighborInfo,
+periodically moves a node to a different distance, sends telemetry with a
+battery that actually drains, and replies with ACKs. It makes it possible to
+test —without hardware and without neighbors— precisely what is otherwise
+impossible to verify.
+
+### Traceroute history
+
+A traceroute isn't a throwaway result: every run is stored with its route, its
+per-hop SNR and its timestamp, and the node detail shows the whole series. It
+lets you see how the route to a node shifts over days.
+
+### Other uncommon touches
+
+- **Full channel configuration**: role, PSK with an AES-256 generator, MQTT
+  uplink/downlink, mute and position precision per channel, using the same
+  steps as the official app. Imports and exports `meshtastic.org/e/#…` URLs.
+- **Warnings about the firmware constraints** that usually bite: NeighborInfo
+  requires a 4 h minimum interval, and its LoRa transmission does not work on
+  channels with the default name and key. The UI says so instead of letting the
+  change be rejected silently.
+- **Full JSON backup** of the node configuration, channels with PSKs included,
+  and restore from file.
+- **System tray**: closing the window doesn't quit the app, which keeps
+  recording what the mesh says.
+- **Bilingual (ES/EN) with automated verification**: a self-check walks the
+  translation calls in the source and fails if any string is missing from the
+  dictionary, because an untranslated key silently falls back to Spanish.
+- **Five muted color themes**; the color propagates even to the charts and the
+  map markers.
+- **Optional automatic purge** on startup, with configurable retention.
+
+---
+
+## Screens
+
+- **CHAT** — channels and direct messages, send state (queued / sent /
+  delivered / failed) with retry, and a search across the whole history that
+  jumps to the conversation of each result.
+- **NODES** — sortable and filterable list, detail with traceroute and history,
+  battery forecast, position request, favorites, ignored nodes, plus remote
+  reboot and shutdown over the admin channel.
+- **MAP** — nodes and waypoints over OpenStreetMap. The firmware reduces
+  position precision, so nodes sharing a coordinate are grouped into a single
+  marker listing all of them.
+- **MESH** — network summary (active in 1 h and 24 h, hop distribution, silent
+  favorites, low battery) plus the graph and activity views.
+- **CONFIG** — user, LoRa, device, channels, modules, fixed position, backup and
+  database maintenance.
+- **TELEMETRY** — charts with ranges from 6 h to 30 days, **comparison of
+  several nodes on the same chart** (aligning series that don't share sampling
+  instants) and CSV export.
+
+Shortcuts: `Ctrl+1…7` for the tabs, `Ctrl+F` to search.
+
+## Development
 
 ```bash
 npm install
-npm run tauri dev     # app con recarga en caliente
-npm test              # self-checks (canales, grafo, alertas, batería, i18n)
-npm run build         # frontend + comprobación de tipos
+npm run tauri dev     # app with hot reload
+npm test              # self-checks (channels, graph, alerts, battery, i18n)
+npm run build         # frontend + type check
 ```
 
-Hace falta el [entorno de Rust para Tauri](https://tauri.app/start/prerequisites/).
+Requires the [Rust toolchain for Tauri](https://tauri.app/start/prerequisites/).
 
-La lógica que se puede probar sin hardware vive en módulos puros
-(`mesh.ts`, `alerts.ts`, `battery.ts`, `channelUrl.ts`) con self-checks que
-corren con el runner nativo de Node, sin frameworks. El arnés de integración
-del transporte simulado se lanza aparte:
+The logic that can be tested without hardware lives in pure modules
+(`mesh.ts`, `alerts.ts`, `battery.ts`, `channelUrl.ts`) with self-checks that
+run on Node's native test runner, no frameworks. The integration harness for
+the simulated transport runs separately:
 
 ```bash
 node --experimental-strip-types src/transport/fake.test.ts
 ```
 
-## Compilar el instalador
+Source comments are in Spanish.
+
+## Building the installer
 
 ```bash
 npm run tauri build
 ```
 
-Deja dos paquetes en `src-tauri/target/release/bundle/`:
+It produces two bundles in `src-tauri/target/release/bundle/`:
 
-- `nsis/Meshtastic Terminal_<versión>_x64-setup.exe` — instalador normal
-- `msi/Meshtastic Terminal_<versión>_x64_en-US.msi` — para despliegue
+- `nsis/Meshtastic Terminal_<version>_x64-setup.exe` — regular installer
+- `msi/Meshtastic Terminal_<version>_x64_en-US.msi` — for deployment
 
-## Dónde vive la base de datos
+## Where the database lives
 
-En la carpeta de datos de la app (`%APPDATA%/com.pere.meshtastic-client`). El
-identificador de la app decide esa ruta: cambiarlo deja el historial anterior
-huérfano. La app instalada y la de desarrollo comparten esa misma base.
+In the app data folder (`%APPDATA%/com.pere.meshtastic-client`). The app
+identifier determines that path: changing it orphans the previous history. The
+installed app and the development one share the same database.
 
-## Licencia
+## License
 
-MIT — ver [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
 
-La fuente JetBrains Mono va empaquetada bajo la OFL; ver
+The bundled JetBrains Mono font is licensed under the OFL; see
 `src/assets/fonts/OFL.txt`.

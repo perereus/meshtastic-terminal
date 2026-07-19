@@ -27,7 +27,7 @@
     "active": true,
     "targets": "all",
     "publisher": "Pere",
-    "shortDescription": "Cliente de escritorio para redes Meshtastic",
+    "shortDescription": "Desktop client for Meshtastic mesh networks",
     "category": "Utility",
     "icon": [
       "icons/32x32.png",
