@@ -149,6 +149,16 @@ const en: Record<string, string> = {
   TELEMETRÍA: "TELEMETRY",
 
   // Grafo de malla
+  "RESUMEN // MALLA": "SUMMARY // MESH",
+  "ACTIVOS 1 H": "ACTIVE 1 H",
+  "ACTIVOS 24 H": "ACTIVE 24 H",
+  "CON POSICIÓN": "WITH POSITION",
+  "CON PKI": "WITH PKI",
+  "BATERÍA BAJA": "LOW BATTERY",
+  "NUNCA OÍDOS": "NEVER HEARD",
+  DESCONOCIDO: "UNKNOWN",
+  DIRECTO: "DIRECT",
+  "★ FAVORITOS CALLADOS": "★ SILENT FAVORITES",
   "PANEL // GRAFO DE MALLA": "PANEL // MESH GRAPH",
   "{0} ENLACES": "{0} LINKS",
   "Releer vecinos y traceroutes de la base de datos":

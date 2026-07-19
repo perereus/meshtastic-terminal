@@ -3,7 +3,8 @@ import { getSnapshot, subscribe } from "../store";
 import { loadAllTraceroutes, loadNeighbors } from "../db";
 import { t } from "../i18n";
 import { ACCENT, fg } from "../theme";
-import { buildEdges, edgeKey as key, type Edge } from "../mesh";
+import { buildEdges, edgeKey as key, summarize, type Edge } from "../mesh";
+import { ago } from "../fmt";
 
 /** Layout dirigido por fuerzas, iteraciones fijas (sin animación).
  *  ponytail: O(n²) por iteración; con ~100 nodos sobra y evita un quadtree. */
@@ -124,8 +125,93 @@ export default function Mesh() {
 
   const selEdges = sel !== undefined ? edges.filter((e) => e.a === sel || e.b === sel) : [];
 
+  // s.version cambia con cada paquete: recalcular la foto es barato
+  const sum = useMemo(() => summarize(s.nodes.values()), [s]);
+
+  const tile = (label: string, value: string | number, cls = "") => (
+    <div key={label} className="panel stat-tile" style={{ minWidth: 96 }}>
+      <div className="label">{label}</div>
+      <div className={`value ${cls}`} style={{ fontSize: 20 }}>
+        {value}
+      </div>
+    </div>
+  );
+
+  // saltos ordenados, con el cubo de desconocidos al final
+  const saltos = [...sum.saltos.entries()].sort((a, b) =>
+    a[0] === "?" ? 1 : b[0] === "?" ? -1 : Number(a[0]) - Number(b[0]),
+  );
+
   return (
     <main style={{ flexDirection: "column" }}>
+      <div className="panel" style={{ flexShrink: 0 }}>
+        <div className="panel-title">{t("RESUMEN // MALLA")}</div>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            padding: 12,
+            flexWrap: "wrap",
+            alignItems: "stretch",
+          }}
+        >
+          {tile(t("NODOS"), sum.total)}
+          {tile(t("ACTIVOS 1 H"), sum.activos1h)}
+          {tile(t("ACTIVOS 24 H"), sum.activos24h)}
+          {tile(t("CON POSICIÓN"), sum.conPosicion)}
+          {tile(t("VÍA MQTT"), sum.viaMqtt)}
+          {tile(t("CON PKI"), sum.conPki)}
+          {tile(
+            t("BATERÍA BAJA"),
+            sum.bateriaBaja,
+            sum.bateriaBaja > 0 ? "err" : "",
+          )}
+          {tile(t("NUNCA OÍDOS"), sum.nuncaOidos, "dim")}
+
+          <div className="panel" style={{ padding: "8px 12px", minWidth: 190 }}>
+            <div
+              className="dim"
+              style={{ fontSize: 10, letterSpacing: 2, marginBottom: 4 }}
+            >
+              {t("SALTOS")}
+            </div>
+            {saltos.map(([k, n]) => (
+              <div key={String(k)} style={{ display: "flex", gap: 8, fontSize: 12 }}>
+                <span style={{ width: 70 }} className={k === "?" ? "dim" : ""}>
+                  {k === "?" ? t("DESCONOCIDO") : k === 0 ? t("DIRECTO") : `${k}`}
+                </span>
+                <span style={{ flex: 1 }}>
+                  {"█".repeat(Math.min(12, Math.ceil((n / sum.total) * 24)))}
+                </span>
+                <span className="dim">{n}</span>
+              </div>
+            ))}
+          </div>
+
+          {sum.mudos.length > 0 && (
+            <div className="panel" style={{ padding: "8px 12px", minWidth: 200 }}>
+              <div
+                className="warn"
+                style={{ fontSize: 10, letterSpacing: 2, marginBottom: 4 }}
+              >
+                {t("★ FAVORITOS CALLADOS")}
+              </div>
+              <div style={{ maxHeight: 92, overflowY: "auto" }}>
+                {sum.mudos.map((n) => (
+                  <div
+                    key={n.num}
+                    style={{ display: "flex", gap: 10, fontSize: 12 }}
+                  >
+                    <span style={{ flex: 1 }}>{n.shortName}</span>
+                    <span className="dim">{t("hace {0}", ago(n.lastHeard))}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="panel" style={{ flex: 1, minWidth: 0 }}>
         <div className="panel-title">
           <span>

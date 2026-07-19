@@ -1,3 +1,63 @@
+import type { NodeEntry } from "./store";
+
+export interface MeshSummary {
+  total: number;
+  activos1h: number;
+  activos24h: number;
+  nuncaOidos: number; // lastHeard 0: vienen de la NodeDB, no los hemos oído
+  conPosicion: number;
+  viaMqtt: number;
+  conPki: number;
+  bateriaBaja: number; // <= 20 % (>100 es alimentación externa, no cuenta)
+  saltos: Map<number | "?", number>; // hopsAway → nº de nodos
+  mudos: NodeEntry[]; // favoritos callados, el que más primero
+}
+
+/** Foto de la malla a partir de la lista de nodos. Pura: la pantalla solo pinta. */
+export function summarize(
+  nodes: Iterable<NodeEntry>,
+  now = Date.now(),
+  mudoDesdeH = 24,
+): MeshSummary {
+  const r: MeshSummary = {
+    total: 0,
+    activos1h: 0,
+    activos24h: 0,
+    nuncaOidos: 0,
+    conPosicion: 0,
+    viaMqtt: 0,
+    conPki: 0,
+    bateriaBaja: 0,
+    saltos: new Map(),
+    mudos: [],
+  };
+  for (const n of nodes) {
+    r.total++;
+    if (!n.lastHeard) r.nuncaOidos++;
+    else {
+      const h = (now - n.lastHeard * 1000) / 3_600_000;
+      if (h < 1) r.activos1h++;
+      if (h < 24) r.activos24h++;
+      if (n.fav && h >= mudoDesdeH) r.mudos.push(n);
+    }
+    // (0,0) es GPS basura, el mismo criterio que usa el mapa
+    if (
+      n.lat !== undefined &&
+      n.lon !== undefined &&
+      (Math.abs(n.lat) > 0.1 || Math.abs(n.lon) > 0.1)
+    ) {
+      r.conPosicion++;
+    }
+    if (n.viaMqtt) r.viaMqtt++;
+    if (n.hasKey) r.conPki++;
+    if (n.batteryLevel !== undefined && n.batteryLevel <= 20) r.bateriaBaja++;
+    const k = n.hopsAway ?? "?";
+    r.saltos.set(k, (r.saltos.get(k) ?? 0) + 1);
+  }
+  r.mudos.sort((a, b) => a.lastHeard - b.lastHeard);
+  return r;
+}
+
 export interface Edge {
   a: number;
   b: number;
