@@ -50,6 +50,13 @@ export async function loadHistory(): Promise<void> {
   });
 }
 
+// Un fallo al escribir en SQLite no debe tumbar la recepción de paquetes, pero
+// tampoco puede desaparecer: sin rastro es imposible saber si una tabla está
+// vacía porque no llegó el dato o porque el guardado falló.
+function dbFail(what: string) {
+  return (e: unknown) => addLog(`BD: fallo al guardar ${what}: ${e}`);
+}
+
 // Notificación del sistema. Permiso se pide la primera vez.
 export async function notify(title: string, body: string): Promise<void> {
   try {
@@ -85,7 +92,7 @@ function upsertNode(num: number, patch: Partial<NodeEntry>): void {
     const merged = { ...prev, ...patch };
     s.nodes = new Map(s.nodes).set(num, merged);
     // ponytail: write por evento; SQLite lo aguanta de sobra a este ritmo
-    saveNode(merged).catch(() => {});
+    saveNode(merged).catch(dbFail("nodo"));
   });
 }
 
@@ -166,8 +173,8 @@ function wireEvents(d: MeshDevice): void {
         });
       s.waypoints = m;
       const saved = m.get(w.id);
-      if (saved) saveWaypoint(saved).catch(() => {});
-      else deleteWaypointDb(w.id).catch(() => {});
+      if (saved) saveWaypoint(saved).catch(dbFail("waypoint"));
+      else deleteWaypointDb(w.id).catch(dbFail("waypoint"));
     });
     const who = getSnapshot().nodes.get(p.from)?.shortName ?? p.from.toString(16);
     addLog(`WAYPOINT ${expired ? "borrado" : "recibido"} de ${who}: ${w.name}`);
@@ -203,7 +210,7 @@ function wireEvents(d: MeshDevice): void {
     const metrics = variant.value as unknown as Record<string, unknown>;
     for (const [key, val] of Object.entries(metrics)) {
       if (typeof val === "number" && Number.isFinite(val)) {
-        saveTelemetry(t.from, key, val, ts).catch(() => {});
+        saveTelemetry(t.from, key, val, ts).catch(dbFail("telemetría"));
       }
     }
     if (variant.case === "deviceMetrics") {
@@ -258,7 +265,7 @@ function wireEvents(d: MeshDevice): void {
       s.messages = [...s.messages, msg];
     });
     markUnread(msg.convo);
-    saveMessage(msg).catch(() => {});
+    saveMessage(msg).catch(dbFail("mensaje"));
     const { nodes, channels } = getSnapshot();
     const who = nodes.get(pkt.from)?.longName ?? `!${pkt.from.toString(16)}`;
     const isDm = msg.convo.startsWith("dm:");
@@ -282,7 +289,7 @@ function wireEvents(d: MeshDevice): void {
     mutate((s) => {
       s.traceroutes = new Map(s.traceroutes).set(pkt.from, tr);
     });
-    saveTraceroute(pkt.from, tr).catch(() => {});
+    saveTraceroute(pkt.from, tr).catch(dbFail("traceroute"));
     addLog(`Traceroute de !${pkt.from.toString(16)}: ${pkt.data.route.length + 1} saltos ida`);
   });
 
@@ -293,7 +300,7 @@ function wireEvents(d: MeshDevice): void {
     const neighbors = pkt.data.neighbors.map(
       (n: { nodeId: number; snr: number }) => ({ num: n.nodeId, snr: n.snr }),
     );
-    saveNeighbors(src, neighbors, Date.now()).catch(() => {});
+    saveNeighbors(src, neighbors, Date.now()).catch(dbFail("vecinos"));
     addLog(`NeighborInfo de !${src.toString(16)}: ${neighbors.length} vecinos`);
   });
 
@@ -631,7 +638,7 @@ export async function retryMessage(msg: Message): Promise<void> {
         m.id === msg.id && m.ts === msg.ts ? { ...m, state } : m,
       );
     });
-    updateMessageState(msg.id, state).catch(() => {});
+    updateMessageState(msg.id, state).catch(dbFail("estado de mensaje"));
   };
   setState("queued");
   try {
@@ -667,7 +674,7 @@ export async function sendText(
     msg.from = s.myNodeNum ?? 0;
     s.messages = [...s.messages, msg];
   });
-  saveMessage(msg).catch(() => {});
+  saveMessage(msg).catch(dbFail("mensaje"));
 
   const setState = (state: Message["state"]) => {
     mutate((s) => {
@@ -675,7 +682,7 @@ export async function sendText(
         m === msg || (m.id === msg.id && m.ts === msg.ts) ? { ...m, state } : m,
       );
     });
-    updateMessageState(msg.id, state).catch(() => {});
+    updateMessageState(msg.id, state).catch(dbFail("estado de mensaje"));
   };
 
   try {
