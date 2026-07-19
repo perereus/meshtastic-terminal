@@ -579,6 +579,26 @@ export default function Config() {
               />
               <span className="dim">{t("h")}</span>
             </div>
+            <label
+              title={t(
+                "Avisa antes de que la batería esté baja, según el ritmo de descarga. 0 = no avisar",
+              )}
+            >
+              {t("AVISAR AUTONOMÍA <")}
+            </label>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="number"
+                min={0}
+                disabled={!alerts.on}
+                value={alerts.autonomiaH}
+                style={{ width: 80 }}
+                onChange={(e) =>
+                  saveAlerts({ autonomiaH: Number(e.target.value) })
+                }
+              />
+              <span className="dim">{t("h")}</span>
+            </div>
           </div>
           <p className="dim" style={{ padding: "0 14px 12px", fontSize: 11 }}>
             {t(

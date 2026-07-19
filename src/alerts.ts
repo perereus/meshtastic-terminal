@@ -1,12 +1,20 @@
 import type { NodeEntry } from "./store";
 
+import type { Prevision } from "./battery";
+
 export interface AlertCfg {
   on: boolean;
   battery: number; // % · avisar por debajo
   silentH: number; // horas sin dar señal
+  autonomiaH: number; // horas de autonomía restante · 0 = no avisar
 }
 
-export const DEFAULT_ALERTS: AlertCfg = { on: false, battery: 20, silentH: 12 };
+export const DEFAULT_ALERTS: AlertCfg = {
+  on: false,
+  battery: 20,
+  silentH: 12,
+  autonomiaH: 12,
+};
 
 const KEY = "alerts";
 
@@ -27,7 +35,7 @@ export function setAlertCfg(cfg: AlertCfg): void {
  *  quien notifica se encarga de traducirlo. */
 export interface Alert {
   key: string; // nodo+tipo, para no repetir el aviso
-  kind: "bateria" | "mudo";
+  kind: "bateria" | "mudo" | "autonomia";
   name: string; // nombre legible del nodo
   value: number; // % de batería · horas de silencio
   threshold: number;
@@ -93,4 +101,30 @@ export function evalAlerts(
 
   for (const a of out) lastFired.set(a.key, now);
   return out;
+}
+
+/** Aviso por autonomía: la batería no está baja todavía, pero al ritmo actual
+ *  lo estará pronto. Se calla si la previsión no es fiable — avisar de un
+ *  agotamiento sacado de una serie irregular sería peor que no avisar. */
+export function evalAutonomia(
+  nodo: { num: number; nombre: string; fav?: boolean },
+  prevision: Prevision | undefined,
+  cfg: AlertCfg,
+  lastFired: Map<string, number>,
+  now = Date.now(),
+): Alert | undefined {
+  if (!cfg.on || !cfg.autonomiaH || !nodo.fav) return undefined;
+  const h = prevision?.horasRestantes;
+  if (h === undefined || prevision!.ajuste < 0.5) return undefined;
+  if (h > cfg.autonomiaH) return undefined;
+  const key = `auto:${nodo.num}`;
+  if (now - (lastFired.get(key) ?? -Infinity) < COOLDOWN_MS) return undefined;
+  lastFired.set(key, now);
+  return {
+    key,
+    kind: "autonomia",
+    name: nodo.nombre,
+    value: Math.round(h),
+    threshold: cfg.autonomiaH,
+  };
 }

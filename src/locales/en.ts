@@ -244,6 +244,12 @@ const en: Record<string, string> = {
   "{0} h sin dar señal": "{0} h without a signal",
   "AVISAR BATERÍA <": "WARN BATTERY <",
   "AVISAR SIN SEÑAL": "WARN NO SIGNAL",
+  "AVISAR AUTONOMÍA <": "WARN RUNTIME <",
+  "Avisa antes de que la batería esté baja, según el ritmo de descarga. 0 = no avisar":
+    "Warns before the battery is low, based on the discharge rate. 0 = no warning",
+  "{0} · autonomía ~{1} h": "{0} · runtime ~{1} h",
+  "Al ritmo actual se agota por debajo de {0} h":
+    "At the current rate it runs out in under {0} h",
   h: "h",
   "Solo avisa de los nodos marcados con ★ en NODOS, y como mucho una vez cada 6 h por nodo y motivo.":
     "Only warns about nodes marked ★ in NODES, and at most once every 6 h per node and reason.",

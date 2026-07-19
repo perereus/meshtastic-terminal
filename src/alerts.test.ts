@@ -1,10 +1,11 @@
 // Self-check: node --experimental-strip-types src/alerts.test.ts
 import assert from "node:assert";
-import { COOLDOWN_MS, evalAlerts } from "./alerts.ts";
+import { COOLDOWN_MS, evalAlerts, evalAutonomia } from "./alerts.ts";
 import type { NodeEntry } from "./store.ts";
+import type { Prevision } from "./battery.ts";
 
 const NOW = 1_700_000_000_000;
-const cfg = { on: true, battery: 20, silentH: 12 };
+const cfg = { on: true, battery: 20, silentH: 12, autonomiaH: 12 };
 const node = (p: Partial<NodeEntry>): NodeEntry => ({
   num: 1,
   longName: "Repetidor",
@@ -82,5 +83,53 @@ const dos = evalAlerts(
   NOW,
 );
 assert.equal(dos.length, 2);
+
+// ── evalAutonomia ────────────────────────────────────────────────────────
+const fav = { num: 9, nombre: "Repetidor", fav: true };
+const prev = (horasRestantes?: number, ajuste = 0.9): Prevision => ({
+  pendiente: -2,
+  horasRestantes,
+  ajuste,
+  muestras: 20,
+  ultimo: 40,
+});
+
+// por debajo del umbral: avisa
+const av = evalAutonomia(fav, prev(6), cfg, new Map(), NOW);
+assert.ok(av);
+assert.equal(av.kind, "autonomia");
+assert.equal(av.value, 6);
+
+// justo en el umbral avisa; por encima no
+assert.ok(evalAutonomia(fav, prev(12), cfg, new Map(), NOW));
+assert.equal(evalAutonomia(fav, prev(13), cfg, new Map(), NOW), undefined);
+
+// previsión poco fiable: mejor callarse que dar una hora inventada
+assert.equal(evalAutonomia(fav, prev(3, 0.2), cfg, new Map(), NOW), undefined);
+
+// sin previsión (cargando o estable) no hay nada que avisar
+assert.equal(evalAutonomia(fav, prev(undefined), cfg, new Map(), NOW), undefined);
+assert.equal(evalAutonomia(fav, undefined, cfg, new Map(), NOW), undefined);
+
+// solo favoritos, y solo con las alertas activas
+assert.equal(
+  evalAutonomia({ ...fav, fav: false }, prev(3), cfg, new Map(), NOW),
+  undefined,
+);
+assert.equal(
+  evalAutonomia(fav, prev(3), { ...cfg, on: false }, new Map(), NOW),
+  undefined,
+);
+// 0 h = desactivado
+assert.equal(
+  evalAutonomia(fav, prev(3), { ...cfg, autonomiaH: 0 }, new Map(), NOW),
+  undefined,
+);
+
+// antirrepetición compartida con el resto de alertas
+const f2 = new Map<string, number>();
+assert.ok(evalAutonomia(fav, prev(5), cfg, f2, NOW));
+assert.equal(evalAutonomia(fav, prev(5), cfg, f2, NOW + 60_000), undefined);
+assert.ok(evalAutonomia(fav, prev(5), cfg, f2, NOW + COOLDOWN_MS));
 
 console.log("alerts.test.ts OK");

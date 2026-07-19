@@ -13,9 +13,10 @@ import {
   notify,
   setConnectionLostHandler,
 } from "./radio";
-import { evalAlerts, getAlertCfg } from "./alerts";
+import { evalAlerts, evalAutonomia, getAlertCfg } from "./alerts";
+import { preverBateria } from "./battery";
 import { addLog, getSnapshot, subscribe } from "./store";
-import { getAutoPurgeDays, purgeOlderThan } from "./db";
+import { getAutoPurgeDays, loadTelemetry, purgeOlderThan } from "./db";
 import Chat from "./screens/Chat";
 import Nodes from "./screens/Nodes";
 import MapView from "./screens/MapView";
@@ -220,6 +221,43 @@ function App() {
       }
     };
     const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Autonomía: va aparte porque necesita leer el histórico de batería de
+  // SQLite por cada favorito. Cada 5 min sobra — la pendiente cambia despacio.
+  useEffect(() => {
+    const fired = new Map<string, number>();
+    const check = async () => {
+      const cfg = getAlertCfg();
+      if (!cfg.on || !cfg.autonomiaH) return;
+      const st = getSnapshot();
+      for (const n of st.nodes.values()) {
+        if (!n.fav || n.num === st.myNodeNum) continue;
+        try {
+          const rows = await loadTelemetry(
+            n.num,
+            "batteryLevel",
+            Date.now() - 6 * 3_600_000,
+          );
+          const a = evalAutonomia(
+            { num: n.num, nombre: n.longName || n.shortName, fav: n.fav },
+            preverBateria(rows),
+            cfg,
+            fired,
+          );
+          if (a) {
+            void notify(
+              t("{0} · autonomía ~{1} h", a.name, a.value),
+              t("Al ritmo actual se agota por debajo de {0} h", a.threshold),
+            );
+          }
+        } catch {
+          // sin datos de ese nodo: no hay previsión que dar
+        }
+      }
+    };
+    const id = setInterval(check, 300_000);
     return () => clearInterval(id);
   }, []);
 
