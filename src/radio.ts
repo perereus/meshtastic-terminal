@@ -26,6 +26,7 @@ import {
   loadMessages,
   loadNodes,
   loadWaypoints,
+  marcarEscucha,
   saveMessage,
   saveNeighbors,
   saveNode,
@@ -93,6 +94,16 @@ function upsertNode(num: number, patch: Partial<NodeEntry>): void {
     s.nodes = new Map(s.nodes).set(num, merged);
     // ponytail: write por evento; SQLite lo aguanta de sobra a este ritmo
     saveNode(merged).catch(dbFail("nodo"));
+    // Solo cuenta como escucha si ya estamos configurados: durante el volcado
+    // inicial la radio re-emite su NodeDB entera y marcaríamos 91 nodos como
+    // "oídos ahora" en cada arranque. Se usa el lastHeard del paquete (epoch s)
+    // para que la hora sea la real y no la de la conexión.
+    if (
+      patch.lastHeard !== undefined &&
+      s.status === Types.DeviceStatusEnum.DeviceConfigured
+    ) {
+      marcarEscucha(num, patch.lastHeard * 1000).catch(dbFail("escucha"));
+    }
   });
 }
 

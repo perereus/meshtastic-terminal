@@ -47,6 +47,12 @@ export async function openDb(): Promise<Database> {
       snr_back TEXT NOT NULL,
       PRIMARY KEY (node, ts)
     );
+    CREATE TABLE IF NOT EXISTS sightings (
+      node INTEGER NOT NULL,
+      hora INTEGER NOT NULL, -- epoch ms dividido por 3600000
+      n INTEGER NOT NULL,
+      PRIMARY KEY (node, hora)
+    );
     CREATE TABLE IF NOT EXISTS neighbors (
       node INTEGER NOT NULL,
       neighbor INTEGER NOT NULL,
@@ -266,6 +272,31 @@ export async function loadAllTraceroutes(
   }));
 }
 
+const HORA_MS = 3_600_000;
+
+/** Marca que se ha oído a un nodo en la hora actual. Un contador por nodo y
+ *  hora en vez de una fila por paquete: la malla emite sin parar y no hace
+ *  falta el detalle al segundo para saber quién estaba vivo y cuándo. */
+export async function marcarEscucha(node: number, ts = Date.now()): Promise<void> {
+  const d = await openDb();
+  await d.execute(
+    `INSERT INTO sightings (node, hora, n) VALUES ($1, $2, 1)
+     ON CONFLICT(node, hora) DO UPDATE SET n = n + 1`,
+    [node, Math.floor(ts / HORA_MS)],
+  );
+}
+
+/** Actividad por nodo y hora desde una fecha. */
+export async function loadActividad(
+  desde: number,
+): Promise<{ node: number; hora: number; n: number }[]> {
+  const d = await openDb();
+  return d.select(
+    `SELECT node, hora, n FROM sightings WHERE hora >= $1 ORDER BY hora`,
+    [Math.floor(desde / HORA_MS)],
+  );
+}
+
 export async function saveWaypoint(w: Waypoint): Promise<void> {
   const d = await openDb();
   await d.execute(
@@ -349,8 +380,18 @@ export async function purgeOlderThan(days: number): Promise<number> {
   const b = await d.execute(`DELETE FROM telemetry WHERE ts < $1`, [cut]);
   const c = await d.execute(`DELETE FROM traceroutes WHERE ts < $1`, [cut]);
   const e = await d.execute(`DELETE FROM neighbors WHERE ts < $1`, [cut]);
+  // sightings guarda la hora, no el ms
+  const f = await d.execute(`DELETE FROM sightings WHERE hora < $1`, [
+    Math.floor(cut / HORA_MS),
+  ]);
   await d.execute(`VACUUM`);
-  return a.rowsAffected + b.rowsAffected + c.rowsAffected + e.rowsAffected;
+  return (
+    a.rowsAffected +
+    b.rowsAffected +
+    c.rowsAffected +
+    e.rowsAffected +
+    f.rowsAffected
+  );
 }
 
 export async function saveTelemetry(

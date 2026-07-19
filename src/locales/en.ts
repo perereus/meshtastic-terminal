@@ -167,6 +167,14 @@ const en: Record<string, string> = {
   DESCONOCIDO: "UNKNOWN",
   DIRECTO: "DIRECT",
   "★ FAVORITOS CALLADOS": "★ SILENT FAVORITES",
+  GRAFO: "GRAPH",
+  ACTIVIDAD: "ACTIVITY",
+  "{0} NODOS OÍDOS": "{0} NODES HEARD",
+  "7 D": "7 D",
+  "UNA CELDA = UNA HORA": "ONE CELL = ONE HOUR",
+  "{0} paquetes": "{0} packets",
+  "SIN ESCUCHAS REGISTRADAS — el historial empieza a llenarse ahora, con la app conectada_":
+    "NO SIGHTINGS RECORDED — the history starts filling up now, with the app connected_",
   "PANEL // GRAFO DE MALLA": "PANEL // MESH GRAPH",
   "{0} ENLACES": "{0} LINKS",
   "Releer vecinos y traceroutes de la base de datos":

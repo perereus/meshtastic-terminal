@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { getSnapshot, subscribe } from "../store";
-import { loadAllTraceroutes, loadNeighbors } from "../db";
+import { loadActividad, loadAllTraceroutes, loadNeighbors } from "../db";
 import { t } from "../i18n";
 import { ACCENT, fg } from "../theme";
 import {
@@ -126,6 +126,16 @@ export default function Mesh() {
   // enlaces inventados para poder juzgar el dibujo sin datos reales; nunca
   // se escriben en la base
   const [demo, setDemo] = useState(false);
+  const [vista, setVista] = useState<"grafo" | "actividad">("grafo");
+  const [act, setAct] = useState<{ node: number; hora: number; n: number }[]>([]);
+  const [actHoras, setActHoras] = useState(48);
+
+  useEffect(() => {
+    if (vista !== "actividad") return;
+    loadActividad(Date.now() - actHoras * 3_600_000)
+      .then(setAct)
+      .catch(() => {});
+  }, [vista, actHoras, reload]);
 
   useEffect(() => {
     loadNeighbors().then(setNeighbors).catch(() => {});
@@ -169,6 +179,31 @@ export default function Mesh() {
 
   // s.version cambia con cada paquete: recalcular la foto es barato
   const sum = useMemo(() => summarize(s.nodes.values()), [s]);
+
+  // rejilla de actividad: filas = nodos, columnas = horas
+  const rejilla = useMemo(() => {
+    const ahora = Math.floor(Date.now() / 3_600_000);
+    const horas = Array.from(
+      { length: actHoras },
+      (_, i) => ahora - actHoras + 1 + i,
+    );
+    const porNodo = new Map<number, Map<number, number>>();
+    let max = 1;
+    for (const r of act) {
+      const m = porNodo.get(r.node) ?? new Map<number, number>();
+      m.set(r.hora, (m.get(r.hora) ?? 0) + r.n);
+      porNodo.set(r.node, m);
+      if (r.n > max) max = r.n;
+    }
+    const filas = [...porNodo.entries()]
+      .map(([node, m]) => ({
+        node,
+        celdas: m,
+        total: [...m.values()].reduce((a, b) => a + b, 0),
+      }))
+      .sort((a, b) => b.total - a.total);
+    return { horas, filas, max };
+  }, [act, actHoras]);
 
   const tile = (label: string, value: string | number, cls = "") => (
     <div key={label} className="panel stat-tile" style={{ minWidth: 96 }}>
@@ -256,24 +291,52 @@ export default function Mesh() {
 
       <div className="panel" style={{ flex: 1, minWidth: 0 }}>
         <div className="panel-title">
-          <span>
-            {t("PANEL // GRAFO DE MALLA")} · {t("{0} NODOS", ids.length)} ·{" "}
-            {t("{0} ENLACES", edges.length)}
-          </span>
           <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <button
-              className={demo ? "primary" : ""}
-              style={{ fontSize: 10, padding: "0 6px" }}
-              title={t(
-                "Enlaces inventados sobre tus nodos reales para ver cómo queda el grafo. No se guarda nada.",
-              )}
-              onClick={() => {
-                setSel(undefined);
-                setDemo((v) => !v);
-              }}
+              className={vista === "grafo" ? "tab active" : "tab"}
+              style={{ fontSize: 10 }}
+              onClick={() => setVista("grafo")}
             >
-              {demo ? t("◉ VISTA PREVIA") : t("○ VISTA PREVIA")}
+              {t("GRAFO")}
             </button>
+            <button
+              className={vista === "actividad" ? "tab active" : "tab"}
+              style={{ fontSize: 10 }}
+              onClick={() => setVista("actividad")}
+            >
+              {t("ACTIVIDAD")}
+            </button>
+            {vista === "grafo"
+              ? `${t("{0} NODOS", ids.length)} · ${t("{0} ENLACES", edges.length)}`
+              : t("{0} NODOS OÍDOS", rejilla.filas.length)}
+          </span>
+          <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {vista === "actividad" &&
+              [24, 48, 168].map((h) => (
+                <button
+                  key={h}
+                  className={actHoras === h ? "tab active" : "tab"}
+                  style={{ fontSize: 10 }}
+                  onClick={() => setActHoras(h)}
+                >
+                  {h === 168 ? t("7 D") : `${h} H`}
+                </button>
+              ))}
+            {vista === "grafo" && (
+              <button
+                className={demo ? "primary" : ""}
+                style={{ fontSize: 10, padding: "0 6px" }}
+                title={t(
+                  "Enlaces inventados sobre tus nodos reales para ver cómo queda el grafo. No se guarda nada.",
+                )}
+                onClick={() => {
+                  setSel(undefined);
+                  setDemo((v) => !v);
+                }}
+              >
+                {demo ? t("◉ VISTA PREVIA") : t("○ VISTA PREVIA")}
+              </button>
+            )}
             <button
               style={{ fontSize: 10, padding: "0 6px" }}
               title={t("Releer vecinos y traceroutes de la base de datos")}
@@ -283,14 +346,74 @@ export default function Mesh() {
               ⟳ {t("RECARGAR")}
             </button>
             <span className={demo ? "warn" : "dim"} style={{ fontSize: 11 }}>
-              {demo
-                ? t("DATOS FALSOS")
-                : t("{0} POR VECINOS", edges.filter((e) => e.src === "vecinos").length)}
+              {vista === "actividad"
+                ? t("UNA CELDA = UNA HORA")
+                : demo
+                  ? t("DATOS FALSOS")
+                  : t(
+                      "{0} POR VECINOS",
+                      edges.filter((e) => e.src === "vecinos").length,
+                    )}
             </span>
           </span>
         </div>
 
-        {ids.length === 0 ? (
+        {vista === "actividad" ? (
+          rejilla.filas.length === 0 ? (
+            <p className="dim" style={{ padding: 16, fontSize: 12 }}>
+              {t(
+                "SIN ESCUCHAS REGISTRADAS — el historial empieza a llenarse ahora, con la app conectada_",
+              )}
+            </p>
+          ) : (
+            <div style={{ flex: 1, overflow: "auto", padding: 12 }}>
+              <table style={{ borderCollapse: "collapse", fontSize: 11 }}>
+                <tbody>
+                  {rejilla.filas.map((f) => (
+                    <tr key={f.node}>
+                      <td
+                        style={{
+                          paddingRight: 10,
+                          whiteSpace: "nowrap",
+                          position: "sticky",
+                          left: 0,
+                          background: "var(--panel)",
+                        }}
+                      >
+                        {short(f.node)}
+                        {f.node === s.myNodeNum && ` (${t("YO")})`}
+                      </td>
+                      {rejilla.horas.map((h) => {
+                        const n = f.celdas.get(h) ?? 0;
+                        // intensidad relativa al máximo, con suelo visible
+                        const op = n === 0 ? 0 : 0.25 + 0.75 * (n / rejilla.max);
+                        const d = new Date(h * 3_600_000);
+                        return (
+                          <td
+                            key={h}
+                            title={`${short(f.node)} · ${d.toLocaleString()} · ${t("{0} paquetes", n)}`}
+                            style={{
+                              width: 9,
+                              height: 14,
+                              padding: 0,
+                              border: "1px solid var(--border)",
+                              background:
+                                n === 0 ? "transparent" : fg(),
+                              opacity: n === 0 ? 0.25 : op,
+                            }}
+                          />
+                        );
+                      })}
+                      <td className="dim" style={{ paddingLeft: 10, whiteSpace: "nowrap" }}>
+                        {f.total}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : ids.length === 0 ? (
           <p className="dim" style={{ padding: 16, fontSize: 12 }}>
             {t(
               "SIN ENLACES — activa NEIGHBOR INFO en CONFIG o lanza traceroutes desde NODOS_",
