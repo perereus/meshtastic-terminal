@@ -292,6 +292,7 @@ const en: Record<string, string> = {
     "0 in SEND = receive only. Sending saturates the channel: use it for short tests and set it back to 0. Received packets show up in the LOG.",
   "Config completa del nodo (radio, módulos y canales con PSK) a JSON.":
     "Full node config (radio, modules and channels with PSK) to JSON.",
+  "CONFIG // BACKUP": "CONFIG // BACKUP",
   "GUARDAR BACKUP": "SAVE BACKUP",
   "RESTAURAR…": "RESTORE…",
   "CONFIG // BASE DE DATOS": "CONFIG // DATABASE",
