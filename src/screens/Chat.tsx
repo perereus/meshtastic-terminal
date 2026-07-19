@@ -5,11 +5,8 @@ import { saveText, stamp } from "../export";
 import { t } from "../i18n";
 
 // en resultados de búsqueda la hora sola no basta: pueden ser de otro día
-function fecha(ms: number): string {
-  const d = new Date(ms);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}`;
-}
+const fecha = (ms: number) =>
+  new Date(ms).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
 
 function ts(ms: number): string {
   const d = new Date(ms);

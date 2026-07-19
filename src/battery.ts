@@ -8,8 +8,6 @@ export interface Prevision {
   pendiente: number;
   /** horas hasta 0 % al ritmo actual · undefined si no se descarga */
   horasRestantes?: number;
-  /** epoch ms del agotamiento · undefined si no se descarga */
-  agota?: number;
   /** cuánto fiarse: 0..1 según dispersión de los puntos sobre la recta */
   ajuste: number;
   muestras: number;
@@ -69,7 +67,6 @@ export function preverBateria(
   // por debajo de 0 evita convertir el ruido de una batería plana en un aviso
   if (pendiente < -0.05) {
     r.horasRestantes = ultimo / -pendiente;
-    r.agota = ahora + r.horasRestantes * 3_600_000;
   }
   return r;
 }

@@ -9,7 +9,7 @@ export interface AlertCfg {
   autonomiaH: number; // horas de autonomía restante · 0 = no avisar
 }
 
-export const DEFAULT_ALERTS: AlertCfg = {
+const DEFAULT_ALERTS: AlertCfg = {
   on: false,
   battery: 20,
   silentH: 12,

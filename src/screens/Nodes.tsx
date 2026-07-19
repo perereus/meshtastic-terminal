@@ -301,7 +301,7 @@ function Detail(props: {
               bat.ajuste.toFixed(2),
             )}
           >
-            {t(...(textoPrevision(bat) as [string, ...(string | number)[]]))}
+            {t(...textoPrevision(bat))}
           </div>
         )}
       </>,

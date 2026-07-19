@@ -18,13 +18,11 @@ assert.ok(baja, "debería haber previsión");
 assert.ok(Math.abs(baja.pendiente + 2) < 0.01, `pendiente ${baja.pendiente}`);
 assert.ok(Math.abs((baja.horasRestantes ?? 0) - 25) < 0.5, `horas ${baja.horasRestantes}`);
 assert.ok(baja.ajuste > 0.99);
-assert.equal(baja.agota, NOW + (baja.horasRestantes ?? 0) * H);
 
 // cargando: no se predice agotamiento
 const sube = preverBateria(serie(60, 3), 12, NOW);
 assert.ok(sube);
 assert.equal(sube.horasRestantes, undefined, "cargando no se agota");
-assert.equal(sube.agota, undefined);
 
 // batería plana: nada de convertir el ruido en un aviso de agotamiento
 const plana = preverBateria(serie(80, 0), 12, NOW);
