@@ -16,6 +16,7 @@ import {
 } from "../radio";
 import { ago, asciiBattery, hwName, snrClass } from "../fmt";
 import { loadTraceroutes } from "../db";
+import { t } from "../i18n";
 
 type SortKey = "visto" | "nombre" | "corto" | "saltos" | "snr" | "bateria" | "pos";
 
@@ -198,7 +199,14 @@ function Detail(props: {
     setAdminArm("");
     const fn = kind === "reboot" ? remoteReboot : remoteShutdown;
     fn(n.num)
-      .then(() => setAdminMsg(`${kind === "reboot" ? "Reboot" : "Shutdown"} enviado ✓ (requiere permiso admin en el nodo remoto)`))
+      .then(() =>
+        setAdminMsg(
+          t(
+            "{0} enviado ✓ (requiere permiso admin en el nodo remoto)",
+            kind === "reboot" ? "Reboot" : "Shutdown",
+          ),
+        ),
+      )
       .catch((e) => setAdminMsg(`ERROR: ${e}`));
   };
 
@@ -224,7 +232,7 @@ function Detail(props: {
     // la respuesta llega por evento; esperamos hasta 60 s pase lo que pase con el ack
     timer.current = setTimeout(() => {
       setTracing(false);
-      setTraceErr("SIN RESPUESTA (60 s)");
+      setTraceErr(t("SIN RESPUESTA (60 s)"));
     }, 60_000);
     try {
       await runTraceroute(n.num);
@@ -244,23 +252,23 @@ function Detail(props: {
         {n.snr !== undefined ? `${n.snr.toFixed(2)} dB` : "—"}
       </span>,
     ],
-    ["BATERÍA", asciiBattery(n.batteryLevel)],
-    ["VOLTAJE", n.voltage !== undefined ? `${n.voltage.toFixed(2)} V` : "—"],
-    ["SALTOS", n.hopsAway !== undefined ? String(n.hopsAway) : "—"],
-    ["VÍA MQTT", n.viaMqtt ? "SÍ" : "NO"],
-    ["CIFRADO DM", n.hasKey ? "PKI 🔒" : "sólo PSK del canal"],
+    [t("BATERÍA"), asciiBattery(n.batteryLevel)],
+    [t("VOLTAJE"), n.voltage !== undefined ? `${n.voltage.toFixed(2)} V` : "—"],
+    [t("SALTOS"), n.hopsAway !== undefined ? String(n.hopsAway) : "—"],
+    [t("VÍA MQTT"), n.viaMqtt ? t("SÍ") : "NO"],
+    [t("CIFRADO DM"), n.hasKey ? "PKI 🔒" : t("sólo PSK del canal")],
     [
-      "POSICIÓN",
+      t("POSICIÓN"),
       n.lat !== undefined && n.lon !== undefined
         ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`
-        : "SIN GPS FIX",
+        : t("SIN GPS FIX"),
     ],
-    ["VISTO HACE", ago(n.lastHeard)],
+    [t("VISTO HACE"), ago(n.lastHeard)],
   ];
   return (
     <div className="panel hot" style={{ width: 300, flexShrink: 0 }}>
       <div className="panel-title">
-        <span>DETALLE // NODO {n.shortName}</span>
+        <span>{t("DETALLE // NODO")} {n.shortName}</span>
         <button
           onClick={props.onClose}
           style={{ width: 22, height: 22, padding: 0, fontSize: 12, lineHeight: 1 }}
@@ -277,10 +285,10 @@ function Detail(props: {
         }}
       >
         {n.longName}
-        {props.isMe && " · (YO)"}
+        {props.isMe && ` · (${t("YO")})`}
       </div>
       <div className="dim" style={{ padding: "2px 12px 12px", fontSize: 11 }}>
-        ÚLTIMO PAQUETE HACE {ago(n.lastHeard)}
+        {t("ÚLTIMO PAQUETE HACE {0}", ago(n.lastHeard))}
       </div>
       <div className="kv" style={{ borderTop: "1px solid var(--border)" }}>
         {rows.map(([k, v]) => (
@@ -301,24 +309,26 @@ function Detail(props: {
           <div className="dim" style={{ fontSize: 10, letterSpacing: 2, marginBottom: 4 }}>
             TRACEROUTE
           </div>
-          {tracing && <span className="warn" style={{ fontSize: 11 }}>EN CURSO_</span>}
+          {tracing && (
+            <span className="warn" style={{ fontSize: 11 }}>{t("EN CURSO_")}</span>
+          )}
           {traceErr && <span className="err" style={{ fontSize: 11 }}>{traceErr}</span>}
           {props.trace && (
             <>
               <RouteLine
-                label="IDA"
+                label={t("IDA")}
                 hops={props.trace.route}
                 snrs={props.trace.snrTowards}
-                from="YO"
+                from={t("YO")}
                 to={n.shortName}
                 short={props.short}
               />
               <RouteLine
-                label="VUELTA"
+                label={t("VUELTA")}
                 hops={props.trace.routeBack}
                 snrs={props.trace.snrBack}
                 from={n.shortName}
-                to="YO"
+                to={t("YO")}
                 short={props.short}
               />
             </>
@@ -329,20 +339,21 @@ function Detail(props: {
                 style={{ fontSize: 10, padding: "2px 6px", marginTop: 8 }}
                 onClick={() => setShowHistory((v) => !v)}
               >
-                {showHistory ? "▼" : "▶"} HISTORIAL ({history.length})
+                {showHistory ? "▼" : "▶"} {t("HISTORIAL")} ({history.length})
               </button>
               {showHistory && (
                 <div style={{ maxHeight: 160, overflowY: "auto", marginTop: 6 }}>
                   {history.map((h) => (
                     <div key={h.ts} style={{ marginBottom: 6 }}>
                       <div className="dim" style={{ fontSize: 10 }}>
-                        {new Date(h.ts).toLocaleString()} · {h.route.length + 1} saltos
+                        {new Date(h.ts).toLocaleString()} ·{" "}
+                        {t("{0} saltos", h.route.length + 1)}
                       </div>
                       <RouteLine
-                        label="IDA"
+                        label={t("IDA")}
                         hops={h.route}
                         snrs={h.snrTowards}
-                        from="YO"
+                        from={t("YO")}
                         to={n.shortName}
                         short={props.short}
                       />
@@ -362,21 +373,23 @@ function Detail(props: {
           }}
         >
           <div className="dim" style={{ fontSize: 10, letterSpacing: 2, marginBottom: 4 }}>
-            PETICIÓN DE POSICIÓN
+            {t("PETICIÓN DE POSICIÓN")}
           </div>
           {posState === "waiting" && (
-            <span className="warn" style={{ fontSize: 11 }}>EN CURSO_</span>
+            <span className="warn" style={{ fontSize: 11 }}>{t("EN CURSO_")}</span>
           )}
           {posState === "ok" && (
             <span style={{ fontSize: 11 }}>
-              RECIBIDA ✓{" "}
+              {t("RECIBIDA ✓")}{" "}
               {n.lat !== undefined && n.lon !== undefined
                 ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`
-                : "(SIN GPS FIX)"}
+                : t("(SIN GPS FIX)")}
             </span>
           )}
           {posState === "timeout" && (
-            <span className="err" style={{ fontSize: 11 }}>SIN RESPUESTA (60 s)</span>
+            <span className="err" style={{ fontSize: 11 }}>
+              {t("SIN RESPUESTA (60 s)")}
+            </span>
           )}
           {!["waiting", "ok", "timeout"].includes(posState) && (
             <span className="err" style={{ fontSize: 11 }}>{posState}</span>
@@ -396,22 +409,22 @@ function Detail(props: {
           <button
             style={{ flex: 1, padding: "6px 0" }}
             className={n.fav ? "primary" : ""}
-            title={n.fav ? "Quitar de favoritos" : "Marcar favorito (arriba en la lista)"}
+            title={n.fav ? t("Quitar de favoritos") : t("Marcar favorito (arriba en la lista)")}
             onClick={() => toggleFav(n.num)}
           >
             {n.fav ? "★ FAV" : "☆ FAV"}
           </button>
           <button
             style={{ flex: 1, padding: "6px 0" }}
-            title={n.ignored ? "Dejar de ignorar" : "Ignorar: descartar sus mensajes"}
+            title={n.ignored ? t("Dejar de ignorar") : t("Ignorar: descartar sus mensajes")}
             onClick={() => toggleIgnored(n.num)}
           >
-            {n.ignored ? "🚫 IGNORADO" : "IGNORAR"}
+            {n.ignored ? t("🚫 IGNORADO") : t("IGNORAR")}
           </button>
           <button
             className="danger"
             style={{ flex: 1, padding: "6px 0" }}
-            title="Borrar de la radio y de la BD local"
+            title={t("Borrar de la radio y de la BD local")}
             onClick={() => {
               if (confirmDel) {
                 deleteNode(n.num).catch(() => {});
@@ -422,7 +435,7 @@ function Detail(props: {
               }
             }}
           >
-            {confirmDel ? "¿SEGURO?" : "BORRAR"}
+            {confirmDel ? t("¿SEGURO?") : t("BORRAR")}
           </button>
         </div>
       )}
@@ -439,18 +452,18 @@ function Detail(props: {
           <div style={{ display: "flex", gap: 8 }}>
             <button
               style={{ flex: 1, padding: "6px 0" }}
-              title="Reboot remoto vía canal admin"
+              title={t("Reboot remoto vía canal admin")}
               onClick={() => onAdmin("reboot")}
             >
-              {adminArm === "reboot" ? "¿SEGURO?" : "REBOOT REMOTO"}
+              {adminArm === "reboot" ? t("¿SEGURO?") : t("REBOOT REMOTO")}
             </button>
             <button
               className="danger"
               style={{ flex: 1, padding: "6px 0" }}
-              title="Apagado remoto vía canal admin"
+              title={t("Apagado remoto vía canal admin")}
               onClick={() => onAdmin("shutdown")}
             >
-              {adminArm === "shutdown" ? "¿SEGURO?" : "APAGAR REMOTO"}
+              {adminArm === "shutdown" ? t("¿SEGURO?") : t("APAGAR REMOTO")}
             </button>
           </div>
           {adminMsg && (
@@ -481,7 +494,7 @@ function Detail(props: {
           </button>
           <button
             style={{ flex: 1, padding: "8px 0", minWidth: 0 }}
-            title="Traceroute: trazar ruta de saltos hasta el nodo"
+            title={t("Traceroute: trazar ruta de saltos hasta el nodo")}
             disabled={tracing}
             onClick={onTrace}
           >
@@ -489,7 +502,7 @@ function Detail(props: {
           </button>
           <button
             style={{ flex: 1, padding: "8px 0", minWidth: 0 }}
-            title="Pedir posición GPS al nodo"
+            title={t("Pedir posición GPS al nodo")}
             disabled={posState === "waiting"}
             onClick={onAskPos}
           >
@@ -546,13 +559,13 @@ export default function Nodes({
       <div className="panel" style={{ flex: 1, minWidth: 0 }}>
         <div className="panel-title">
           <span>
-            PANEL // NODOS · {nodes.length}
-            {q ? ` DE ${all.length}` : ""} DETECTADOS
+            {t("PANEL // NODOS")} · {nodes.length}
+            {q ? t(" DE {0}", all.length) : ""} {t("DETECTADOS")}
           </span>
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="filtrar nombre / id_"
+            placeholder={t("filtrar nombre / id_")}
             style={{ width: 180, fontSize: 11 }}
           />
         </div>
@@ -560,13 +573,13 @@ export default function Nodes({
           <table className="grid">
             <thead>
               <tr>
-                <Th label="NODO" k="nombre" sort={sort} onSort={onSort} />
-                <Th label="CORTO" k="corto" sort={sort} onSort={onSort} />
+                <Th label={t("NODO")} k="nombre" sort={sort} onSort={onSort} />
+                <Th label={t("CORTO")} k="corto" sort={sort} onSort={onSort} />
                 <Th label="SNR" k="snr" sort={sort} onSort={onSort} />
-                <Th label="BATERÍA" k="bateria" sort={sort} onSort={onSort} />
-                <Th label="SALTOS" k="saltos" sort={sort} onSort={onSort} />
-                <Th label="POSICIÓN" k="pos" sort={sort} onSort={onSort} />
-                <Th label="VISTO HACE" k="visto" sort={sort} onSort={onSort} />
+                <Th label={t("BATERÍA")} k="bateria" sort={sort} onSort={onSort} />
+                <Th label={t("SALTOS")} k="saltos" sort={sort} onSort={onSort} />
+                <Th label={t("POSICIÓN")} k="pos" sort={sort} onSort={onSort} />
+                <Th label={t("VISTO HACE")} k="visto" sort={sort} onSort={onSort} />
               </tr>
             </thead>
             <tbody>
@@ -581,7 +594,7 @@ export default function Nodes({
                   <td style={n.ignored ? { opacity: 0.4 } : undefined}>
                     {n.fav && <span className="warn">★ </span>}
                     !{n.num.toString(16)} · {n.longName}
-                    {n.num === s.myNodeNum && " (YO)"}
+                    {n.num === s.myNodeNum && ` (${t("YO")})`}
                     {n.viaMqtt && " ☁"}
                     {n.hasKey && " 🔒"}
                     {n.ignored && " 🚫"}
@@ -605,7 +618,7 @@ export default function Nodes({
                   <td>
                     {n.lat !== undefined && n.lon !== undefined
                       ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`
-                      : "SIN GPS FIX"}
+                      : t("SIN GPS FIX")}
                   </td>
                   <td>{ago(n.lastHeard)}</td>
                 </tr>
@@ -614,17 +627,19 @@ export default function Nodes({
           </table>
           {nodes.length === 0 && (
             <p className="dim" style={{ padding: 12 }}>
-              {q ? `SIN COINCIDENCIAS PARA "${filter}"_` : "NO NODES DETECTED — AWAITING SIGNAL_"}
+              {q
+                ? t('SIN COINCIDENCIAS PARA "{0}"_', filter)
+                : "NO NODES DETECTED — AWAITING SIGNAL_"}
             </p>
           )}
         </div>
         <div className="panel-foot">
-          <span>{all.length} NODOS EN BD</span>
+          <span>{t("{0} NODOS EN BD", all.length)}</span>
           <span style={{ flex: 1 }} />
           <span>
             SNR: <span className="ok">≥5 dB OK</span> ·{" "}
-            <span className="warn">0–5 dB REG</span> ·{" "}
-            <span className="err">&lt;0 dB MAL</span>
+            <span className="warn">{t("0–5 dB REG")}</span> ·{" "}
+            <span className="err">{t("<0 dB MAL")}</span>
           </span>
         </div>
       </div>
