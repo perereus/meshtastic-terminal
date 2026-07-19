@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { clearUnread, getSnapshot, subscribe } from "../store";
 import { retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
+import { t } from "../i18n";
 
 function ts(ms: number): string {
   const d = new Date(ms);
@@ -36,7 +37,7 @@ export default function Chat({
     .filter((c) => c.role !== 0)
     .map((c) => ({ key: `ch:${c.index}`, label: `#${c.name}` }));
   if (channelConvos.length === 0) {
-    channelConvos.push({ key: "ch:0", label: "#Principal" });
+    channelConvos.push({ key: "ch:0", label: t("#Principal") });
   }
   const dmKeys = new Set(
     s.messages.filter((m) => m.convo.startsWith("dm:")).map((m) => m.convo),
@@ -49,7 +50,7 @@ export default function Chat({
 
   const nodeShort = (num: number) =>
     num === s.myNodeNum
-      ? "YO"
+      ? t("YO")
       : (s.nodes.get(num)?.shortName ?? num.toString(16).slice(-4));
 
   const convoLabel =
@@ -63,14 +64,14 @@ export default function Chat({
     try {
       await sendText(text, convo);
     } catch (e) {
-      setError(`FALLO TX: ${e}`);
+      setError(t("FALLO TX: {0}", String(e)));
     }
   };
 
   return (
     <main>
       <div className="panel" style={{ width: 230, flexShrink: 0 }}>
-        <div className="panel-title">PANEL // CANALES</div>
+        <div className="panel-title">{t("PANEL // CANALES")}</div>
         <div style={{ padding: "8px 0" }}>
           {channelConvos.map((c) => (
             <div
@@ -86,12 +87,12 @@ export default function Chat({
           ))}
         </div>
         <div className="panel-title" style={{ borderTop: "1px solid var(--border)" }}>
-          MENSAJES DIRECTOS
+          {t("MENSAJES DIRECTOS")}
         </div>
         <div style={{ padding: "8px 0" }}>
           {dmConvos.length === 0 && (
             <div className="convo-item dim" style={{ cursor: "default" }}>
-              <span>— ninguno —</span>
+              <span>{t("— ninguno —")}</span>
             </div>
           )}
           {dmConvos.map((c) => (
@@ -115,21 +116,21 @@ export default function Chat({
             PANEL // CHAT · {convoLabel}
             {convo.startsWith("dm:") &&
               (s.nodes.get(Number(convo.slice(3)))?.hasKey ? (
-                <span title="cifrado extremo a extremo (PKI)"> 🔒 PKI</span>
+                <span title={t("cifrado extremo a extremo (PKI)")}> 🔒 PKI</span>
               ) : (
                 <span
                   className="warn"
-                  title="sin clave pública: va cifrado sólo con la PSK del canal"
+                  title={t("sin clave pública: va cifrado sólo con la PSK del canal")}
                 >
                   {" "}
-                  ⚠ SIN PKI
+                  {t("⚠ SIN PKI")}
                 </span>
               ))}
           </span>
           <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <button
               style={{ fontSize: 10, padding: "0 6px" }}
-              title="Exportar esta conversación a un archivo de texto"
+              title={t("Exportar esta conversación a un archivo de texto")}
               disabled={msgs.length === 0}
               onClick={async () => {
                 try {
@@ -142,15 +143,15 @@ export default function Chat({
                       )
                       .join("\n"),
                   );
-                  setError(path ? `EXPORTADO → ${path}` : "");
+                  setError(path ? t("EXPORTADO → {0}", path) : "");
                 } catch (e) {
-                  setError(`FALLO EXPORT: ${e}`);
+                  setError(t("FALLO EXPORT: {0}", String(e)));
                 }
               }}
             >
-              ⭳ EXPORTAR
+              {t("⭳ EXPORTAR")}
             </button>
-            {s.nodes.size} NODOS EN ESCUCHA
+            {t("{0} NODOS EN ESCUCHA", s.nodes.size)}
           </span>
         </div>
         <div
@@ -165,7 +166,7 @@ export default function Chat({
         >
           {msgs.length === 0 && (
             <div className="dim" style={{ fontSize: 11 }}>
-              ──── SIN MENSAJES EN {convoLabel} — AWAITING SIGNAL_ ────
+              {t("──── SIN MENSAJES EN {0} — AWAITING SIGNAL_ ────", convoLabel)}
             </div>
           )}
           {msgs.map((m) => (
@@ -182,23 +183,23 @@ export default function Chat({
               </span>{" "}
               {m.text}{" "}
               {m.mine && m.state === "queued" && (
-                <span className="warn">⧗ en cola</span>
+                <span className="warn">{t("⧗ en cola")}</span>
               )}
               {m.mine && m.state === "sent" && (
-                <span className="dim">➤ enviado a radio</span>
+                <span className="dim">{t("➤ enviado a radio")}</span>
               )}
               {m.mine && m.state === "delivered" && (
-                <span className="dim">✓ entregado</span>
+                <span className="dim">{t("✓ entregado")}</span>
               )}
               {m.mine && m.state === "failed" && (
                 <>
-                  <span className="err">✗ fallo</span>{" "}
+                  <span className="err">{t("✗ fallo")}</span>{" "}
                   <button
                     style={{ fontSize: 10, padding: "0 6px" }}
-                    title="Reintentar envío"
+                    title={t("Reintentar envío")}
                     onClick={() => retryMessage(m).catch(() => {})}
                   >
-                    ↻ REINTENTAR
+                    {t("↻ REINTENTAR")}
                   </button>
                 </>
               )}
@@ -213,12 +214,14 @@ export default function Chat({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSend()}
-            placeholder="escribe un mensaje_"
+            placeholder={t("escribe un mensaje_")}
           />
           <span className="cursor">█</span>
           <span className="dim" style={{ fontSize: 11 }}>
-            ENTER=TX · {Math.max(0, 200 - new TextEncoder().encode(draft).length)} B
-            LIBRES
+            {t(
+              "ENTER=TX · {0} B LIBRES",
+              Math.max(0, 200 - new TextEncoder().encode(draft).length),
+            )}
           </span>
         </div>
       </div>

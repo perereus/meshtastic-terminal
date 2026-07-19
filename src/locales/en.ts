@@ -1,0 +1,32 @@
+/** es → en. Clave = texto español literal usado en el código. */
+const en: Record<string, string> = {
+  // Chat
+  "PANEL // CANALES": "PANEL // CHANNELS",
+  "#Principal": "#Primary",
+  "MENSAJES DIRECTOS": "DIRECT MESSAGES",
+  "— ninguno —": "— none —",
+  "cifrado extremo a extremo (PKI)": "end-to-end encrypted (PKI)",
+  "sin clave pública: va cifrado sólo con la PSK del canal":
+    "no public key: encrypted with the channel PSK only",
+  "⚠ SIN PKI": "⚠ NO PKI",
+  "Exportar esta conversación a un archivo de texto":
+    "Export this conversation to a text file",
+  "⭳ EXPORTAR": "⭳ EXPORT",
+  "{0} NODOS EN ESCUCHA": "{0} NODES LISTENING",
+  "EXPORTADO → {0}": "EXPORTED → {0}",
+  "FALLO EXPORT: {0}": "EXPORT FAILED: {0}",
+  "FALLO TX: {0}": "TX FAILED: {0}",
+  "──── SIN MENSAJES EN {0} — AWAITING SIGNAL_ ────":
+    "──── NO MESSAGES IN {0} — AWAITING SIGNAL_ ────",
+  "⧗ en cola": "⧗ queued",
+  "➤ enviado a radio": "➤ sent to radio",
+  "✓ entregado": "✓ delivered",
+  "✗ fallo": "✗ failed",
+  "Reintentar envío": "Retry send",
+  "↻ REINTENTAR": "↻ RETRY",
+  "escribe un mensaje_": "type a message_",
+  "ENTER=TX · {0} B LIBRES": "ENTER=TX · {0} B FREE",
+  YO: "ME",
+};
+
+export default en;
