@@ -92,6 +92,14 @@ const en: Record<string, string> = {
     "{0} sent ✓ (requires admin permission on the remote node)",
   "SIN RESPUESTA (60 s)": "NO REPLY (60 s)",
   BATERÍA: "BATTERY",
+  "BATERÍA IRREGULAR · sin previsión fiable":
+    "IRREGULAR BATTERY · no reliable forecast",
+  "CARGANDO · {0} %/h": "CHARGING · {0} %/h",
+  "ESTABLE · sin descarga apreciable": "STEADY · no noticeable discharge",
+  "SE AGOTA EN ~{0} h": "EMPTY IN ~{0} h",
+  "SE AGOTA EN ~{0} días": "EMPTY IN ~{0} days",
+  "Estimado con los últimos {0} puntos de batería · ajuste {1}":
+    "Estimated from the last {0} battery points · fit {1}",
   VOLTAJE: "VOLTAGE",
   SALTOS: "HOPS",
   "VÍA MQTT": "VIA MQTT",

@@ -15,7 +15,8 @@ import {
   toggleIgnored,
 } from "../radio";
 import { ago, asciiBattery, hwName, snrClass } from "../fmt";
-import { loadTraceroutes } from "../db";
+import { loadTelemetry, loadTraceroutes } from "../db";
+import { preverBateria, textoPrevision, type Prevision } from "../battery";
 import { t } from "../i18n";
 
 type SortKey = "visto" | "nombre" | "corto" | "saltos" | "snr" | "bateria" | "pos";
@@ -147,6 +148,21 @@ function Detail(props: {
   const posBase = useRef<number | undefined>(undefined);
   const [history, setHistory] = useState<Traceroute[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [bat, setBat] = useState<Prevision>();
+
+  // previsión de autonomía a partir del histórico de batería en SQLite
+  useEffect(() => {
+    let cancelled = false;
+    setBat(undefined);
+    loadTelemetry(n.num, "batteryLevel", Date.now() - 6 * 3_600_000)
+      .then((rows) => {
+        if (!cancelled) setBat(preverBateria(rows));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [n.num, n.batteryLevel]);
 
   useEffect(() => {
     let cancelled = false;
@@ -252,7 +268,29 @@ function Detail(props: {
         {n.snr !== undefined ? `${n.snr.toFixed(2)} dB` : "—"}
       </span>,
     ],
-    [t("BATERÍA"), asciiBattery(n.batteryLevel)],
+    [
+      t("BATERÍA"),
+      <>
+        {asciiBattery(n.batteryLevel)}
+        {bat && (
+          <div
+            className={
+              bat.horasRestantes !== undefined && bat.horasRestantes < 24
+                ? "warn"
+                : "dim"
+            }
+            style={{ fontSize: 10, letterSpacing: 0 }}
+            title={t(
+              "Estimado con los últimos {0} puntos de batería · ajuste {1}",
+              bat.muestras,
+              bat.ajuste.toFixed(2),
+            )}
+          >
+            {t(...(textoPrevision(bat) as [string, ...(string | number)[]]))}
+          </div>
+        )}
+      </>,
+    ],
     [t("VOLTAJE"), n.voltage !== undefined ? `${n.voltage.toFixed(2)} V` : "—"],
     [t("SALTOS"), n.hopsAway !== undefined ? String(n.hopsAway) : "—"],
     [t("VÍA MQTT"), n.viaMqtt ? t("SÍ") : "NO"],

@@ -10,7 +10,8 @@ import en from "./locales/en.ts";
 const CALL = /\bt\(\s*(["'])(.*?)(?<!\\)\1/gs;
 
 // claves que no aparecen como literal porque se construyen en tiempo de
-// ejecución: pestañas (t(tab)) y nombres de tema (t(THEME_LABELS[x]))
+// ejecución: pestañas (t(tab)), nombres de tema (t(THEME_LABELS[x])) y los
+// textos de previsión de batería, que battery.ts devuelve como clave
 const DINAMICAS = [
   "NODOS",
   "MAPA",
@@ -21,6 +22,11 @@ const DINAMICAS = [
   "CIAN",
   "HUESO",
   "VIOLETA",
+  "BATERÍA IRREGULAR · sin previsión fiable",
+  "CARGANDO · {0} %/h",
+  "ESTABLE · sin descarga apreciable",
+  "SE AGOTA EN ~{0} h",
+  "SE AGOTA EN ~{0} días",
 ];
 
 function fuentes(dir: string): string[] {
