@@ -234,11 +234,17 @@ export async function saveNeighbors(
   }
 }
 
-export async function loadNeighbors(): Promise<
-  { node: number; neighbor: number; snr: number; ts: number }[]
-> {
+/** Vecinos vistos en los últimos N días. Un enlace que nadie renueva deja de
+ *  existir en la malla; sin este corte el grafo acumularía aristas fantasma
+ *  aunque nunca se purgue la base. */
+export async function loadNeighbors(
+  maxAgeDays = 7,
+): Promise<{ node: number; neighbor: number; snr: number; ts: number }[]> {
   const d = await openDb();
-  return d.select(`SELECT node, neighbor, snr, ts FROM neighbors`);
+  return d.select(
+    `SELECT node, neighbor, snr, ts FROM neighbors WHERE ts >= $1`,
+    [Date.now() - maxAgeDays * 86_400_000],
+  );
 }
 
 /** Traceroutes recientes de todos los nodos, para dibujar el grafo. */
@@ -319,16 +325,19 @@ export async function dbStats(): Promise<{
   return r;
 }
 
-// Borra mensajes y telemetría anteriores a N días. Los nodos no se tocan:
-// son pocos y su identidad es lo que hace legible el historial que queda.
+// Borra mensajes, telemetría, traceroutes y vecinos anteriores a N días. Los
+// nodos no se tocan: son pocos y su identidad es lo que hace legible el
+// historial que queda. Los vecinos sí caducan: si no se renuevan, el enlace ya
+// no existe y dejarlo pintaría aristas fantasma en el grafo.
 export async function purgeOlderThan(days: number): Promise<number> {
   const d = await openDb();
   const cut = Date.now() - days * 86_400_000;
   const a = await d.execute(`DELETE FROM messages WHERE ts < $1`, [cut]);
   const b = await d.execute(`DELETE FROM telemetry WHERE ts < $1`, [cut]);
   const c = await d.execute(`DELETE FROM traceroutes WHERE ts < $1`, [cut]);
+  const e = await d.execute(`DELETE FROM neighbors WHERE ts < $1`, [cut]);
   await d.execute(`VACUUM`);
-  return a.rowsAffected + b.rowsAffected + c.rowsAffected;
+  return a.rowsAffected + b.rowsAffected + c.rowsAffected + e.rowsAffected;
 }
 
 export async function saveTelemetry(
