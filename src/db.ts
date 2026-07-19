@@ -47,6 +47,13 @@ export async function openDb(): Promise<Database> {
       snr_back TEXT NOT NULL,
       PRIMARY KEY (node, ts)
     );
+    CREATE TABLE IF NOT EXISTS neighbors (
+      node INTEGER NOT NULL,
+      neighbor INTEGER NOT NULL,
+      snr REAL NOT NULL,
+      ts INTEGER NOT NULL,
+      PRIMARY KEY (node, neighbor)
+    );
     CREATE TABLE IF NOT EXISTS waypoints (
       id INTEGER PRIMARY KEY,
       lat REAL NOT NULL,
@@ -207,6 +214,49 @@ export async function loadTraceroutes(node: number, limit = 20): Promise<Tracero
     snrTowards: nums(r.snr_towards),
     routeBack: nums(r.route_back),
     snrBack: nums(r.snr_back),
+  }));
+}
+
+/** Vecinos declarados por un nodo (módulo NeighborInfo). Se reemplaza el
+ *  conjunto entero: el paquete es la foto completa de sus vecinos. */
+export async function saveNeighbors(
+  node: number,
+  neighbors: { num: number; snr: number }[],
+  ts: number,
+): Promise<void> {
+  const d = await openDb();
+  await d.execute(`DELETE FROM neighbors WHERE node = $1`, [node]);
+  for (const n of neighbors) {
+    await d.execute(
+      `INSERT OR REPLACE INTO neighbors (node, neighbor, snr, ts) VALUES ($1, $2, $3, $4)`,
+      [node, n.num, n.snr, ts],
+    );
+  }
+}
+
+export async function loadNeighbors(): Promise<
+  { node: number; neighbor: number; snr: number; ts: number }[]
+> {
+  const d = await openDb();
+  return d.select(`SELECT node, neighbor, snr, ts FROM neighbors`);
+}
+
+/** Traceroutes recientes de todos los nodos, para dibujar el grafo. */
+export async function loadAllTraceroutes(
+  limit = 200,
+): Promise<{ node: number; ts: number; route: number[]; snr: number[] }[]> {
+  const d = await openDb();
+  const rows = await d.select<
+    { node: number; ts: number; route: string; snr_towards: string }[]
+  >(
+    `SELECT node, ts, route, snr_towards FROM traceroutes ORDER BY ts DESC LIMIT $1`,
+    [limit],
+  );
+  return rows.map((r) => ({
+    node: r.node,
+    ts: r.ts,
+    route: nums(r.route),
+    snr: nums(r.snr_towards),
   }));
 }
 

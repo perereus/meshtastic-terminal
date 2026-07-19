@@ -27,6 +27,7 @@ import {
   loadNodes,
   loadWaypoints,
   saveMessage,
+  saveNeighbors,
   saveNode,
   saveTelemetry,
   saveTraceroute,
@@ -277,6 +278,17 @@ function wireEvents(d: MeshDevice): void {
     });
     saveTraceroute(pkt.from, tr).catch(() => {});
     addLog(`Traceroute de !${pkt.from.toString(16)}: ${pkt.data.route.length + 1} saltos ida`);
+  });
+
+  // NeighborInfo: cada nodo publica a quién oye y con qué SNR. Es la única
+  // fuente de enlaces que no depende de lanzar traceroutes a mano.
+  d.events.onNeighborInfoPacket.subscribe((pkt) => {
+    const src = pkt.data.nodeId || pkt.from;
+    const neighbors = pkt.data.neighbors.map(
+      (n: { nodeId: number; snr: number }) => ({ num: n.nodeId, snr: n.snr }),
+    );
+    saveNeighbors(src, neighbors, Date.now()).catch(() => {});
+    addLog(`NeighborInfo de !${src.toString(16)}: ${neighbors.length} vecinos`);
   });
 
   d.events.onChannelPacket.subscribe((ch) => {

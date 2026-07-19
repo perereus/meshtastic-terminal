@@ -16,6 +16,7 @@ import { getSnapshot, subscribe } from "./store";
 import Chat from "./screens/Chat";
 import Nodes from "./screens/Nodes";
 import MapView from "./screens/MapView";
+import Mesh from "./screens/Mesh";
 import Config from "./screens/Config";
 import Telemetry from "./screens/Telemetry";
 import { hwName, regionName } from "./fmt";
@@ -23,7 +24,15 @@ import { saveText, stamp } from "./export";
 import { t } from "./i18n";
 import "./App.css";
 
-const TABS = ["CHAT", "NODOS", "MAPA", "CONFIG", "TELEMETRÍA", "DEBUG"] as const;
+const TABS = [
+  "CHAT",
+  "NODOS",
+  "MAPA",
+  "MALLA",
+  "CONFIG",
+  "TELEMETRÍA",
+  "DEBUG",
+] as const;
 type Tab = (typeof TABS)[number];
 
 // ponytail: un error boundary de una sola pantalla no debe tumbar toda la app.
@@ -465,6 +474,7 @@ function App() {
           }}
         />
       )}
+      {tab === "MALLA" && <Mesh />}
       {tab === "CONFIG" && <Config />}
       {tab === "TELEMETRÍA" && <Telemetry />}
       {tab === "DEBUG" && (

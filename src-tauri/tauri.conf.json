@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "meshtastic-client",
+  "productName": "Meshtastic Terminal",
   "version": "0.1.0",
   "identifier": "com.pere.meshtastic-client",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "meshtastic-client",
+        "title": "Meshtastic Terminal",
         "label": "main",
         "width": 1378,
         "height": 808,
@@ -26,6 +26,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Pere",
+    "shortDescription": "Cliente de escritorio para redes Meshtastic",
+    "category": "Utility",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

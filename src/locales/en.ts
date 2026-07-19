@@ -132,7 +132,21 @@ const en: Record<string, string> = {
   Cerrar: "Close",
   NODOS: "NODES",
   MAPA: "MAP",
+  MALLA: "MESH",
   TELEMETRÍA: "TELEMETRY",
+
+  // Grafo de malla
+  "PANEL // GRAFO DE MALLA": "PANEL // MESH GRAPH",
+  "{0} ENLACES": "{0} LINKS",
+  "Releer vecinos y traceroutes de la base de datos":
+    "Reload neighbors and traceroutes from the database",
+  RECARGAR: "RELOAD",
+  "{0} POR VECINOS": "{0} FROM NEIGHBORS",
+  "SIN ENLACES — activa NEIGHBOR INFO en CONFIG o lanza traceroutes desde NODOS_":
+    "NO LINKS — enable NEIGHBOR INFO in CONFIG or run traceroutes from NODES_",
+  ENLACES: "LINKS",
+  "LÍNEA CONTINUA = VECINO DIRECTO": "SOLID LINE = DIRECT NEIGHBOR",
+  "DISCONTINUA = TRAMO DE TRACEROUTE": "DASHED = TRACEROUTE SEGMENT",
   "BLE: 0 dispositivos. Bluetooth ON? nodo anunciando? (quítalo de Config Bluetooth de Windows y reinícialo)":
     "BLE: 0 devices. Bluetooth ON? node advertising? (remove it from Windows Bluetooth settings and reboot it)",
   "BLE: {0} dispositivos ({1} Meshtastic)": "BLE: {0} devices ({1} Meshtastic)",
