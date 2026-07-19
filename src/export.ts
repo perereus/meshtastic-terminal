@@ -8,9 +8,12 @@ export async function saveText(
   filename: string,
   text: string,
 ): Promise<string | undefined> {
+  // el filtro sale de la extensión del nombre propuesto: si no, el diálogo
+  // ofrece guardar un .csv como .txt
+  const ext = filename.split(".").pop()?.toLowerCase() || "txt";
   const path = await save({
     defaultPath: filename,
-    filters: [{ name: "Texto", extensions: ["txt"] }],
+    filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
   });
   if (!path) return undefined;
   await writeTextFile(path, text);

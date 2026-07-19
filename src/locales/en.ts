@@ -49,6 +49,10 @@ const en: Record<string, string> = {
   "Quitar de la comparación": "Remove from the comparison",
   "MÁXIMO {0}": "MAX {0}",
   "SOLO DE {0}": "{0} ONLY",
+  "⭳ CSV": "⭳ CSV",
+  "Exportar a CSV lo que se ve en la gráfica":
+    "Export what the chart shows to CSV",
+  "ERROR: {0}": "ERROR: {0}",
   "{0} MUESTRAS": "{0} SAMPLES",
   "SIN DATOS": "NO DATA",
   GRÁFICA: "CHART",

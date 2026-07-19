@@ -5,6 +5,7 @@ import { getSnapshot, subscribe } from "../store";
 import { listMetrics, listTelemetryNodes, loadTelemetry } from "../db";
 import { t } from "../i18n";
 import { ACCENT, fg } from "../theme";
+import { saveText, stamp } from "../export";
 
 // pseudo-métrica: ChUtil + AirUtilTx en la misma gráfica
 const CHANNEL = "__canal";
@@ -35,6 +36,8 @@ export default function Telemetry() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
   const [node, setNode] = useState<number | undefined>();
   const [compare, setCompare] = useState<number[]>([]);
+  const [csvMsg, setCsvMsg] = useState("");
+  const [exporting, setExporting] = useState(false);
   const [metrics, setMetrics] = useState<string[]>([]);
   const [metric, setMetric] = useState("");
   const [days, setDays] = useState(1);
@@ -213,6 +216,42 @@ export default function Telemetry() {
 
   useEffect(() => () => plotRef.current?.destroy(), []);
 
+  // CSV en formato largo (una fila por muestra) en vez de una columna por nodo:
+  // los nodos no comparten timestamps, así que el formato ancho saldría lleno
+  // de huecos. Cualquier hoja de cálculo lo pivota si hace falta.
+  const onExportCsv = async () => {
+    if (effectiveNode === undefined || !metric) return;
+    setExporting(true);
+    setCsvMsg("");
+    try {
+      const since = Date.now() - days * 86_400_000;
+      const realMetric = metric === CHANNEL ? "channelUtilization" : metric;
+      const targets = [effectiveNode, ...compare];
+      const series = await Promise.all(
+        targets.map((n) => loadTelemetry(n, realMetric, since)),
+      );
+      const rows = ["fecha_iso,epoch_ms,nodo,id_nodo,metrica,valor"];
+      targets.forEach((num, i) => {
+        // comillas en el nombre: podría llevar comas y romper el CSV
+        const name = `"${shortName(num).replace(/"/g, '""')}"`;
+        for (const r of series[i]) {
+          rows.push(
+            `${new Date(r.ts).toISOString()},${r.ts},${name},!${num.toString(16)},${realMetric},${r.value}`,
+          );
+        }
+      });
+      const path = await saveText(
+        `meshtastic-${realMetric}-${stamp()}.csv`,
+        rows.join("\n"),
+      );
+      setCsvMsg(path ? t("EXPORTADO → {0}", path) : "");
+    } catch (e) {
+      setCsvMsg(t("ERROR: {0}", String(e)));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const nodeLabel =
     effectiveNode !== undefined
       ? (s.nodes.get(effectiveNode)?.shortName ?? effectiveNode)
@@ -297,8 +336,16 @@ export default function Telemetry() {
           ))}
         </div>
         <span style={{ flex: 1 }} />
-        <span className="dim" style={{ fontSize: 11 }}>
-          {stats ? t("{0} MUESTRAS", stats.n) : t("SIN DATOS")}
+        <button
+          style={{ fontSize: 10, padding: "0 6px" }}
+          title={t("Exportar a CSV lo que se ve en la gráfica")}
+          disabled={!stats || exporting}
+          onClick={onExportCsv}
+        >
+          {t("⭳ CSV")}
+        </button>
+        <span className={csvMsg.startsWith("ERROR") ? "err" : "dim"} style={{ fontSize: 11 }}>
+          {csvMsg || (stats ? t("{0} MUESTRAS", stats.n) : t("SIN DATOS"))}
         </span>
       </div>
 
