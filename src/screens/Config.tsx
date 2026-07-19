@@ -10,7 +10,12 @@ import {
   importConfigJson,
   setFixedPosition,
 } from "../radio";
-import { dbStats, purgeOlderThan } from "../db";
+import {
+  dbStats,
+  getAutoPurgeDays,
+  purgeOlderThan,
+  setAutoPurgeDays,
+} from "../db";
 import { mutate } from "../store";
 import { parseChannelSetUrl } from "../channelUrl";
 import { buildChannelSetUrl } from "../channelUrl";
@@ -166,6 +171,7 @@ export default function Config() {
   }>();
   const [purgeDays, setPurgeDays] = useState(30);
   const [purgeArm, setPurgeArm] = useState(false);
+  const [autoPurge, setAutoPurge] = useState(getAutoPurgeDays);
   const [purgeMsg, setPurgeMsg] = useState("");
   // dispositivo/posición/pantalla/energía
   const [devRole, setDevRole] = useState(0);
@@ -1266,6 +1272,41 @@ export default function Config() {
               {t("afecta a mensajes y telemetría · los nodos no se tocan")}
             </span>
             {purgeMsg && <span className="warn">{purgeMsg}</span>}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                borderTop: "1px solid var(--border)",
+                paddingTop: 10,
+              }}
+            >
+              <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={autoPurge > 0}
+                  onChange={(e) => {
+                    const v = e.target.checked ? purgeDays : 0;
+                    setAutoPurge(v);
+                    setAutoPurgeDays(v);
+                  }}
+                />
+                {t("PURGAR AL ARRANCAR")}
+              </label>
+              <input
+                type="number"
+                min={1}
+                disabled={autoPurge === 0}
+                value={autoPurge || purgeDays}
+                style={{ width: 80 }}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setAutoPurge(v);
+                  setAutoPurgeDays(v);
+                }}
+              />
+              <span>{t("días")}</span>
+            </div>
           </div>
         </Section>
 

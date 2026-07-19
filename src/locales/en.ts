@@ -274,6 +274,9 @@ const en: Record<string, string> = {
   "leyendo…": "reading…",
   "borrar lo anterior a": "delete anything older than",
   días: "days",
+  "PURGAR AL ARRANCAR": "PURGE ON STARTUP",
+  "Purga automática: {0} filas borradas":
+    "Automatic purge: {0} rows deleted",
   "[ ¿SEGURO? ]": "[ SURE? ]",
   "[ PURGAR ]": "[ PURGE ]",
   "afecta a mensajes y telemetría · los nodos no se tocan":

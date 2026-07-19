@@ -14,7 +14,8 @@ import {
   setConnectionLostHandler,
 } from "./radio";
 import { evalAlerts, getAlertCfg } from "./alerts";
-import { getSnapshot, subscribe } from "./store";
+import { addLog, getSnapshot, subscribe } from "./store";
+import { getAutoPurgeDays, purgeOlderThan } from "./db";
 import Chat from "./screens/Chat";
 import Nodes from "./screens/Nodes";
 import MapView from "./screens/MapView";
@@ -234,7 +235,17 @@ function App() {
 
   useEffect(() => {
     refreshPorts();
-    loadHistory().catch((e) => setError(`BD: ${e}`));
+    // Purga antes de cargar: así el historial que entra en memoria ya viene
+    // recortado y no hay que volver a filtrarlo. Si falla, se carga igual.
+    const days = getAutoPurgeDays();
+    (days > 0
+      ? purgeOlderThan(days)
+          .then((n) => {
+            if (n > 0) addLog(t("Purga automática: {0} filas borradas", n));
+          })
+          .catch(() => {})
+      : Promise.resolve()
+    ).then(() => loadHistory().catch((e) => setError(`BD: ${e}`)));
 
     // Prefijar la última conexión usada
     const last = loadLast();

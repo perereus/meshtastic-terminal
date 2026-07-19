@@ -325,6 +325,19 @@ export async function dbStats(): Promise<{
   return r;
 }
 
+const AUTO_PURGE_KEY = "autoPurgeDays";
+
+/** Días de retención para la purga al arrancar. 0 = desactivada (por defecto:
+ *  borrar datos sin que el usuario lo pida es lo último que debe pasar solo). */
+export function getAutoPurgeDays(): number {
+  const n = Number(localStorage.getItem(AUTO_PURGE_KEY));
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+export function setAutoPurgeDays(days: number): void {
+  localStorage.setItem(AUTO_PURGE_KEY, String(days > 0 ? Math.floor(days) : 0));
+}
+
 // Borra mensajes, telemetría, traceroutes y vecinos anteriores a N días. Los
 // nodos no se tocan: son pocos y su identidad es lo que hace legible el
 // historial que queda. Los vecinos sí caducan: si no se renuevan, el enlace ya
