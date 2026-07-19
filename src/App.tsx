@@ -20,6 +20,7 @@ import Config from "./screens/Config";
 import Telemetry from "./screens/Telemetry";
 import { hwName, regionName } from "./fmt";
 import { saveText, stamp } from "./export";
+import { t } from "./i18n";
 import "./App.css";
 
 const TABS = ["CHAT", "NODOS", "MAPA", "CONFIG", "TELEMETRÍA", "DEBUG"] as const;
@@ -41,7 +42,7 @@ class ScreenBoundary extends Component<
         <main>
           <div className="panel" style={{ flex: 1 }}>
             <div className="panel-title">
-              <span>ERROR EN PANTALLA</span>
+              <span>{t("ERROR EN PANTALLA")}</span>
             </div>
             <pre className="err" style={{ padding: 16, whiteSpace: "pre-wrap" }}>
               {String(this.state.err?.stack ?? this.state.err)}
@@ -63,17 +64,25 @@ function Titlebar() {
         ◊ MESHTASTIC ·· MESH·NET TERMINAL
       </span>
       <div className="titlebar-btns">
-        <button className="tb-btn" onClick={() => appWindow.minimize()} title="Minimizar">
+        <button
+          className="tb-btn"
+          onClick={() => appWindow.minimize()}
+          title={t("Minimizar")}
+        >
           ─
         </button>
         <button
           className="tb-btn"
           onClick={() => appWindow.toggleMaximize()}
-          title="Maximizar"
+          title={t("Maximizar")}
         >
           ▢
         </button>
-        <button className="tb-btn tb-close" onClick={() => appWindow.close()} title="Cerrar">
+        <button
+          className="tb-btn tb-close"
+          onClick={() => appWindow.close()}
+          title={t("Cerrar")}
+        >
           ✕
         </button>
       </div>
@@ -160,8 +169,14 @@ function App() {
         setBleSel((cur) => cur || d[0]?.address || "");
         setError(
           d.length === 0
-            ? "BLE: 0 dispositivos. Bluetooth ON? nodo anunciando? (quítalo de Config Bluetooth de Windows y reinícialo)"
-            : `BLE: ${d.length} dispositivos (${d.filter((x) => x.svc).length} Meshtastic)`,
+            ? t(
+                "BLE: 0 dispositivos. Bluetooth ON? nodo anunciando? (quítalo de Config Bluetooth de Windows y reinícialo)",
+              )
+            : t(
+                "BLE: {0} dispositivos ({1} Meshtastic)",
+                d.length,
+                d.filter((x) => x.svc).length,
+              ),
         );
       })
       .catch((e) => setError(String(e)))
@@ -243,7 +258,7 @@ function App() {
     reconnectBusyRef.current = true;
     const { mode: m, id } = lastRef.current;
     setConnecting(true);
-    setError(`Reconectando… (intento ${attemptRef.current + 1})`);
+    setError(t("Reconectando… (intento {0})", attemptRef.current + 1));
     try {
       await doConnect(m, id);
       if (!wantRef.current) return; // el usuario canceló mientras reconectaba
@@ -254,7 +269,7 @@ function App() {
       if (!wantRef.current) return;
       attemptRef.current++;
       const delay = Math.min(15000, 2000 * 2 ** (attemptRef.current - 1));
-      setError(`Reconexión fallida, reintento en ${delay / 1000}s`);
+      setError(t("Reconexión fallida, reintento en {0}s", delay / 1000));
       reconnectTimerRef.current = setTimeout(tryReconnect, delay) as unknown as number;
     } finally {
       reconnectBusyRef.current = false;
@@ -275,7 +290,7 @@ function App() {
   const onCancel = async () => {
     canceledRef.current = true;
     setConnecting(false);
-    setError("Conexión cancelada");
+    setError(t("Conexión cancelada"));
     await stopAndForget();
   };
 
@@ -309,17 +324,17 @@ function App() {
           <span>MESH·NET TERMINAL</span>
         </div>
         <nav>
-          {TABS.map((t) => (
+          {TABS.map((tb) => (
             <button
-              key={t}
-              className={`tab ${t === tab ? "active" : ""}`}
+              key={tb}
+              className={`tab ${tb === tab ? "active" : ""}`}
               onClick={() => {
                 setNodeFocus(undefined);
-                setTab(t);
+                setTab(tb);
               }}
             >
-              [{t}]
-              {t === "CHAT" && totalUnread > 0 && (
+              [{t(tb)}]
+              {tb === "CHAT" && totalUnread > 0 && (
                 <span className="unread-badge">{totalUnread}</span>
               )}
             </button>
@@ -331,7 +346,7 @@ function App() {
           onChange={(e) => setMode(e.target.value as "serie" | "tcp" | "ble")}
           disabled={connected || connecting}
         >
-          <option value="serie">SERIE</option>
+          <option value="serie">{t("SERIE")}</option>
           <option value="tcp">TCP</option>
           <option value="ble">BLE</option>
         </select>
@@ -342,20 +357,20 @@ function App() {
               onChange={(e) => setSelected(e.target.value)}
               disabled={connected || connecting}
             >
-              {ports.length === 0 && <option value="">SIN PUERTOS</option>}
+              {ports.length === 0 && <option value="">{t("SIN PUERTOS")}</option>}
               {ports.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>
               ))}
             </select>
-            <button onClick={refreshPorts} disabled={connected} title="Refrescar">
+            <button onClick={refreshPorts} disabled={connected} title={t("Refrescar")}>
               ⟳
             </button>
           </>
         ) : mode === "tcp" ? (
           <input
-            placeholder="IP DEL NODO : 4403"
+            placeholder={t("IP DEL NODO : 4403")}
             value={host}
             onChange={(e) => setHost(e.target.value)}
             disabled={connected || connecting}
@@ -370,7 +385,7 @@ function App() {
               style={{ minWidth: 150 }}
             >
               {bleDevices.length === 0 && (
-                <option value="">{scanning ? "BUSCANDO…" : "SIN NODOS"}</option>
+                <option value="">{scanning ? t("BUSCANDO…") : t("SIN NODOS")}</option>
               )}
               {bleDevices.map((d) => (
                 <option key={d.address} value={d.address}>
@@ -382,19 +397,19 @@ function App() {
             <button
               onClick={scanBle}
               disabled={connected || connecting || scanning}
-              title="Escanear BLE"
+              title={t("Escanear BLE")}
             >
-              {scanning ? "⟳" : "ESCANEAR"}
+              {scanning ? "⟳" : t("ESCANEAR")}
             </button>
           </>
         )}
         {connected ? (
           <button className="primary" onClick={stopAndForget}>
-            DESCONECTAR
+            {t("DESCONECTAR")}
           </button>
         ) : connecting ? (
           <button className="primary" onClick={onCancel}>
-            CANCELAR
+            {t("CANCELAR")}
           </button>
         ) : (
           <button
@@ -408,7 +423,7 @@ function App() {
                   : !bleSel
             }
           >
-            CONECTAR
+            {t("CONECTAR")}
           </button>
         )}
         <div className="conn-pill">
@@ -460,17 +475,17 @@ function App() {
               <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <button
                   style={{ fontSize: 10, padding: "0 6px" }}
-                  title="Exportar el log a un archivo de texto"
+                  title={t("Exportar el log a un archivo de texto")}
                   disabled={s.log.length === 0}
                   onClick={() =>
                     saveText(`meshtastic-log-${stamp()}.txt`, s.log.join("\n"))
-                      .then((p) => p && setError(`EXPORTADO → ${p}`))
-                      .catch((e) => setError(`FALLO EXPORT: ${e}`))
+                      .then((p) => p && setError(t("EXPORTADO → {0}", p)))
+                      .catch((e) => setError(t("FALLO EXPORT: {0}", String(e))))
                   }
                 >
-                  ⭳ EXPORTAR
+                  {t("⭳ EXPORTAR")}
                 </button>
-                {s.log.length} LÍNEAS
+                {t("{0} LÍNEAS", s.log.length)}
               </span>
             </div>
             <pre className="debuglog">
@@ -485,9 +500,11 @@ function App() {
 
       <footer>
         {me?.hwModel !== undefined && <span>HW {hwName(me.hwModel)}</span>}
-        {lora?.region !== undefined && <span>REGIÓN {regionName(lora.region)}</span>}
-        {ch0 && <span>CANAL 0 #{ch0.name}</span>}
-        <span>{s.nodes.size} NODOS</span>
+        {lora?.region !== undefined && (
+          <span>{t("REGIÓN")} {regionName(lora.region)}</span>
+        )}
+        {ch0 && <span>{t("CANAL")} 0 #{ch0.name}</span>}
+        <span>{t("{0} NODOS", s.nodes.size)}</span>
         <span style={{ flex: 1 }} />
         <span>{s.log[s.log.length - 1] ?? "—"}</span>
       </footer>

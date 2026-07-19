@@ -124,6 +124,36 @@ const en: Record<string, string> = {
   "{0} NODOS EN BD": "{0} NODES IN DB",
   "0–5 dB REG": "0–5 dB FAIR",
   "<0 dB MAL": "<0 dB BAD",
+
+  // App (cabecera, conexión, debug, pie)
+  "ERROR EN PANTALLA": "SCREEN ERROR",
+  Minimizar: "Minimize",
+  Maximizar: "Maximize",
+  Cerrar: "Close",
+  NODOS: "NODES",
+  MAPA: "MAP",
+  TELEMETRÍA: "TELEMETRY",
+  "BLE: 0 dispositivos. Bluetooth ON? nodo anunciando? (quítalo de Config Bluetooth de Windows y reinícialo)":
+    "BLE: 0 devices. Bluetooth ON? node advertising? (remove it from Windows Bluetooth settings and reboot it)",
+  "BLE: {0} dispositivos ({1} Meshtastic)": "BLE: {0} devices ({1} Meshtastic)",
+  "Reconectando… (intento {0})": "Reconnecting… (attempt {0})",
+  "Reconexión fallida, reintento en {0}s": "Reconnect failed, retrying in {0}s",
+  "Conexión cancelada": "Connection cancelled",
+  SERIE: "SERIAL",
+  "SIN PUERTOS": "NO PORTS",
+  Refrescar: "Refresh",
+  "IP DEL NODO : 4403": "NODE IP : 4403",
+  "BUSCANDO…": "SCANNING…",
+  "SIN NODOS": "NO NODES",
+  "Escanear BLE": "Scan BLE",
+  ESCANEAR: "SCAN",
+  DESCONECTAR: "DISCONNECT",
+  CANCELAR: "CANCEL",
+  CONECTAR: "CONNECT",
+  "Exportar el log a un archivo de texto": "Export the log to a text file",
+  "{0} LÍNEAS": "{0} LINES",
+  REGIÓN: "REGION",
+  CANAL: "CHANNEL",
 };
 
 export default en;
