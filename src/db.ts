@@ -47,6 +47,13 @@ export async function openDb(): Promise<Database> {
       snr_back TEXT NOT NULL,
       PRIMARY KEY (node, ts)
     );
+    CREATE TABLE IF NOT EXISTS hops (
+      node INTEGER NOT NULL,
+      ts INTEGER NOT NULL,
+      hops INTEGER NOT NULL,
+      antes INTEGER,
+      PRIMARY KEY (node, ts)
+    );
     CREATE TABLE IF NOT EXISTS sightings (
       node INTEGER NOT NULL,
       hora INTEGER NOT NULL, -- epoch ms dividido por 3600000
@@ -272,6 +279,36 @@ export async function loadAllTraceroutes(
   }));
 }
 
+/** Solo se guardan los cambios de distancia, no el valor en cada paquete: lo
+ *  interesante es cuándo se alargó o acortó la ruta, y así la tabla queda
+ *  minúscula aunque la malla emita sin parar. */
+export async function saveHopChange(
+  node: number,
+  hops: number,
+  antes: number | undefined,
+  ts = Date.now(),
+): Promise<void> {
+  const d = await openDb();
+  await d.execute(
+    `INSERT OR REPLACE INTO hops (node, ts, hops, antes) VALUES ($1, $2, $3, $4)`,
+    [node, ts, hops, antes ?? null],
+  );
+}
+
+export async function loadHopChanges(
+  node: number,
+  limit = 10,
+): Promise<{ ts: number; hops: number; antes?: number }[]> {
+  const d = await openDb();
+  const rows = await d.select<
+    { ts: number; hops: number; antes: number | null }[]
+  >(`SELECT ts, hops, antes FROM hops WHERE node = $1 ORDER BY ts DESC LIMIT $2`, [
+    node,
+    limit,
+  ]);
+  return rows.map((r) => ({ ts: r.ts, hops: r.hops, antes: r.antes ?? undefined }));
+}
+
 const HORA_MS = 3_600_000;
 
 /** Marca que se ha oído a un nodo en la hora actual. Un contador por nodo y
@@ -384,13 +421,15 @@ export async function purgeOlderThan(days: number): Promise<number> {
   const f = await d.execute(`DELETE FROM sightings WHERE hora < $1`, [
     Math.floor(cut / HORA_MS),
   ]);
+  const g = await d.execute(`DELETE FROM hops WHERE ts < $1`, [cut]);
   await d.execute(`VACUUM`);
   return (
     a.rowsAffected +
     b.rowsAffected +
     c.rowsAffected +
     e.rowsAffected +
-    f.rowsAffected
+    f.rowsAffected +
+    g.rowsAffected
   );
 }
 

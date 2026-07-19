@@ -7,6 +7,8 @@ import {
 } from "@tauri-apps/plugin-notification";
 import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 import { parseChannelSetUrl } from "./channelUrl";
+import { COOLDOWN_MS, getAlertCfg } from "./alerts";
+import { t } from "./i18n";
 import { createSerialTransport } from "./transport/serial";
 import { createTcpTransport } from "./transport/tcp";
 import { createBleTransport } from "./transport/ble";
@@ -27,6 +29,7 @@ import {
   loadNodes,
   loadWaypoints,
   marcarEscucha,
+  saveHopChange,
   saveMessage,
   saveNeighbors,
   saveNode,
@@ -104,7 +107,37 @@ function upsertNode(num: number, patch: Partial<NodeEntry>): void {
     ) {
       marcarEscucha(num, patch.lastHeard * 1000).catch(dbFail("escucha"));
     }
+
+    // Cambio de distancia: un nodo que pasa de directo a 2 saltos suele ser un
+    // repetidor caído o una antena movida. Solo con la radio ya configurada,
+    // por el mismo motivo que las escuchas.
+    if (
+      patch.hopsAway !== undefined &&
+      prev.hopsAway !== undefined &&
+      patch.hopsAway !== prev.hopsAway &&
+      s.status === Types.DeviceStatusEnum.DeviceConfigured
+    ) {
+      avisarCambioRuta(merged, prev.hopsAway);
+    }
   });
+}
+
+// Un aviso por nodo cada 6 h: la distancia puede oscilar entre dos valores
+// durante un rato y no queremos una notificación por cada rebote.
+const rutaAvisada = new Map<number, number>();
+
+function avisarCambioRuta(n: NodeEntry, antes: number): void {
+  const ahora = n.hopsAway as number;
+  saveHopChange(n.num, ahora, antes).catch(dbFail("cambio de ruta"));
+  const quien = n.longName || n.shortName;
+  addLog(`RUTA: ${quien} pasa de ${antes} a ${ahora} saltos`);
+  if (!n.fav || !getAlertCfg().on) return;
+  if (Date.now() - (rutaAvisada.get(n.num) ?? -Infinity) < COOLDOWN_MS) return;
+  rutaAvisada.set(n.num, Date.now());
+  void notify(
+    t("{0} · ruta {1}", quien, ahora > antes ? t("más larga") : t("más corta")),
+    t("Ahora a {0} saltos (antes {1})", ahora, antes),
+  );
 }
 
 function wireEvents(d: MeshDevice): void {

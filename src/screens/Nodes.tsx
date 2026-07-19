@@ -15,7 +15,7 @@ import {
   toggleIgnored,
 } from "../radio";
 import { ago, asciiBattery, hwName, snrClass } from "../fmt";
-import { loadTelemetry, loadTraceroutes } from "../db";
+import { loadHopChanges, loadTelemetry, loadTraceroutes } from "../db";
 import { preverBateria, textoPrevision, type Prevision } from "../battery";
 import { t } from "../i18n";
 
@@ -149,6 +149,21 @@ function Detail(props: {
   const [history, setHistory] = useState<Traceroute[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [bat, setBat] = useState<Prevision>();
+  const [hops, setHops] = useState<{ ts: number; hops: number; antes?: number }[]>(
+    [],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    loadHopChanges(n.num)
+      .then((h) => {
+        if (!cancelled) setHops(h);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [n.num, n.hopsAway]);
 
   // previsión de autonomía a partir del histórico de batería en SQLite
   useEffect(() => {
@@ -292,7 +307,27 @@ function Detail(props: {
       </>,
     ],
     [t("VOLTAJE"), n.voltage !== undefined ? `${n.voltage.toFixed(2)} V` : "—"],
-    [t("SALTOS"), n.hopsAway !== undefined ? String(n.hopsAway) : "—"],
+    [
+      t("SALTOS"),
+      <>
+        {n.hopsAway !== undefined ? String(n.hopsAway) : "—"}
+        {hops[0] && (
+          <span
+            className="dim"
+            style={{ fontSize: 10 }}
+            title={hops
+              .map(
+                (h) =>
+                  `${new Date(h.ts).toLocaleString()} · ${h.antes ?? "?"} → ${h.hops}`,
+              )
+              .join("\n")}
+          >
+            {" "}
+            {t("· cambió hace {0} (antes {1})", ago(hops[0].ts / 1000), hops[0].antes ?? "?")}
+          </span>
+        )}
+      </>,
+    ],
     [t("VÍA MQTT"), n.viaMqtt ? t("SÍ") : "NO"],
     [t("CIFRADO DM"), n.hasKey ? "PKI 🔒" : t("sólo PSK del canal")],
     [
