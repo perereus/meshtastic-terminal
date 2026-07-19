@@ -3,7 +3,13 @@ import { getSnapshot, subscribe } from "../store";
 import { loadAllTraceroutes, loadNeighbors } from "../db";
 import { t } from "../i18n";
 import { ACCENT, fg } from "../theme";
-import { buildEdges, edgeKey as key, summarize, type Edge } from "../mesh";
+import {
+  buildEdges,
+  demoEdges,
+  edgeKey as key,
+  summarize,
+  type Edge,
+} from "../mesh";
 import { ago } from "../fmt";
 
 /** Layout dirigido por fuerzas, iteraciones fijas (sin animación).
@@ -88,6 +94,9 @@ export default function Mesh() {
   >([]);
   const [sel, setSel] = useState<number | undefined>();
   const [reload, setReload] = useState(0);
+  // enlaces inventados para poder juzgar el dibujo sin datos reales; nunca
+  // se escriben en la base
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
     loadNeighbors().then(setNeighbors).catch(() => {});
@@ -95,8 +104,11 @@ export default function Mesh() {
   }, [reload]);
 
   const edges = useMemo(
-    () => buildEdges(neighbors, traces, s.myNodeNum),
-    [neighbors, traces, s.myNodeNum],
+    () =>
+      demo
+        ? demoEdges([...s.nodes.values()], s.myNodeNum)
+        : buildEdges(neighbors, traces, s.myNodeNum),
+    [demo, s.nodes, neighbors, traces, s.myNodeNum],
   );
 
   const ids = useMemo(() => {
@@ -220,14 +232,30 @@ export default function Mesh() {
           </span>
           <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <button
+              className={demo ? "primary" : ""}
+              style={{ fontSize: 10, padding: "0 6px" }}
+              title={t(
+                "Enlaces inventados sobre tus nodos reales para ver cómo queda el grafo. No se guarda nada.",
+              )}
+              onClick={() => {
+                setSel(undefined);
+                setDemo((v) => !v);
+              }}
+            >
+              {demo ? t("◉ VISTA PREVIA") : t("○ VISTA PREVIA")}
+            </button>
+            <button
               style={{ fontSize: 10, padding: "0 6px" }}
               title={t("Releer vecinos y traceroutes de la base de datos")}
+              disabled={demo}
               onClick={() => setReload((v) => v + 1)}
             >
               ⟳ {t("RECARGAR")}
             </button>
-            <span className="dim" style={{ fontSize: 11 }}>
-              {t("{0} POR VECINOS", edges.filter((e) => e.src === "vecinos").length)}
+            <span className={demo ? "warn" : "dim"} style={{ fontSize: 11 }}>
+              {demo
+                ? t("DATOS FALSOS")
+                : t("{0} POR VECINOS", edges.filter((e) => e.src === "vecinos").length)}
             </span>
           </span>
         </div>
@@ -237,6 +265,8 @@ export default function Mesh() {
             {t(
               "SIN ENLACES — activa NEIGHBOR INFO en CONFIG o lanza traceroutes desde NODOS_",
             )}
+            <br />
+            {t("Para ver cómo quedaría el grafo, prueba VISTA PREVIA.")}
           </p>
         ) : (
           <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
@@ -358,9 +388,17 @@ export default function Mesh() {
         )}
 
         <div className="panel-foot">
-          <span>{t("LÍNEA CONTINUA = VECINO DIRECTO")}</span>
-          <span style={{ flex: 1 }} />
-          <span>{t("DISCONTINUA = TRAMO DE TRACEROUTE")}</span>
+          {demo ? (
+            <span className="warn">
+              {t("VISTA PREVIA: enlaces inventados, no hay nada de esto en la base")}
+            </span>
+          ) : (
+            <>
+              <span>{t("LÍNEA CONTINUA = VECINO DIRECTO")}</span>
+              <span style={{ flex: 1 }} />
+              <span>{t("DISCONTINUA = TRAMO DE TRACEROUTE")}</span>
+            </>
+          )}
         </div>
       </div>
     </main>

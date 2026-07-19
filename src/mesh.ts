@@ -58,6 +58,57 @@ export function summarize(
   return r;
 }
 
+/** PRNG determinista (mulberry32): la misma malla da siempre el mismo dibujo,
+ *  si no el grafo cambiaría en cada render y sería imposible juzgarlo. */
+function rng(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Enlaces inventados a partir de los nodos reales, para probar el dibujo del
+ *  grafo sin esperar a que la malla emita NeighborInfo. NO se guardan en la
+ *  base: viven solo en memoria mientras la vista previa está activa. */
+export function demoEdges(nodes: NodeEntry[], me?: number): Edge[] {
+  const r = rng(nodes.length * 7919 + (me ?? 0));
+  // por saltos reales cuando se conocen; si no, un nivel estable por nodo
+  const tier = (n: NodeEntry) =>
+    n.num === me ? 0 : (n.hopsAway ?? (n.num % 3) + 1);
+  const porNivel = new Map<number, NodeEntry[]>();
+  for (const n of nodes) {
+    const k = Math.min(4, tier(n));
+    porNivel.set(k, [...(porNivel.get(k) ?? []), n]);
+  }
+  const out = new Map<string, Edge>();
+  const add = (a: number, b: number) => {
+    if (a === b) return;
+    const k = edgeKey(a, b);
+    if (out.has(k)) return;
+    out.set(k, { a, b, snr: Math.round((r() * 20 - 8) * 10) / 10, src: "vecinos" });
+  };
+  const niveles = [...porNivel.keys()].sort((a, b) => a - b);
+  for (const nivel of niveles) {
+    // el nivel de arriba es el padre natural; el 0 (yo) no tiene padre
+    const padres = porNivel.get(nivel - 1) ?? porNivel.get(niveles[0]) ?? [];
+    const hijos = porNivel.get(nivel) ?? [];
+    for (const h of hijos) {
+      if (padres.length === 0) continue;
+      add(h.num, padres[Math.floor(r() * padres.length)].num);
+      // algunos nodos oyen a dos padres: da grafo, no árbol
+      if (r() < 0.35) add(h.num, padres[Math.floor(r() * padres.length)].num);
+    }
+    // enlaces laterales dentro del mismo nivel
+    for (let i = 0; i < hijos.length; i++) {
+      if (r() < 0.2) add(hijos[i].num, hijos[Math.floor(r() * hijos.length)].num);
+    }
+  }
+  return [...out.values()];
+}
+
 export interface Edge {
   a: number;
   b: number;
