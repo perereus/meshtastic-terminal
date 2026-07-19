@@ -49,33 +49,33 @@ export async function loadHistory(): Promise<void> {
   mutate((s) => {
     s.messages = msgs;
     s.waypoints = new Map(wps.map((w) => [w.id, w]));
-    // BD primero; el volcado de la radio pisará campo a campo lo que traiga
-    // (upsertNode conserva lo previo si el patch viene undefined).
+    // DB first; the radio's dump overwrites field by field what it brings
+    // (upsertNode keeps the previous value when the patch says undefined).
     s.nodes = new Map(nodes.map((n) => [n.num, n]));
   });
 }
 
-// Un fallo al escribir en SQLite no debe tumbar la recepción de paquetes, pero
-// tampoco puede desaparecer: sin rastro es imposible saber si una tabla está
-// vacía porque no llegó el dato o porque el guardado falló.
+// A failed SQLite write must not take down packet reception, but it can't
+// vanish either: with no trace it's impossible to tell whether a table is
+// empty because the data never arrived or because the write failed.
 function dbFail(what: string) {
   return (e: unknown) => addLog(`BD: fallo al guardar ${what}: ${e}`);
 }
 
-// Notificación del sistema. Permiso se pide la primera vez.
+// System notification. Permission is requested the first time.
 export async function notify(title: string, body: string): Promise<void> {
   try {
     let ok = await isPermissionGranted();
     if (!ok) ok = (await requestPermission()) === "granted";
     if (ok) sendNotification({ title, body });
   } catch {
-    // sin soporte de notificaciones: no es crítico
+    // no notification support: not critical
   }
 }
 
-// Mensajes entrantes: solo si la ventana no tiene el foco (si estás mirando el
-// chat no hace falta). Las alertas de nodo sí avisan siempre: no dependen de
-// que estés mirando la pantalla correcta.
+// Incoming messages: only when the window isn't focused (if you're looking at
+// the chat there's no need). Node alerts always notify: they don't depend on
+// you looking at the right screen.
 async function notifyIncoming(title: string, body: string): Promise<void> {
   if (await getCurrentWindow().isFocused().catch(() => false)) return;
   await notify(title, body);
@@ -89,19 +89,19 @@ function upsertNode(num: number, patch: Partial<NodeEntry>): void {
       shortName: num.toString(16).slice(-4),
       lastHeard: 0,
     };
-    // ponytail: un patch con undefined NO debe pisar el default/valor previo
-    // (p.ej. NodeInfo sin user dejaba longName=undefined → localeCompare casca)
+    // ponytail: a patch with undefined must NOT overwrite the default/previous
+    // value (e.g. NodeInfo without user left longName=undefined → localeCompare crashes)
     for (const k of Object.keys(patch) as (keyof NodeEntry)[]) {
       if (patch[k] === undefined) delete patch[k];
     }
     const merged = { ...prev, ...patch };
     s.nodes = new Map(s.nodes).set(num, merged);
-    // ponytail: write por evento; SQLite lo aguanta de sobra a este ritmo
+    // ponytail: one write per event; SQLite handles this rate easily
     saveNode(merged).catch(dbFail("nodo"));
-    // Solo cuenta como escucha si ya estamos configurados: durante el volcado
-    // inicial la radio re-emite su NodeDB entera y marcaríamos 91 nodos como
-    // "oídos ahora" en cada arranque. Se usa el lastHeard del paquete (epoch s)
-    // para que la hora sea la real y no la de la conexión.
+    // Only counts as a sighting once we're configured: during the initial dump
+    // the radio re-sends its whole NodeDB and we'd mark 91 nodes as
+    // "heard now" on every startup. The packet's lastHeard (epoch s) is used
+    // so the hour is the real one and not the connection time.
     if (
       patch.lastHeard !== undefined &&
       s.status === Types.DeviceStatusEnum.DeviceConfigured
@@ -109,9 +109,9 @@ function upsertNode(num: number, patch: Partial<NodeEntry>): void {
       marcarEscucha(num, patch.lastHeard * 1000).catch(dbFail("escucha"));
     }
 
-    // Cambio de distancia: un nodo que pasa de directo a 2 saltos suele ser un
-    // repetidor caído o una antena movida. Solo con la radio ya configurada,
-    // por el mismo motivo que las escuchas.
+    // Distance change: a node going from direct to 2 hops usually means a
+    // repeater down or a moved antenna. Only with the radio already
+    // configured, for the same reason as sightings.
     if (
       patch.hopsAway !== undefined &&
       prev.hopsAway !== undefined &&
@@ -123,8 +123,8 @@ function upsertNode(num: number, patch: Partial<NodeEntry>): void {
   });
 }
 
-// Un aviso por nodo cada 6 h: la distancia puede oscilar entre dos valores
-// durante un rato y no queremos una notificación por cada rebote.
+// One warning per node every 6 h: the distance can oscillate between two
+// values for a while and we don't want a notification per bounce.
 const rutaAvisada = new Map<number, number>();
 
 function avisarCambioRuta(n: NodeEntry, antes: number): void {
@@ -159,8 +159,8 @@ function wireEvents(d: MeshDevice): void {
     upsertNode(node.num, {
       longName: node.user?.longName ?? undefined,
       shortName: node.user?.shortName ?? undefined,
-      // lastHeard real del firmware. Si es 0 (nodo nunca oído directo) no lo
-      // fabricamos: undefined → upsert conserva prev/default (ago() muestra "—").
+      // real lastHeard from the firmware. If it's 0 (node never heard directly)
+      // we don't fabricate it: undefined → upsert keeps prev/default (ago() shows "—").
       lastHeard: node.lastHeard || undefined,
       snr: node.snr,
       batteryLevel: node.deviceMetrics?.batteryLevel,
@@ -174,14 +174,14 @@ function wireEvents(d: MeshDevice): void {
       hwModel: node.user?.hwModel !== undefined ? String(node.user.hwModel) : undefined,
       hopsAway: node.hopsAway,
       viaMqtt: node.viaMqtt,
-      // sin user no sabemos nada de su clave: undefined conserva lo anterior
+      // without user we know nothing about its key: undefined keeps the previous value
       hasKey: node.user ? node.user.publicKey.length > 0 : undefined,
     });
   });
 
-  // Durante el volcado de la NodeDB (configure) el core re-emite user/position
-  // por cada nodo. NO son escuchas en vivo: solo sellamos "ahora" si ya estamos
-  // configurados; en el volcado dejamos el lastHeard que puso onNodeInfoPacket.
+  // During the NodeDB dump (configure) the core re-emits user/position for
+  // every node. Those are NOT live sightings: we only stamp "now" when already
+  // configured; during the dump we keep the lastHeard set by onNodeInfoPacket.
   const liveTs = () =>
     getSnapshot().status === Types.DeviceStatusEnum.DeviceConfigured
       ? Math.floor(Date.now() / 1000)
@@ -192,14 +192,14 @@ function wireEvents(d: MeshDevice): void {
       longName: u.data.longName,
       shortName: u.data.shortName,
       lastHeard: liveTs(),
-      // clave pública presente ⇒ los DM con este nodo van cifrados con PKI
+      // public key present ⇒ DMs with this node are encrypted with PKI
       hasKey: (u.data.publicKey?.length ?? 0) > 0,
     });
   });
 
   d.events.onWaypointPacket.subscribe((p) => {
     const w = p.data;
-    // borrado: el firmware reenvía el waypoint con expire en el pasado
+    // deletion: the firmware re-sends the waypoint with expire in the past
     const expired = w.expire > 0 && w.expire * 1000 < Date.now();
     mutate((s) => {
       const m = new Map(s.waypoints);
@@ -235,8 +235,8 @@ function wireEvents(d: MeshDevice): void {
   });
 
   d.events.onPositionPacket.subscribe((p) => {
-    // señal de "respuesta recibida" ANTES del filtro: una posición sin fix
-    // también responde al PEDIR POS
+    // "reply received" signal BEFORE the filter: a position without a fix
+    // also answers the position request
     mutate((s) => {
       s.posUpdates = new Map(s.posUpdates).set(p.from, Date.now());
     });
@@ -269,8 +269,8 @@ function wireEvents(d: MeshDevice): void {
   });
 
   d.events.onMessagePacket.subscribe((pkt) => {
-    // El core hace echo de nuestro propio paquete (echoResponse=true) en cuanto
-    // la radio lo acepta. No lo duplicamos: lo usamos para marcar "sent".
+    // The core echoes our own packet (echoResponse=true) as soon as the radio
+    // accepts it. We don't duplicate it: we use it to mark "sent".
     const { myNodeNum } = getSnapshot();
     if (myNodeNum !== undefined && pkt.from === myNodeNum) {
       mutate((s) => {
@@ -289,10 +289,10 @@ function wireEvents(d: MeshDevice): void {
           return m;
         });
       });
-      // ponytail: "sent" es transitorio, no lo persistimos; delivered/failed sí
+      // ponytail: "sent" is transient, we don't persist it; delivered/failed we do
       return;
     }
-    // nodo ignorado: descartar su mensaje (ni chat, ni no-leídos, ni notificación)
+    // ignored node: drop its message (no chat, no unread, no notification)
     if (getSnapshot().nodes.get(pkt.from)?.ignored) return;
     const msg: Message = {
       id: pkt.id,
@@ -315,8 +315,8 @@ function wireEvents(d: MeshDevice): void {
     const who = nodes.get(pkt.from)?.longName ?? `!${pkt.from.toString(16)}`;
     const isDm = msg.convo.startsWith("dm:");
     const where = isDm ? "DM" : `#${channels.get(pkt.channel)?.name ?? pkt.channel}`;
-    // MUTE del canal (casilla en CONFIG // CANALES) silencia solo el canal:
-    // un DM sigue avisando aunque llegue por un canal silenciado.
+    // The channel MUTE (checkbox in CONFIG // CHANNELS) silences only the
+    // channel: a DM still notifies even when it arrives on a muted channel.
     const muted =
       !isDm &&
       (channels.get(pkt.channel)?.settings?.moduleSettings?.isMuted ?? false);
@@ -338,8 +338,8 @@ function wireEvents(d: MeshDevice): void {
     addLog(`Traceroute de !${pkt.from.toString(16)}: ${pkt.data.route.length + 1} saltos ida`);
   });
 
-  // NeighborInfo: cada nodo publica a quién oye y con qué SNR. Es la única
-  // fuente de enlaces que no depende de lanzar traceroutes a mano.
+  // NeighborInfo: each node publishes who it hears and with what SNR. It's the
+  // only source of links that doesn't depend on running traceroutes by hand.
   d.events.onNeighborInfoPacket.subscribe((pkt) => {
     const src = pkt.data.nodeId || pkt.from;
     const neighbors = pkt.data.neighbors.map(
@@ -355,7 +355,7 @@ function wireEvents(d: MeshDevice): void {
         index: ch.index,
         name: ch.settings?.name || (ch.index === 0 ? "Principal" : `Canal ${ch.index}`),
         role: ch.role,
-        settings: ch.settings, // guardamos PSK/opts para poder exportar la URL
+        settings: ch.settings, // keep PSK/opts so the URL can be exported
       });
     });
   });
@@ -396,22 +396,22 @@ export async function connectTcp(host: string): Promise<void> {
   await connect(await createTcpTransport(host, handleLost));
 }
 
-/** Radio simulada: para probar sin hardware ni vecinos. Escribe en la misma
- *  base que una conexión real, así que sus nodos (!7f00…) se mezclan con los
- *  de verdad; purgar o filtrar por ese prefijo si molestan. */
+/** Simulated radio: for testing without hardware or neighbors. It writes to
+ *  the same database as a real connection, so its nodes (!7f00…) mix with the
+ *  real ones; purge or filter by that prefix if they get in the way. */
 export async function connectFake(): Promise<void> {
   await connect(await createFakeTransport());
 }
 
-// La app registra aquí qué hacer cuando el enlace se cae solo (no un
-// disconnect manual): dispara la auto-reconexión.
+// The app registers here what to do when the link drops on its own (not a
+// manual disconnect): it triggers auto-reconnection.
 let onConnectionLost: (() => void) | undefined;
 export function setConnectionLostHandler(cb: (() => void) | undefined): void {
   onConnectionLost = cb;
 }
 
 function handleLost(): void {
-  if (!device) return; // ya desconectado manualmente
+  if (!device) return; // already disconnected manually
   device = undefined;
   mutate((s) => {
     s.status = Types.DeviceStatusEnum.DeviceDisconnected;
@@ -424,8 +424,8 @@ export async function connectBle(address: string): Promise<void> {
   await connect(await createBleTransport(address, handleLost));
 }
 
-// Importa canales desde una URL de Meshtastic (https://meshtastic.org/e/#<b64url>).
-// Acepta también solo el fragmento base64. Devuelve nº de canales aplicados.
+// Imports channels from a Meshtastic URL (https://meshtastic.org/e/#<b64url>).
+// Also accepts just the base64 fragment. Returns the number of channels applied.
 export async function importChannelSet(url: string): Promise<number> {
   if (!device) throw new Error("Sin conexión");
   const set = parseChannelSetUrl(url);
@@ -453,9 +453,9 @@ export async function importChannelSet(url: string): Promise<number> {
   return set.settings.length;
 }
 
-// ── Backup/restore de config completa ──────────────────────────────────────
-// Serializamos cada mensaje protobuf a binario+base64 dentro de un JSON:
-// robusto ante campos nuevos y sin depender del formato JSON de protobuf.
+// ── Full config backup/restore ─────────────────────────────────────────────
+// Each protobuf message is serialized to binary+base64 inside a JSON:
+// robust against new fields and without depending on protobuf's JSON format.
 const bytesToB64 = (b: Uint8Array) => btoa(String.fromCharCode(...b));
 const b64ToBytes = (s: string) =>
   Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -464,7 +464,7 @@ export function exportConfigJson(): string {
   const { config, moduleConfig, channels } = getSnapshot();
   const configs: string[] = [];
   for (const [case_, value] of config) {
-    if (case_ === "sessionkey") continue; // efímera, no restaurable
+    if (case_ === "sessionkey") continue; // ephemeral, not restorable
     configs.push(
       bytesToB64(
         toBinary(
@@ -540,8 +540,8 @@ export async function importConfigJson(json: string): Promise<number> {
   return n;
 }
 
-// ── Admin remoto ────────────────────────────────────────────────────────────
-// Envía un AdminMessage a otro nodo (canal admin / PKI según firmware).
+// ── Remote admin ────────────────────────────────────────────────────────────
+// Sends an AdminMessage to another node (admin channel / PKI depending on firmware).
 async function sendAdminTo(
   dest: number,
   payloadVariant: Protobuf.Admin.AdminMessage["payloadVariant"],
@@ -590,9 +590,9 @@ export async function runTraceroute(dest: number): Promise<void> {
     m.delete(dest);
     s.traceroutes = m;
   });
-  // El ack implícito puede expirar (TIMEOUT) aunque la RouteDiscovery llegue
-  // luego por su propio evento onTraceRoutePacket. No bloqueamos por el ack:
-  // lo registramos y dejamos que la UI espere la respuesta real.
+  // The implicit ack can expire (TIMEOUT) even when the RouteDiscovery arrives
+  // later through its own onTraceRoutePacket event. We don't block on the ack:
+  // we log it and let the UI wait for the real reply.
   device.traceRoute(dest).catch((e: unknown) => {
     const code = (e as { error?: number } | undefined)?.error;
     addLog(`Traceroute → !${dest.toString(16)}: ack ${routingErrName(code)}`);
@@ -609,7 +609,7 @@ export function toggleIgnored(num: number): void {
   if (n) upsertNode(num, { ignored: !n.ignored });
 }
 
-// Borra el nodo de la radio (si hay conexión) y de la BD/estado local.
+// Deletes the node from the radio (if connected) and from the local DB/state.
 export async function deleteNode(num: number): Promise<void> {
   await device?.removeNodeByNum(num).catch(() => {});
   mutate((s) => {
@@ -621,9 +621,9 @@ export async function deleteNode(num: number): Promise<void> {
   addLog(`Nodo !${num.toString(16)} borrado`);
 }
 
-// Pide la posición a un nodo. La respuesta llega por onPositionPacket (ya
-// cablead0) y actualiza nodo+mapa. Como en traceroute, el ack puede expirar
-// aunque la respuesta llegue después: no bloqueamos.
+// Requests a position from a node. The reply arrives via onPositionPacket
+// (already wired) and updates node+map. As with traceroute, the ack may expire
+// even though the reply comes later: we don't block.
 export function requestNodePosition(dest: number): void {
   if (!device) throw new Error("Sin conexión");
   device.requestPosition(dest).catch((e: unknown) => {
@@ -632,7 +632,7 @@ export function requestNodePosition(dest: number): void {
   });
 }
 
-// Posición fija para nodos sin GPS (el nuestro). El firmware la difunde al mesh.
+// Fixed position for nodes without GPS (ours). The firmware broadcasts it to the mesh.
 export async function setFixedPosition(lat: number, lon: number): Promise<void> {
   if (!device) throw new Error("Sin conexión");
   await device.setFixedPosition(lat, lon);
@@ -643,8 +643,8 @@ export async function clearFixedPosition(): Promise<void> {
   await device.removeFixedPosition();
 }
 
-// Emite un waypoint al canal. id=0 → nuevo (id aleatorio); id existente → edición.
-// El eco del propio paquete vuelve por onWaypointPacket, que es quien lo guarda.
+// Sends a waypoint to the channel. id=0 → new (random id); existing id → edit.
+// The echo of our own packet comes back via onWaypointPacket, which stores it.
 export async function sendWaypoint(
   w: Omit<Waypoint, "from" | "id"> & { id?: number },
   channel = 0,
@@ -666,7 +666,7 @@ export async function sendWaypoint(
   );
 }
 
-// Borrar = reemitirlo con expire en el pasado: así se va de todos los nodos.
+// Deleting = re-sending it with expire in the past: that way it leaves every node.
 export async function deleteWaypoint(id: number): Promise<void> {
   const w = getSnapshot().waypoints.get(id);
   if (!w) return;
@@ -679,7 +679,7 @@ export async function deleteWaypoint(id: number): Promise<void> {
   await deleteWaypointDb(id).catch(() => {});
 }
 
-// Reintenta un mensaje fallido reusando la misma entrada (id/ts intactos).
+// Retries a failed message reusing the same entry (id/ts untouched).
 export async function retryMessage(msg: Message): Promise<void> {
   if (!device) throw new Error("Sin conexión");
   const isDm = msg.convo.startsWith("dm:");
@@ -712,7 +712,7 @@ export async function sendText(
   const channel = isDm ? 0 : Number(convo.slice(3));
 
   const msg: Message = {
-    id: Date.now(), // id local provisional; el definitivo llega con el ack
+    id: Date.now(), // provisional local id; the final one arrives with the ack
     convo,
     from: 0,
     to: isDm ? (destination as number) : 0xffffffff,

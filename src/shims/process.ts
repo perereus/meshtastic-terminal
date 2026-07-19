@@ -1,5 +1,5 @@
-// ponytail: tslog (dentro de @meshtastic/core) referencia `process` al cargar;
-// este módulo debe ser el PRIMER import de main.tsx.
+// ponytail: tslog (inside @meshtastic/core) references `process` on load;
+// this module must be the FIRST import in main.tsx.
 (globalThis as Record<string, unknown>).process ??= {
   env: {},
   argv: [],
@@ -7,7 +7,7 @@
   stderr: undefined,
   cwd: () => "/",
 };
-// tslog también llama Buffer.isBuffer() en cada log
+// tslog also calls Buffer.isBuffer() on every log
 (globalThis as Record<string, unknown>).Buffer ??= {
   isBuffer: () => false,
 };

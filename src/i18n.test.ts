@@ -1,17 +1,17 @@
 // Self-check: node --experimental-strip-types src/i18n.test.ts
-// Una clave sin traducir no rompe nada: t() devuelve el español. Justo por eso
-// hay que buscarla a propósito, o la UI en inglés se llena de restos.
+// An untranslated key breaks nothing: t() returns the Spanish. That's exactly
+// why it has to be hunted on purpose, or the English UI fills up with leftovers.
 import assert from "node:assert";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import en from "./locales/en.ts";
 
-// t("...") o t('...'), quedándose con el literal
+// t("...") or t('...'), keeping the literal
 const CALL = /\bt\(\s*(["'])(.*?)(?<!\\)\1/gs;
 
-// claves que no aparecen como literal porque se construyen en tiempo de
-// ejecución: pestañas (t(tab)), nombres de tema (t(THEME_LABELS[x])) y los
-// textos de previsión de batería, que battery.ts devuelve como clave
+// keys that never appear as a literal because they're built at runtime:
+// tabs (t(tab)), theme names (t(THEME_LABELS[x])) and the battery forecast
+// texts, which battery.ts returns as a key
 const DINAMICAS = [
   "NODOS",
   "MAPA",
@@ -34,7 +34,7 @@ function fuentes(dir: string): string[] {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
     if (e.isDirectory()) out.push(...fuentes(p));
-    // i18n.ts queda fuera: su comentario de ejemplo no es una cadena real
+    // i18n.ts is excluded: its example comment is not a real string
     else if (/\.tsx?$/.test(e.name) && !/\.test\.ts$/.test(e.name))
       if (!p.includes("locales") && e.name !== "i18n.ts") out.push(p);
   }
@@ -52,7 +52,7 @@ assert.ok(usadas.size > 100, `pocas claves encontradas (${usadas.size}): ¿regex
 const faltan = [...usadas].filter((k) => !(k in en));
 assert.deepEqual(faltan, [], `sin traducir en en.ts:\n  ${faltan.join("\n  ")}`);
 
-// las dinámicas no salen del escaneo, así que se comprueban a mano
+// the dynamic ones don't show up in the scan, so they're checked by hand
 const faltanDin = DINAMICAS.filter((k) => !(k in en));
 assert.deepEqual(faltanDin, [], `claves dinámicas sin traducir: ${faltanDin}`);
 

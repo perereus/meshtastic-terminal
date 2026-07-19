@@ -1,7 +1,7 @@
 import en from "./locales/en";
 
-/** i18n mínimo: la clave ES el texto en español; en.ts mapea es→en.
- *  Añadir idioma = un archivo más y una rama en t(). Sin dependencias. */
+/** Minimal i18n: the key IS the Spanish text; en.ts maps es→en.
+ *  Adding a language = one more file and one branch in t(). No dependencies. */
 
 export type Lang = "es" | "en";
 
@@ -15,15 +15,15 @@ export function getLang(): Lang {
 
 export function setLang(l: Lang): void {
   localStorage.setItem(LANG_KEY, l);
-  // ponytail: recarga en vez de re-render reactivo; cambiar idioma es
-  // excepcional y así ningún componente necesita suscribirse
+  // ponytail: reload instead of a reactive re-render; changing language is
+  // exceptional, and this way no component needs to subscribe
   location.reload();
 }
 
-// una sola lectura por carga de página (el cambio de idioma recarga)
+// a single read per page load (changing the language reloads)
 const lang = getLang();
 
-/** t("texto en español") · t("hace {0}", x) para interpolar */
+/** t("texto en español") · t("hace {0}", x) to interpolate */
 export function t(es: string, ...args: (string | number)[]): string {
   let s = lang === "en" ? (en[es] ?? es) : es;
   args.forEach((a, i) => {

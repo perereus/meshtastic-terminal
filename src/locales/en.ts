@@ -1,4 +1,4 @@
-/** es → en. Clave = texto español literal usado en el código. */
+/** es → en. Key = the literal Spanish text used in the code. */
 const en: Record<string, string> = {
   // Chat
   "PANEL // CANALES": "PANEL // CHANNELS",
@@ -32,7 +32,7 @@ const en: Record<string, string> = {
   "{0} RESULTADOS · CLIC PARA IR A LA CONVERSACIÓN":
     "{0} RESULTS · CLICK TO JUMP TO THE CONVERSATION",
 
-  // Telemetría
+  // Telemetry
   "CANAL OCUPADO (%)": "CHANNEL BUSY (%)",
   "NIVEL BATERÍA (%)": "BATTERY LEVEL (%)",
   "TENSIÓN BATERÍA (V)": "BATTERY VOLTAGE (V)",
@@ -62,7 +62,7 @@ const en: Record<string, string> = {
   "SE GUARDA TODO LO": "EVERYTHING THE MESH",
   "QUE EMITE LA MALLA": "TRANSMITS IS STORED",
 
-  // Mapa
+  // Map
   NODO: "NODE",
   VISTO: "SEEN",
   "hace {0}": "{0} ago",
@@ -87,7 +87,7 @@ const en: Record<string, string> = {
   "[ EMITIR ]": "[ SEND ]",
   "[ CANCELAR ]": "[ CANCEL ]",
 
-  // Nodos
+  // Nodes
   "{0} enviado ✓ (requiere permiso admin en el nodo remoto)":
     "{0} sent ✓ (requires admin permission on the remote node)",
   "SIN RESPUESTA (60 s)": "NO REPLY (60 s)",
@@ -151,7 +151,7 @@ const en: Record<string, string> = {
   "0–5 dB REG": "0–5 dB FAIR",
   "<0 dB MAL": "<0 dB BAD",
 
-  // App (cabecera, conexión, debug, pie)
+  // App (header, connection, debug, footer)
   "ERROR EN PANTALLA": "SCREEN ERROR",
   Minimizar: "Minimize",
   Maximizar: "Maximize",
@@ -161,7 +161,7 @@ const en: Record<string, string> = {
   MALLA: "MESH",
   TELEMETRÍA: "TELEMETRY",
 
-  // Grafo de malla
+  // Mesh graph
   "RESUMEN // MALLA": "SUMMARY // MESH",
   "ACTIVOS 1 H": "ACTIVE 1 H",
   "ACTIVOS 24 H": "ACTIVE 24 H",

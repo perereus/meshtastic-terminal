@@ -1,9 +1,9 @@
 import { Types, Utils } from "@meshtastic/core";
 
 /**
- * Construye un Transport de @meshtastic/core a partir de tres primitivas:
- * escribir bytes, suscribirse a bytes entrantes y cerrar. El framing del
- * protocolo lo ponen Utils.toDeviceStream/fromDeviceStream.
+ * Builds a @meshtastic/core Transport from three primitives: write bytes,
+ * subscribe to incoming bytes and close. The protocol framing is handled by
+ * Utils.toDeviceStream/fromDeviceStream.
  */
 export async function makeTransport(
   writeRaw: (chunk: Uint8Array) => Promise<void>,

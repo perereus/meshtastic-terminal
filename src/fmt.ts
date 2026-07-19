@@ -9,10 +9,10 @@ export function ago(epochS: number): string {
   return `${Math.floor(s / 86400)}d`;
 }
 
-/** [███████░░░]  72% — o PWR si está enchufado.
- *  Los bloques U+2588/U+2591 dependen de la JetBrains Mono empaquetada en
- *  App.css: los subsets de Google Fonts recortan ese rango y descuadran.
- *  El porcentaje se alinea con NBSP porque el HTML colapsa espacios normales. */
+/** [███████░░░]  72% — or PWR when plugged in.
+ *  The U+2588/U+2591 blocks depend on the JetBrains Mono bundled in
+ *  App.css: Google Fonts subsets cut that range and break the alignment.
+ *  The percentage is padded with NBSP because HTML collapses normal spaces. */
 export function asciiBattery(level?: number): string {
   if (level === undefined) return "—";
   if (level > 100) return "[██████████] PWR";
@@ -21,7 +21,7 @@ export function asciiBattery(level?: number): string {
   return `[${"█".repeat(full)}${"░".repeat(10 - full)}] ${pct}%`;
 }
 
-/** clase de color según SNR: ≥5 ok, 0–5 warn, <0 err */
+/** color class by SNR: ≥5 ok, 0–5 warn, <0 err */
 export function snrClass(snr?: number): string {
   if (snr === undefined) return "dim";
   if (snr >= 5) return "ok";

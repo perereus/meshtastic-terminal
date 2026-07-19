@@ -1,16 +1,16 @@
 import { Protobuf, Types } from "@meshtastic/core";
 import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
-// extensión explícita para que el arnés de Node pueda importar este módulo
+// explicit extension so the Node harness can import this module
 import { makeTransport } from "./bridge.ts";
 
 /**
- * Radio simulada: habla el mismo protocolo por bytes que una de verdad, así
- * que ejercita toda la pila (framing, protobuf, eventos, guardado en SQLite)
- * sin hardware. Sirve para probar lo que depende de tener vecinos o de que
- * alguien conteste: traceroutes, NeighborInfo, cambios de ruta, acks.
+ * Simulated radio: it speaks the same byte protocol as a real one, so it
+ * exercises the whole stack (framing, protobuf, events, SQLite writes) without
+ * hardware. It covers what depends on having neighbors or on someone replying:
+ * traceroutes, NeighborInfo, route changes, acks.
  *
- * No pretende imitar el firmware: solo emite lo suficiente para que la app se
- * comporte como en la malla real.
+ * It doesn't try to imitate the firmware: it only emits enough for the app to
+ * behave as it does on a real mesh.
  */
 
 const MI_NUM = 0x7f000001;
@@ -53,7 +53,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
   const fromRadio = (v: Protobuf.Mesh.FromRadio["payloadVariant"]) =>
     create(Protobuf.Mesh.FromRadioSchema, { id: nextId(), payloadVariant: v });
 
-  /** Empaqueta datos de aplicación como si vinieran por la malla */
+  /** Wraps application data as if it came over the mesh */
   const meshPacket = (
     from: number,
     portnum: Protobuf.Portnums.PortNum,
@@ -107,7 +107,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
       }),
     });
 
-  /** Secuencia de arranque, igual que la que manda el firmware al conectar */
+  /** Startup sequence, the same the firmware sends on connect */
   const handshake = (configId: number) => {
     enviar(
       fromRadio({
@@ -164,7 +164,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
         }),
       }),
     );
-    // el nodo propio también aparece en la NodeDB
+    // our own node also shows up in the NodeDB
     enviar(
       nodeInfo({
         num: MI_NUM,
@@ -180,7 +180,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
     enviar(fromRadio({ case: "configCompleteId", value: configId }));
   };
 
-  /** ACK de enrutado: sin esto los mensajes se quedarían en "enviado" */
+  /** Routing ACK: without it messages would stay at "sent" */
   const ack = (requestId: number) =>
     enviar(
       meshPacket(
@@ -196,16 +196,16 @@ export async function createFakeTransport(): Promise<Types.Transport> {
       ),
     );
 
-  // ── lo que la app manda a la radio ──────────────────────────────────────
+  // ── what the app sends to the radio ─────────────────────────────────────
   const recibirDeLaApp = (chunk: Uint8Array) => {
-    // llega ya enmarcado por toDeviceStream: 0x94 0xc3 y dos bytes de longitud
+    // arrives already framed by toDeviceStream: 0x94 0xc3 and two length bytes
     const cuerpo =
       chunk[0] === 148 && chunk[1] === 195 ? chunk.subarray(4) : chunk;
     let msg: Protobuf.Mesh.ToRadio;
     try {
       msg = fromBinary(Protobuf.Mesh.ToRadioSchema, cuerpo);
     } catch {
-      return; // trozo suelto: el simulador no reensambla
+      return; // stray chunk: the simulator doesn't reassemble
     }
     if (msg.payloadVariant.case === "wantConfigId") {
       setTimeout(() => handshake(msg.payloadVariant.value as number), 60);
@@ -216,16 +216,16 @@ export async function createFakeTransport(): Promise<Types.Transport> {
     if (p.payloadVariant.case !== "decoded") return;
     const data = p.payloadVariant.value;
 
-    // ack de todo lo que se envía, para que el chat marque entregado
+    // ack everything that is sent, so the chat marks it delivered
     setTimeout(() => ack(p.id), 120);
 
     if (data.portnum === Protobuf.Portnums.PortNum.TRACEROUTE_APP) {
-      // respuesta con ruta de ida y vuelta pasando por un repetidor
+      // reply with an outbound and return route through a repeater
       const destino = p.to;
       const intermedio = NODOS.find((n) => n.num !== destino && n.hops === 0);
       const ruta = create(Protobuf.Mesh.RouteDiscoverySchema, {
         route: intermedio ? [intermedio.num] : [],
-        snrTowards: [24, 12], // dB ×4, como el firmware
+        snrTowards: [24, 12], // dB ×4, like the firmware
         routeBack: intermedio ? [intermedio.num] : [],
         snrBack: [20, 10],
       });
@@ -244,7 +244,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
     }
 
     if (data.portnum === Protobuf.Portnums.PortNum.POSITION_APP) {
-      // petición de posición: contesta el destino con la suya
+      // position request: the destination answers with its own
       const n = NODOS.find((x) => x.num === p.to);
       if (n) {
         setTimeout(
@@ -269,7 +269,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
     }
 
     if (data.portnum === Protobuf.Portnums.PortNum.TEXT_MESSAGE_APP) {
-      // alguien responde al canal para que el chat tenga vida
+      // someone answers on the channel so the chat has some life
       const quien = NODOS[1];
       setTimeout(
         () =>
@@ -286,9 +286,9 @@ export async function createFakeTransport(): Promise<Types.Transport> {
     }
   };
 
-  // ── tráfico espontáneo de la malla ──────────────────────────────────────
+  // ── spontaneous mesh traffic ────────────────────────────────────────────
   const arrancarTrafico = () => {
-    // telemetría cada 20 s: alimenta las gráficas y la previsión de batería
+    // telemetry every 20 s: feeds the charts and the battery forecast
     timers.push(
       setInterval(() => {
         for (const n of NODOS) {
@@ -318,7 +318,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
       }, 20_000),
     );
 
-    // NeighborInfo cada 45 s: llena el grafo de la pestaña MALLA
+    // NeighborInfo every 45 s: fills the graph on the MESH tab
     timers.push(
       setInterval(() => {
         for (const n of NODOS) {
@@ -348,8 +348,8 @@ export async function createFakeTransport(): Promise<Types.Transport> {
       }, 45_000),
     );
 
-    // un nodo que cambia de distancia cada 90 s: dispara la detección de
-    // cambios de topología sin esperar a que se caiga un repetidor de verdad
+    // a node that changes distance every 90 s: triggers the topology change
+    // detection without waiting for a real repeater to go down
     timers.push(
       setInterval(() => {
         const n = NODOS[2];
@@ -358,7 +358,7 @@ export async function createFakeTransport(): Promise<Types.Transport> {
       }, 90_000),
     );
 
-    // mensaje suelto cada 60 s
+    // a stray message every 60 s
     timers.push(
       setInterval(() => {
         const n = NODOS[Math.floor(Math.random() * NODOS.length)];

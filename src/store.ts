@@ -13,9 +13,9 @@ export interface NodeEntry {
   hwModel?: string;
   hopsAway?: number;
   viaMqtt?: boolean;
-  hasKey?: boolean; // tiene clave pública ⇒ DM cifrados con PKI
-  fav?: boolean; // local: primero en la lista
-  ignored?: boolean; // local: sus mensajes se descartan
+  hasKey?: boolean; // has a public key ⇒ DMs encrypted with PKI
+  fav?: boolean; // local: first in the list
+  ignored?: boolean; // local: its messages are discarded
 }
 
 export interface Message {
@@ -27,8 +27,8 @@ export interface Message {
   text: string;
   ts: number; // epoch ms
   mine: boolean;
-  // queued: en cola local · sent: la radio aceptó el paquete (eco propio) ·
-  // delivered: ACK de routing recibido · failed: error/timeout
+  // queued: waiting locally · sent: the radio accepted the packet (own echo) ·
+  // delivered: routing ACK received · failed: error/timeout
   state: "queued" | "sent" | "delivered" | "failed";
 }
 
@@ -36,7 +36,7 @@ export interface ChannelEntry {
   index: number;
   name: string;
   role: number; // Protobuf.Channel.Channel_Role
-  settings?: Protobuf.Channel.ChannelSettings; // crudo, para exportar URL
+  settings?: Protobuf.Channel.ChannelSettings; // raw, to export the URL
 }
 
 export interface Waypoint {
@@ -45,10 +45,10 @@ export interface Waypoint {
   lon: number;
   name: string;
   description: string;
-  icon: number; // codepoint del emoji (0 = sin icono)
-  expire: number; // epoch s · 0 = no caduca
-  lockedTo: number; // 0 = editable por cualquiera
-  from: number; // quién lo emitió
+  icon: number; // emoji codepoint (0 = no icon)
+  expire: number; // epoch s · 0 = never expires
+  lockedTo: number; // 0 = editable by anyone
+  from: number; // who sent it
 }
 
 export interface Traceroute {
@@ -56,7 +56,7 @@ export interface Traceroute {
   snrTowards: number[]; // dB ×4
   routeBack: number[];
   snrBack: number[]; // dB ×4
-  ts: number; // epoch ms de recepción
+  ts: number; // epoch ms when received
 }
 
 interface State {
@@ -70,10 +70,10 @@ interface State {
     string,
     Protobuf.ModuleConfig.ModuleConfig["payloadVariant"]["value"]
   >;
-  traceroutes: Map<number, Traceroute>; // key: nodo destino
-  waypoints: Map<number, Waypoint>; // key: id del waypoint
-  posUpdates: Map<number, number>; // key: nodo → ts ms del último PositionPacket
-  unread: Map<string, number>; // key: convo → nº mensajes sin leer
+  traceroutes: Map<number, Traceroute>; // key: destination node
+  waypoints: Map<number, Waypoint>; // key: waypoint id
+  posUpdates: Map<number, number>; // key: node → ts ms of the last PositionPacket
+  unread: Map<string, number>; // key: convo → number of unread messages
   log: string[];
 }
 
@@ -90,7 +90,7 @@ const state: State = {
   log: [],
 };
 
-// Instantánea inmutable para useSyncExternalStore
+// Immutable snapshot for useSyncExternalStore
 let snapshot = { ...state, version: 0 };
 const listeners = new Set<() => void>();
 
@@ -111,7 +111,7 @@ export function getSnapshot() {
 
 export function addLog(text: string): void {
   mutate((s) => {
-    // ponytail: log acotado a 500 líneas, suficiente para diagnóstico
+    // ponytail: log capped at 500 lines, enough for diagnosis
     s.log = [
       ...s.log.slice(-499),
       `${new Date().toLocaleTimeString()} ${text}`,
@@ -126,7 +126,7 @@ export function markUnread(convo: string): void {
 }
 
 export function clearUnread(convo: string): void {
-  if (!state.unread.has(convo)) return; // evita re-render inútil
+  if (!state.unread.has(convo)) return; // avoids a useless re-render
   mutate((s) => {
     const m = new Map(s.unread);
     m.delete(convo);

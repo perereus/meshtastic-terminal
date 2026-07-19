@@ -1,0 +1,286 @@
+{
+ "src/App.tsx": [
+  [
+   371,
+   "    if (reconnectBusyRef.current) return; // ya hay un intento en marcha"
+  ],
+  [
+   378,
+   "      if (!wantRef.current) return; // el usuario canceló mientras reconectaba"
+  ]
+ ],
+ "src/alerts.ts": [
+  [
+   7,
+   "  battery: number; // % · avisar por debajo"
+  ],
+  [
+   8,
+   "  silentH: number; // horas sin dar señal"
+  ],
+  [
+   9,
+   "  autonomiaH: number; // horas de autonomía restante · 0 = no avisar"
+  ],
+  [
+   37,
+   "  key: string; // nodo+tipo, para no repetir el aviso"
+  ],
+  [
+   39,
+   "  name: string; // nombre legible del nodo"
+  ],
+  [
+   40,
+   "  value: number; // % de batería · horas de silencio"
+  ]
+ ],
+ "src/battery.test.ts": [
+  [
+   11,
+   "    ts: NOW - (n - 1 - i) * H * 0.5, // una muestra cada media hora"
+  ]
+ ],
+ "src/battery.ts": [
+  [
+   3,
+   "  value: number; // % de batería"
+  ],
+  [
+   14,
+   "  ultimo: number; // último % conocido"
+  ]
+ ],
+ "src/channelUrl.test.ts": [
+  [
+   44,
+   "assert.throws(() => parseChannelSetUrl(\"https://x/e/#\"), /vacía/);"
+  ]
+ ],
+ "src/locales/en.ts": [
+  [
+   75,
+   "  \"PANEL // MAPA TÁCTICO\": \"PANEL // TACTICAL MAP\","
+  ],
+  [
+   250,
+   "  \"CONFIG // APLICACIÓN\": \"CONFIG // APPLICATION\","
+  ],
+  [
+   282,
+   "  \"CONFIG // POSICIÓN FIJA\": \"CONFIG // FIXED POSITION\","
+  ],
+  [
+   337,
+   "  \"CONFIG // BASE DE DATOS\": \"CONFIG // DATABASE\","
+  ]
+ ],
+ "src/main.tsx": [
+  [
+   7,
+   "applyTheme(); // antes del primer render, sin parpadeo del tema por defecto"
+  ]
+ ],
+ "src/mesh.test.ts": [
+  [
+   55,
+   "    nd({ num: 4, lastHeard: 0 }), // en la NodeDB pero nunca oído"
+  ],
+  [
+   79,
+   "    nd({ num: 3, fav: true, lastHeard: hAgo(2) }), // hablando, no es mudo"
+  ],
+  [
+   80,
+   "    nd({ num: 4, lastHeard: hAgo(90) }), // callado pero no favorito"
+  ]
+ ],
+ "src/mesh.ts": [
+  [
+   7,
+   "  nuncaOidos: number; // lastHeard 0: vienen de la NodeDB, no los hemos oído"
+  ],
+  [
+   11,
+   "  bateriaBaja: number; // <= 20 % (>100 es alimentación externa, no cuenta)"
+  ],
+  [
+   12,
+   "  saltos: Map<number | \"?\", number>; // hopsAway → nº de nodos"
+  ],
+  [
+   13,
+   "  mudos: NodeEntry[]; // favoritos callados, el que más primero"
+  ],
+  [
+   143,
+   "        snr: snr !== undefined ? snr / 4 : undefined, // el firmware manda dB×4"
+  ]
+ ],
+ "src/radio.ts": [
+  [
+   358,
+   "        settings: ch.settings, // guardamos PSK/opts para poder exportar la URL"
+  ],
+  [
+   414,
+   "  if (!device) return; // ya desconectado manualmente"
+  ],
+  [
+   467,
+   "    if (case_ === \"sessionkey\") continue; // efímera, no restaurable"
+  ],
+  [
+   715,
+   "    id: Date.now(), // id local provisional; el definitivo llega con el ack"
+  ]
+ ],
+ "src/screens/Config.tsx": [
+  [
+   518,
+   "        <Section title={t(\"CONFIG // APLICACIÓN\")}>"
+  ],
+  [
+   729,
+   "        <Section title={t(\"CONFIG // POSICIÓN FIJA\")}>"
+  ],
+  [
+   838,
+   "                  setImportPending(\"\"); // URL cambiada → invalida confirmación"
+  ],
+  [
+   1284,
+   "        <Section title={t(\"CONFIG // BASE DE DATOS\")}>"
+  ]
+ ],
+ "src/screens/MapView.tsx": [
+  [
+   11,
+   "  id?: number; // definido = edición"
+  ],
+  [
+   16,
+   "  icon: string; // un emoji"
+  ],
+  [
+   17,
+   "  expireH: number; // horas · 0 = no caduca"
+  ],
+  [
+   220,
+   "            {t(\"PANEL // MAPA TÁCTICO\")} · {t(\"{0} NODOS\", s.nodes.size)} ·{\" \"}"
+  ]
+ ],
+ "src/screens/Mesh.tsx": [
+  [
+   33,
+   "    const ang = i * 2.399963; // ángulo áureo"
+  ],
+  [
+   44,
+   "  let temp = w / 8; // desplazamiento máximo por iteración, se enfría a 0"
+  ],
+  [
+   99,
+   "  const pad = 60; // sitio para las etiquetas, que van a la derecha del nodo"
+  ]
+ ],
+ "src/screens/Nodes.tsx": [
+  [
+   111,
+   "  snrs: number[]; // dB ×4, un valor por segmento (nodo receptor)"
+  ],
+  [
+   132,
+   "  posTs?: number; // ts del último PositionPacket recibido de este nodo"
+  ]
+ ],
+ "src/store.ts": [
+  [
+   16,
+   "  hasKey?: boolean; // tiene clave pública ⇒ DM cifrados con PKI"
+  ],
+  [
+   17,
+   "  fav?: boolean; // local: primero en la lista"
+  ],
+  [
+   18,
+   "  ignored?: boolean; // local: sus mensajes se descartan"
+  ],
+  [
+   39,
+   "  settings?: Protobuf.Channel.ChannelSettings; // crudo, para exportar URL"
+  ],
+  [
+   48,
+   "  icon: number; // codepoint del emoji (0 = sin icono)"
+  ],
+  [
+   49,
+   "  expire: number; // epoch s · 0 = no caduca"
+  ],
+  [
+   50,
+   "  lockedTo: number; // 0 = editable por cualquiera"
+  ],
+  [
+   51,
+   "  from: number; // quién lo emitió"
+  ],
+  [
+   59,
+   "  ts: number; // epoch ms de recepción"
+  ],
+  [
+   73,
+   "  traceroutes: Map<number, Traceroute>; // key: nodo destino"
+  ],
+  [
+   74,
+   "  waypoints: Map<number, Waypoint>; // key: id del waypoint"
+  ],
+  [
+   75,
+   "  posUpdates: Map<number, number>; // key: nodo → ts ms del último PositionPacket"
+  ],
+  [
+   76,
+   "  unread: Map<string, number>; // key: convo → nº mensajes sin leer"
+  ],
+  [
+   129,
+   "  if (!state.unread.has(convo)) return; // evita re-render inútil"
+  ]
+ ],
+ "src/theme.ts": [
+  [
+   40,
+   "  applyTheme(); // en vivo, sin recargar"
+  ]
+ ],
+ "src/transport/ble.ts": [
+  [
+   25,
+   "  svc: boolean; // anuncia el servicio Meshtastic"
+  ],
+  [
+   96,
+   "    await stopScan().catch(() => {}); // cortar escaneo pase lo que pase"
+  ],
+  [
+   127,
+   "        if (!closed) onLost?.(); // caída inesperada (no un disconnect manual)"
+  ]
+ ],
+ "src/transport/fake.ts": [
+  [
+   208,
+   "      return; // trozo suelto: el simulador no reensambla"
+  ],
+  [
+   228,
+   "        snrTowards: [24, 12], // dB ×4, como el firmware"
+  ]
+ ]
+}

@@ -32,8 +32,8 @@ type Mqtt = Protobuf.ModuleConfig.ModuleConfig_MQTTConfig;
 type Neigh = Protobuf.ModuleConfig.ModuleConfig_NeighborInfoConfig;
 type RangeT = Protobuf.ModuleConfig.ModuleConfig_RangeTestConfig;
 
-// Precisión de posición por canal, mismos escalones que la app oficial.
-// Bits de precisión → radio aproximado del área difundida.
+// Position precision per channel, same steps as the official app.
+// Precision bits → approximate radius of the broadcast area.
 const PRECISION_OPTS: [number, string][] = [
   [0, t("SIN POSICIÓN")],
   [10, "±23 km"],
@@ -85,7 +85,7 @@ function Section(props: {
               setCls("warn");
               setBusy(true);
               try {
-                // el ack de la radio puede perderse: no colgar la UI para siempre
+                // the radio's ack can get lost: don't hang the UI forever
                 await Promise.race([
                   props.onSave?.(),
                   new Promise((_, rej) =>
@@ -136,7 +136,7 @@ export default function Config() {
   const [txEnabled, setTxEnabled] = useState(true);
   const [chNames, setChNames] = useState<Record<number, string>>({});
   const [chPsks, setChPsks] = useState<Record<number, string>>({}); // base64
-  // resto de opciones por canal (rol, MQTT, precisión pos, mute) — solo las tocadas
+  // remaining per-channel options (role, MQTT, pos precision, mute) — only touched ones
   const [chExtra, setChExtra] = useState<
     Record<
       number,
@@ -163,7 +163,7 @@ export default function Config() {
   const [rtOn, setRtOn] = useState(false);
   const [rtSender, setRtSender] = useState(0);
   const [rtSave, setRtSave] = useState(false);
-  // base de datos
+  // database
   const [stats, setStats] = useState<{
     messages: number;
     telemetry: number;
@@ -173,7 +173,7 @@ export default function Config() {
   const [purgeArm, setPurgeArm] = useState(false);
   const [autoPurge, setAutoPurge] = useState(getAutoPurgeDays);
   const [purgeMsg, setPurgeMsg] = useState("");
-  // dispositivo/posición/pantalla/energía
+  // device/position/display/power
   const [devRole, setDevRole] = useState(0);
   const [posBcast, setPosBcast] = useState(0);
   const [posSmart, setPosSmart] = useState(true);
@@ -184,7 +184,7 @@ export default function Config() {
   const [bkCls, setBkCls] = useState("");
   const [importPending, setImportPending] = useState("");
 
-  // módulos
+  // modules
   const [mqEnabled, setMqEnabled] = useState(false);
   const [mqAddress, setMqAddress] = useState("");
   const [mqUser, setMqUser] = useState("");
@@ -327,7 +327,7 @@ export default function Config() {
     await device?.commitEditSettings();
   };
 
-  // PSK en base64 estándar (como las apps oficiales). Vacío = sin cifrado.
+  // PSK in standard base64 (like the official apps). Empty = no encryption.
   const pskToB64 = (b?: Uint8Array) =>
     b && b.length ? btoa(String.fromCharCode(...b)) : "";
   const pskFromB64 = (str: string): Uint8Array => {
@@ -340,8 +340,8 @@ export default function Config() {
     return bytes;
   };
 
-  // guarda dispositivo+posición+pantalla+energía de una vez (spread conserva
-  // los campos no expuestos)
+  // saves device+position+display+power in one go (the spread keeps the
+  // fields not exposed here)
   const saveDevice = async () => {
     const cfgs: Protobuf.Config.Config["payloadVariant"][] = [
       { case: "device", value: { ...devCfg, role: devRole } as Dev },
@@ -392,7 +392,7 @@ export default function Config() {
     }
   };
 
-  // conserva los campos no expuestos en la UI (spread del mensaje actual)
+  // keeps the fields not exposed in the UI (spread of the current message)
   const saveModule = async (
     payloadVariant: Protobuf.ModuleConfig.ModuleConfig["payloadVariant"],
   ) => {
@@ -416,8 +416,8 @@ export default function Config() {
       }),
     });
 
-  // El firmware exige 14400 s (4 h) como mínimo: por debajo rechaza el cambio
-  // y devuelve la config anterior, que parece "no se guarda".
+  // The firmware requires 14400 s (4 h) minimum: below that it rejects the
+  // change and returns the previous config, which looks like "it won't save".
   const NEIGH_MIN = 14_400;
 
   const saveNeigh = () =>
@@ -456,7 +456,7 @@ export default function Config() {
         create(Protobuf.Channel.ChannelSchema, {
           index,
           role: ex.role ?? ch.role,
-          // conservar los settings no expuestos (spread del mensaje actual)
+          // keep the settings not exposed here (spread of the current message)
           settings: {
             ...ch.settings,
             name: chNames[index] ?? ch.name,
@@ -502,7 +502,7 @@ export default function Config() {
         await navigator.clipboard.writeText(url);
         setCopied(true);
       } catch {
-        // clipboard puede estar bloqueado; el usuario copia del campo
+        // clipboard may be blocked; the user can copy from the field
       }
     } catch (e) {
       setExportUrl(`ERROR: ${e}`);
@@ -835,7 +835,7 @@ export default function Config() {
                 style={{ flex: 1 }}
                 onChange={(e) => {
                   setChUrl(e.target.value);
-                  setImportPending(""); // URL cambiada → invalida confirmación
+                  setImportPending(""); // URL changed → invalidates the confirmation
                 }}
               />
               <button
@@ -843,7 +843,7 @@ export default function Config() {
                 disabled={!chUrl.trim()}
                 onClick={async () => {
                   setImportMsg("");
-                  // 1er clic: enseñar qué trae la URL; 2º clic: aplicar
+                  // 1st click: show what the URL brings; 2nd click: apply
                   if (!importPending) {
                     try {
                       const set = parseChannelSetUrl(chUrl);
@@ -934,7 +934,7 @@ export default function Config() {
               </span>
             )}
             {channels.map((ch) => {
-              // DISABLED → solo la primera línea; el resto de opciones no aplica
+              // DISABLED → first line only; the rest of the options don't apply
               const roleNow = chExtra[ch.index]?.role ?? ch.role;
               return (
               <div

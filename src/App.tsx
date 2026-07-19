@@ -40,8 +40,8 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
-// ponytail: un error boundary de una sola pantalla no debe tumbar toda la app.
-// key={tab} lo remonta al cambiar de pestaña, limpiando el estado de error.
+// ponytail: an error boundary for a single screen must not take down the app.
+// key={tab} remounts it when switching tabs, clearing the error state.
 class ScreenBoundary extends Component<
   { children: ReactNode },
   { err?: Error }
@@ -104,8 +104,8 @@ function Titlebar() {
   );
 }
 
-// Última conexión recordada (localStorage). Para BLE guardamos también el
-// nombre para poder mostrarlo en el desplegable antes de escanear.
+// Last connection remembered (localStorage). For BLE we also store the name
+// so it can be shown in the dropdown before scanning.
 type Mode = "serie" | "tcp" | "ble" | "sim";
 interface LastConn {
   mode: Mode;
@@ -125,7 +125,7 @@ function saveLast(v: LastConn): void {
   try {
     localStorage.setItem(LAST_KEY, JSON.stringify(v));
   } catch {
-    /* localStorage no disponible: no pasa nada */
+    /* localStorage unavailable: no big deal */
   }
 }
 
@@ -142,9 +142,9 @@ function App() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
   const [tab, setTab] = useState<Tab>("CHAT");
   const [chatConvo, setChatConvo] = useState("ch:0");
-  // nodo a preseleccionar al saltar MAPA → NODOS con [+INFO]
+  // node to preselect when jumping MAP → NODES with [+INFO]
   const [nodeFocus, setNodeFocus] = useState<number | undefined>();
-  // contador: cada incremento le pide al chat que enfoque su caja de búsqueda
+  // counter: each bump asks the chat to focus its search box
   const [focusSearch, setFocusSearch] = useState(0);
   const [mode, setMode] = useState<Mode>("serie");
   const [ports, setPorts] = useState<string[]>([]);
@@ -158,8 +158,8 @@ function App() {
   const [now, setNow] = useState(Date.now());
   const [connectedAt, setConnectedAt] = useState<number | undefined>();
   const canceledRef = useRef(false);
-  // Auto-reconexión: wantRef = el usuario quiere estar conectado (false tras
-  // DESCONECTAR/CANCELAR). lastRef = con qué reconectar. Backoff exponencial.
+  // Auto-reconnect: wantRef = the user wants to be connected (false after
+  // DISCONNECT/CANCEL). lastRef = what to reconnect to. Exponential backoff.
   const wantRef = useRef(false);
   const lastRef = useRef<{ mode: Mode; id: string } | undefined>(undefined);
   const attemptRef = useRef(0);
@@ -176,7 +176,7 @@ function App() {
     return () => clearInterval(t);
   }, []);
 
-  // Ctrl+1…7 cambia de pestaña · Ctrl+F busca en el chat
+  // Ctrl+1…7 switches tabs · Ctrl+F searches the chat
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.altKey || e.metaKey) return;
@@ -195,8 +195,8 @@ function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Alertas de nodos favoritos (batería baja / sin señal). Cada minuto basta:
-  // son condiciones de horas, y evalAlerts ya lleva su propio antirrepetición.
+  // Favorite node alerts (low battery / no signal). Once a minute is plenty:
+  // these are conditions measured in hours, and evalAlerts has its own cooldown.
   useEffect(() => {
     const fired = new Map<string, number>();
     const check = () => {
@@ -225,8 +225,8 @@ function App() {
     return () => clearInterval(id);
   }, []);
 
-  // Autonomía: va aparte porque necesita leer el histórico de batería de
-  // SQLite por cada favorito. Cada 5 min sobra — la pendiente cambia despacio.
+  // Runtime: kept apart because it needs to read each favorite's battery
+  // history from SQLite. Every 5 min is plenty — the slope moves slowly.
   useEffect(() => {
     const fired = new Map<string, number>();
     const check = async () => {
@@ -254,7 +254,7 @@ function App() {
             );
           }
         } catch {
-          // sin datos de ese nodo: no hay previsión que dar
+          // no data for that node: there is no forecast to give
         }
       }
     };
@@ -295,8 +295,8 @@ function App() {
 
   useEffect(() => {
     refreshPorts();
-    // Purga antes de cargar: así el historial que entra en memoria ya viene
-    // recortado y no hay que volver a filtrarlo. Si falla, se carga igual.
+    // Purge before loading: the history that reaches memory is already
+    // trimmed and needs no second filter. If it fails, we load anyway.
     const days = getAutoPurgeDays();
     (days > 0
       ? purgeOlderThan(days)
@@ -307,7 +307,7 @@ function App() {
       : Promise.resolve()
     ).then(() => loadHistory().catch((e) => setError(`BD: ${e}`)));
 
-    // Prefijar la última conexión usada
+    // Prefill the last connection used
     const last = loadLast();
     if (last) {
       setMode(last.mode);
@@ -319,7 +319,7 @@ function App() {
       }
     }
 
-    // Cuando el enlace se cae solo, arrancar la auto-reconexión
+    // When the link drops on its own, start auto-reconnecting
     setConnectionLostHandler(() => {
       if (wantRef.current) void tryReconnect();
     });
@@ -364,18 +364,18 @@ function App() {
     }
   };
 
-  // Reintenta la última conexión con backoff exponencial (2s→15s tope) mientras
-  // el usuario siga queriendo estar conectado. Solo BLE avisa de caídas hoy.
+  // Retries the last connection with exponential backoff (2s→15s cap) while
+  // the user still wants to be connected. Only BLE reports drops today.
   const tryReconnect = async () => {
     if (!wantRef.current || !lastRef.current) return;
-    if (reconnectBusyRef.current) return; // ya hay un intento en marcha
+    if (reconnectBusyRef.current) return; // an attempt is already running
     reconnectBusyRef.current = true;
     const { mode: m, id } = lastRef.current;
     setConnecting(true);
     setError(t("Reconectando… (intento {0})", attemptRef.current + 1));
     try {
       await doConnect(m, id);
-      if (!wantRef.current) return; // el usuario canceló mientras reconectaba
+      if (!wantRef.current) return; // the user cancelled while reconnecting
       setConnectedAt(Date.now());
       setError("");
       attemptRef.current = 0;
@@ -398,9 +398,9 @@ function App() {
     await disconnect();
   };
 
-  // Aborta un intento de conexión colgado (p.ej. configure() sin respuesta del
-  // nodo). disconnect() cierra el transporte y hace que el connect en curso
-  // rechace; canceledRef evita que ese rechazo pise el mensaje de cancelado.
+  // Aborts a hung connection attempt (e.g. configure() with no reply from the
+  // node). disconnect() closes the transport and makes the pending connect
+  // reject; canceledRef keeps that rejection from overwriting the cancel message.
   const onCancel = async () => {
     canceledRef.current = true;
     setConnecting(false);

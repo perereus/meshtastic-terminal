@@ -79,7 +79,7 @@ export async function openDb(): Promise<Database> {
       from_num INTEGER NOT NULL
     );
   `);
-  // migración BDs anteriores sin fav/ignored (falla si ya existen: ignorar)
+  // migration for older DBs without fav/ignored (fails if they exist: ignore)
   await db.execute(`ALTER TABLE nodes ADD COLUMN fav INTEGER DEFAULT 0`).catch(() => {});
   await db.execute(`ALTER TABLE nodes ADD COLUMN ignored INTEGER DEFAULT 0`).catch(() => {});
   return db;
@@ -133,8 +133,8 @@ export async function loadMessages(limit = 2000): Promise<Message[]> {
   }));
 }
 
-// Persistimos lo estable del nodo (identidad + última posición conocida).
-// snr/batería son volátiles: no valen nada tras reabrir.
+// We persist what's stable about a node (identity + last known position).
+// snr/battery are volatile: they're worthless after reopening.
 export async function saveNode(n: NodeEntry): Promise<void> {
   const d = await openDb();
   await d.execute(
@@ -187,7 +187,7 @@ export async function loadNodes(): Promise<NodeEntry[]> {
   }));
 }
 
-// ponytail: rutas como CSV en TEXT — nadie consulta por salto suelto
+// ponytail: routes as CSV in TEXT — nobody queries by individual hop
 export async function saveTraceroute(node: number, t: Traceroute): Promise<void> {
   const d = await openDb();
   await d.execute(
@@ -230,8 +230,8 @@ export async function loadTraceroutes(node: number, limit = 20): Promise<Tracero
   }));
 }
 
-/** Vecinos declarados por un nodo (módulo NeighborInfo). Se reemplaza el
- *  conjunto entero: el paquete es la foto completa de sus vecinos. */
+/** Neighbors declared by a node (NeighborInfo module). The whole set is
+ *  replaced: the packet is the complete picture of its neighbors. */
 export async function saveNeighbors(
   node: number,
   neighbors: { num: number; snr: number }[],
@@ -247,9 +247,9 @@ export async function saveNeighbors(
   }
 }
 
-/** Vecinos vistos en los últimos N días. Un enlace que nadie renueva deja de
- *  existir en la malla; sin este corte el grafo acumularía aristas fantasma
- *  aunque nunca se purgue la base. */
+/** Neighbors seen in the last N days. A link nobody refreshes stops existing
+ *  in the mesh; without this cutoff the graph would pile up ghost edges even
+ *  if the database is never purged. */
 export async function loadNeighbors(
   maxAgeDays = 7,
 ): Promise<{ node: number; neighbor: number; snr: number; ts: number }[]> {
@@ -260,7 +260,7 @@ export async function loadNeighbors(
   );
 }
 
-/** Traceroutes recientes de todos los nodos, para dibujar el grafo. */
+/** Recent traceroutes from every node, to draw the graph. */
 export async function loadAllTraceroutes(
   limit = 200,
 ): Promise<{ node: number; ts: number; route: number[]; snr: number[] }[]> {
@@ -279,9 +279,9 @@ export async function loadAllTraceroutes(
   }));
 }
 
-/** Solo se guardan los cambios de distancia, no el valor en cada paquete: lo
- *  interesante es cuándo se alargó o acortó la ruta, y así la tabla queda
- *  minúscula aunque la malla emita sin parar. */
+/** Only distance changes are stored, not the value in every packet: what
+ *  matters is when the route grew or shrank, and this keeps the table tiny
+ *  even though the mesh transmits non-stop. */
 export async function saveHopChange(
   node: number,
   hops: number,
@@ -311,9 +311,9 @@ export async function loadHopChanges(
 
 const HORA_MS = 3_600_000;
 
-/** Marca que se ha oído a un nodo en la hora actual. Un contador por nodo y
- *  hora en vez de una fila por paquete: la malla emite sin parar y no hace
- *  falta el detalle al segundo para saber quién estaba vivo y cuándo. */
+/** Marks that a node was heard during the current hour. A counter per node
+ *  and hour instead of a row per packet: the mesh transmits non-stop and
+ *  second-level detail isn't needed to know who was alive and when. */
 export async function marcarEscucha(node: number, ts = Date.now()): Promise<void> {
   const d = await openDb();
   await d.execute(
@@ -323,7 +323,7 @@ export async function marcarEscucha(node: number, ts = Date.now()): Promise<void
   );
 }
 
-/** Actividad por nodo y hora desde una fecha. */
+/** Activity per node and hour since a given date. */
 export async function loadActividad(
   desde: number,
 ): Promise<{ node: number; hora: number; n: number }[]> {
@@ -351,7 +351,7 @@ export async function deleteWaypointDb(id: number): Promise<void> {
 export async function loadWaypoints(): Promise<Waypoint[]> {
   const d = await openDb();
   const now = Math.floor(Date.now() / 1000);
-  // los caducados no vuelven: se limpian al arrancar
+  // expired ones don't come back: they're cleaned on startup
   await d.execute(`DELETE FROM waypoints WHERE expire > 0 AND expire < $1`, [now]);
   const rows = await d.select<
     {
@@ -395,8 +395,8 @@ export async function dbStats(): Promise<{
 
 const AUTO_PURGE_KEY = "autoPurgeDays";
 
-/** Días de retención para la purga al arrancar. 0 = desactivada (por defecto:
- *  borrar datos sin que el usuario lo pida es lo último que debe pasar solo). */
+/** Retention days for the purge on startup. 0 = disabled (by default:
+ *  deleting data unasked is the last thing that should happen on its own). */
 export function getAutoPurgeDays(): number {
   const n = Number(localStorage.getItem(AUTO_PURGE_KEY));
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
@@ -406,10 +406,10 @@ export function setAutoPurgeDays(days: number): void {
   localStorage.setItem(AUTO_PURGE_KEY, String(days > 0 ? Math.floor(days) : 0));
 }
 
-// Borra mensajes, telemetría, traceroutes y vecinos anteriores a N días. Los
-// nodos no se tocan: son pocos y su identidad es lo que hace legible el
-// historial que queda. Los vecinos sí caducan: si no se renuevan, el enlace ya
-// no existe y dejarlo pintaría aristas fantasma en el grafo.
+// Deletes messages, telemetry, traceroutes and neighbors older than N days.
+// Nodes are left alone: there are few of them and their identity is what makes
+// the remaining history readable. Neighbors do expire: if they aren't renewed
+// the link no longer exists and keeping it would draw ghost edges in the graph.
 export async function purgeOlderThan(days: number): Promise<number> {
   const d = await openDb();
   const cut = Date.now() - days * 86_400_000;
@@ -417,7 +417,7 @@ export async function purgeOlderThan(days: number): Promise<number> {
   const b = await d.execute(`DELETE FROM telemetry WHERE ts < $1`, [cut]);
   const c = await d.execute(`DELETE FROM traceroutes WHERE ts < $1`, [cut]);
   const e = await d.execute(`DELETE FROM neighbors WHERE ts < $1`, [cut]);
-  // sightings guarda la hora, no el ms
+  // sightings stores the hour, not the ms
   const f = await d.execute(`DELETE FROM sightings WHERE hora < $1`, [
     Math.floor(cut / HORA_MS),
   ]);

@@ -11,14 +11,14 @@ export async function createSerialTransport(
   path: string,
   onLost?: () => void,
 ): Promise<Types.Transport> {
-  // Si quedó abierto de una sesión anterior (p. ej. recarga), liberarlo
+  // If it was left open from a previous session (e.g. a reload), release it
   await SerialPort.forceClose(path).catch(() => {});
   const port = new SerialPort({ path, baudRate: 115200 });
   await port.open();
-  // Las placas USB-CDC (nRF52/RAK) no transmiten hasta ver DTR activo
+  // USB-CDC boards (nRF52/RAK) don't transmit until they see DTR asserted
   await port.writeDataTerminalReady(true).catch(() => {});
   await port.startListening();
-  // USB desenchufado → avisar para auto-reconexión (no salta en close manual)
+  // USB unplugged → report it for auto-reconnection (doesn't fire on manual close)
   if (onLost) await port.disconnected(onLost).catch(() => {});
 
   return makeTransport(

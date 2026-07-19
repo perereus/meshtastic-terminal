@@ -1,5 +1,5 @@
-/** Temas de color: solo cambian --fg/--bg/--panel; el resto del tema
- *  (dim, border, glow) deriva de --fg vía color-mix en App.css. */
+/** Color themes: they only change --fg/--bg/--panel; the rest of the theme
+ *  (dim, border, glow) derives from --fg via color-mix in App.css. */
 
 export const THEMES = {
   verde: { fg: "#39ff5a", bg: "#0a0f0a", panel: "#0b110b" },
@@ -26,16 +26,16 @@ export function applyTheme(): void {
   root.setProperty("--panel", th.panel);
 }
 
-/** Color de texto del tema activo, para canvas/SVG que no leen CSS vars
- *  (uPlot, marcadores Leaflet). Admite sufijo alfa hex: fg("88"). */
+/** Text color of the active theme, for canvas/SVG that can't read CSS vars
+ *  (uPlot, Leaflet markers). Accepts a hex alpha suffix: fg("88"). */
 export function fg(alpha = ""): string {
   return THEMES[getTheme()].fg + alpha;
 }
 
-/** Segundo color, legible sobre cualquiera de los temas. */
+/** Second color, legible over any of the themes. */
 export const ACCENT = "#e6e6e6";
 
 export function setTheme(name: Theme): void {
   localStorage.setItem(THEME_KEY, name);
-  applyTheme(); // en vivo, sin recargar
+  applyTheme(); // live, without reloading
 }

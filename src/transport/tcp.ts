@@ -8,8 +8,8 @@ export async function createTcpTransport(
   onLost?: () => void,
 ): Promise<Types.Transport> {
   await invoke("tcp_connect", { host });
-  // El lado Rust emite tcp-closed solo en caída real (EOF/error), no en
-  // tcp_disconnect manual (aborta el reader sin emitir).
+  // The Rust side emits tcp-closed only on a real drop (EOF/error), not on a
+  // manual tcp_disconnect (which aborts the reader without emitting).
   const unlistenClosed = onLost
     ? await listen("tcp-closed", () => onLost())
     : undefined;

@@ -4,7 +4,7 @@ import { retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
 import { t } from "../i18n";
 
-// en resultados de búsqueda la hora sola no basta: pueden ser de otro día
+// in search results the time alone isn't enough: they may be from another day
 const fecha = (ms: number) =>
   new Date(ms).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
 
@@ -21,7 +21,7 @@ export default function Chat({
 }: {
   convo: string;
   setConvo: (c: string) => void;
-  // cambia cada vez que se pulsa Ctrl+F, también si el chat ya estaba abierto
+  // changes on every Ctrl+F, even when the chat was already open
   focusSearch?: number;
 }) {
   const s = useSyncExternalStore(subscribe, getSnapshot);
@@ -35,8 +35,8 @@ export default function Chat({
     if (focusSearch) searchRef.current?.select();
   }, [focusSearch]);
 
-  // Buscar recorre TODAS las conversaciones: encontrar un mensaje viejo suele
-  // importar más que en qué canal estaba. Cada resultado dice de dónde sale.
+  // Search walks ALL conversations: finding an old message usually matters
+  // more than which channel it was in. Each result says where it came from.
   const q = search.trim().toLowerCase();
   const msgs = q
     ? s.messages.filter((m) => m.text.toLowerCase().includes(q))
@@ -46,7 +46,7 @@ export default function Chat({
     if (!q) endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs.length, q]);
 
-  // Al ver una conversación (o llegar mensaje mientras está abierta), sin leer=0
+  // Viewing a conversation (or a message arriving while open) clears unread
   useEffect(() => {
     clearUnread(convo);
   }, [convo, msgs.length]);

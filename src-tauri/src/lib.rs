@@ -5,8 +5,8 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
-// La app sigue recibiendo paquetes de la malla con la ventana cerrada, asi que
-// cerrar la esconde en la bandeja. Salir de verdad: menu de la bandeja.
+// The app keeps receiving mesh packets with the window closed, so closing it
+// hides it in the tray. Quitting for real: the tray menu.
 fn show_main(app: &tauri::AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.show();
@@ -56,9 +56,9 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
-                // Cerrar solo esconde, asi que el plugin no ve un cierre real:
-                // guardamos aqui, con la ventana aun visible y con medidas
-                // validas, en vez de fiarlo al evento de salida.
+                // Closing only hides, so the plugin never sees a real close:
+                // we save here, with the window still visible and reporting
+                // valid measurements, instead of relying on the exit event.
                 let _ = window.app_handle().save_window_state(StateFlags::all());
                 let _ = window.hide();
             }

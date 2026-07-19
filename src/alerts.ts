@@ -4,9 +4,9 @@ import type { Prevision } from "./battery";
 
 export interface AlertCfg {
   on: boolean;
-  battery: number; // % · avisar por debajo
-  silentH: number; // horas sin dar señal
-  autonomiaH: number; // horas de autonomía restante · 0 = no avisar
+  battery: number; // % · warn below this
+  silentH: number; // hours without a signal
+  autonomiaH: number; // hours of runtime left · 0 = don't warn
 }
 
 const DEFAULT_ALERTS: AlertCfg = {
@@ -31,23 +31,23 @@ export function setAlertCfg(cfg: AlertCfg): void {
   localStorage.setItem(KEY, JSON.stringify(cfg));
 }
 
-/** Sin texto ya formado: el módulo se mantiene puro (y testeable sin DOM);
- *  quien notifica se encarga de traducirlo. */
+/** No preformatted text: the module stays pure (and testable without a DOM);
+ *  whoever notifies takes care of translating it. */
 export interface Alert {
-  key: string; // nodo+tipo, para no repetir el aviso
+  key: string; // node+type, so the warning isn't repeated
   kind: "bateria" | "mudo" | "autonomia";
-  name: string; // nombre legible del nodo
-  value: number; // % de batería · horas de silencio
+  name: string; // readable node name
+  value: number; // % battery · hours of silence
   threshold: number;
 }
 
-/** Repetir el mismo aviso cada poco sería ruido; una vez cada 6 h basta para
- *  no olvidarse del problema sin convertirse en spam. */
+/** Repeating the same warning constantly would be noise; once every 6 h is
+ *  enough not to forget the problem without becoming spam. */
 export const COOLDOWN_MS = 6 * 3_600_000;
 
-/** Alertas pendientes. Solo mira favoritos: con ~100 nodos en la malla,
- *  avisar de todos sería ruido puro; el favorito es la señal de "me importa".
- *  `lastFired` lleva la última vez que se avisó de cada key (se muta aquí). */
+/** Pending alerts. Favorites only: with ~100 nodes in the mesh, warning about
+ *  all of them would be pure noise; a favorite is the "I care" signal.
+ *  `lastFired` holds the last time each key fired (mutated here). */
 export function evalAlerts(
   nodes: Iterable<NodeEntry>,
   cfg: AlertCfg,
@@ -63,7 +63,7 @@ export function evalAlerts(
     if (!n.fav || n.num === myNodeNum) continue;
     const who = n.longName || n.shortName || `!${n.num.toString(16)}`;
 
-    // batteryLevel > 100 significa alimentación externa, no batería
+    // batteryLevel > 100 means external power, not a battery
     if (
       n.batteryLevel !== undefined &&
       n.batteryLevel <= cfg.battery &&
@@ -81,7 +81,7 @@ export function evalAlerts(
       }
     }
 
-    // lastHeard en epoch s; 0 = nunca se ha oído, no es un silencio medible
+    // lastHeard in epoch s; 0 = never heard, which is not measurable silence
     if (n.lastHeard > 0) {
       const horas = (now - n.lastHeard * 1000) / 3_600_000;
       if (horas >= cfg.silentH) {
@@ -103,9 +103,9 @@ export function evalAlerts(
   return out;
 }
 
-/** Aviso por autonomía: la batería no está baja todavía, pero al ritmo actual
- *  lo estará pronto. Se calla si la previsión no es fiable — avisar de un
- *  agotamiento sacado de una serie irregular sería peor que no avisar. */
+/** Runtime warning: the battery isn't low yet, but at the current rate it
+ *  will be soon. It stays quiet when the forecast is unreliable — warning
+ *  about a runout derived from an irregular series is worse than not warning. */
 export function evalAutonomia(
   nodo: { num: number; nombre: string; fav?: boolean },
   prevision: Prevision | undefined,

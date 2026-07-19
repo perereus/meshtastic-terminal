@@ -18,8 +18,8 @@ export function bytesToB64url(bytes: Uint8Array): string {
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-// Parsea una URL de canal de Meshtastic (https://meshtastic.org/e/#<b64url>).
-// Acepta también solo el fragmento base64url.
+// Parses a Meshtastic channel URL (https://meshtastic.org/e/#<b64url>).
+// Also accepts just the base64url fragment.
 export function parseChannelSetUrl(
   url: string,
 ): Protobuf.AppOnly.ChannelSet {
@@ -30,7 +30,7 @@ export function parseChannelSetUrl(
   return set;
 }
 
-// Genera la URL compartible a partir de los ajustes de canal + config LoRa.
+// Builds the shareable URL from the channel settings + LoRa config.
 export function buildChannelSetUrl(
   settings: Protobuf.Channel.ChannelSettings[],
   loraConfig?: Protobuf.Config.Config_LoRaConfig,

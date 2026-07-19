@@ -1,15 +1,15 @@
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 
-// Diálogo nativo "guardar como". El plugin-dialog concede a fs acceso a la
-// ruta elegida, así que no hace falta ampliar el scope en capabilities.
-// Devuelve la ruta, o undefined si el usuario cancela.
+// Native "save as" dialog. plugin-dialog grants fs access to the chosen
+// path, so there is no need to widen the scope in capabilities.
+// Returns the path, or undefined if the user cancels.
 export async function saveText(
   filename: string,
   text: string,
 ): Promise<string | undefined> {
-  // el filtro sale de la extensión del nombre propuesto: si no, el diálogo
-  // ofrece guardar un .csv como .txt
+  // the filter comes from the extension of the proposed name: otherwise the
+  // dialog would offer to save a .csv as .txt
   const ext = filename.split(".").pop()?.toLowerCase() || "txt";
   const path = await save({
     defaultPath: filename,

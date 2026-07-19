@@ -1,40 +1,40 @@
 export interface Muestra {
   ts: number; // epoch ms
-  value: number; // % de batería
+  value: number; // % battery
 }
 
 export interface Prevision {
-  /** %/hora: negativo se descarga, positivo carga */
+  /** %/hour: negative discharges, positive charges */
   pendiente: number;
-  /** horas hasta 0 % al ritmo actual · undefined si no se descarga */
+  /** hours to 0 % at the current rate · undefined when not discharging */
   horasRestantes?: number;
-  /** cuánto fiarse: 0..1 según dispersión de los puntos sobre la recta */
+  /** how much to trust it: 0..1 from the spread of the points around the line */
   ajuste: number;
   muestras: number;
-  ultimo: number; // último % conocido
+  ultimo: number; // last known %
 }
 
-/** Regresión lineal por mínimos cuadrados sobre las últimas `horas` de batería.
+/** Least squares linear regression over the last `horas` hours of battery.
  *
- *  Un nodo solar sube de día y baja de noche: ajustar sobre una ventana larga
- *  daría pendiente ~0 y una previsión inútil. Con ventana corta se predice el
- *  tramo actual, que es lo accionable ("esta noche no llega").
+ *  A solar node charges by day and drains by night: fitting over a long window
+ *  would give a slope near 0 and a useless forecast. A short window predicts
+ *  the current leg, which is the actionable part ("it won't last the night").
  *
- *  Devuelve undefined si no hay datos suficientes para decir nada honesto. */
+ *  Returns undefined when there isn't enough data to say anything honest. */
 export function preverBateria(
   muestras: Muestra[],
   horas = 6,
   ahora = Date.now(),
 ): Prevision | undefined {
   const desde = ahora - horas * 3_600_000;
-  // >100 % es alimentación externa, no batería: falsearía la recta
+  // >100 % is external power, not a battery: it would skew the line
   const pts = muestras
     .filter((m) => m.ts >= desde && m.value <= 100)
     .sort((a, b) => a.ts - b.ts);
   if (pts.length < 4) return undefined;
 
   const t0 = pts[0].ts;
-  // x en horas desde la primera muestra: evita números enormes en la regresión
+  // x in hours from the first sample: avoids huge numbers in the regression
   const xs = pts.map((p) => (p.ts - t0) / 3_600_000);
   const ys = pts.map((p) => p.value);
   const n = pts.length;
@@ -46,32 +46,32 @@ export function preverBateria(
     sxy += (xs[i] - mx) * (ys[i] - my);
     sxx += (xs[i] - mx) ** 2;
   }
-  // todas las muestras en el mismo instante: no hay recta posible
+  // all samples at the same instant: no line is possible
   if (sxx === 0) return undefined;
   const pendiente = sxy / sxx;
   const interseccion = my - pendiente * mx;
 
-  // R²: si los puntos no siguen una recta, la previsión no vale nada
+  // R²: if the points don't follow a line, the forecast is worthless
   let ssRes = 0;
   let ssTot = 0;
   for (let i = 0; i < n; i++) {
     ssRes += (ys[i] - (interseccion + pendiente * xs[i])) ** 2;
     ssTot += (ys[i] - my) ** 2;
   }
-  // batería plana (ssTot 0): la recta es exacta, R²=1 por convenio
+  // flat battery (ssTot 0): the line is exact, R²=1 by convention
   const ajuste = ssTot === 0 ? 1 : Math.max(0, 1 - ssRes / ssTot);
 
   const ultimo = ys[n - 1];
   const r: Prevision = { pendiente, ajuste, muestras: n, ultimo };
-  // solo tiene sentido predecir agotamiento si de verdad baja; un umbral algo
-  // por debajo de 0 evita convertir el ruido de una batería plana en un aviso
+  // predicting a runout only makes sense when it really drops; a threshold
+  // slightly below 0 keeps the noise of a flat battery from becoming a warning
   if (pendiente < -0.05) {
     r.horasRestantes = ultimo / -pendiente;
   }
   return r;
 }
 
-/** Texto corto para la UI. Devuelve la clave y los argumentos para t(). */
+/** Short text for the UI. Returns the key and the arguments for t(). */
 export function textoPrevision(p: Prevision): [string, ...(string | number)[]] {
   if (p.ajuste < 0.5) return ["BATERÍA IRREGULAR · sin previsión fiable"];
   if (p.pendiente > 0.05) return ["CARGANDO · {0} %/h", p.pendiente.toFixed(1)];

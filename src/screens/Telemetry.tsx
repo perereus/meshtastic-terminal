@@ -7,7 +7,7 @@ import { t } from "../i18n";
 import { ACCENT, fg } from "../theme";
 import { saveText, stamp } from "../export";
 
-// pseudo-métrica: ChUtil + AirUtilTx en la misma gráfica
+// pseudo-metric: ChUtil + AirUtilTx on the same chart
 const CHANNEL = "__canal";
 
 const METRIC_LABELS: Record<string, string> = {
@@ -28,8 +28,8 @@ const RANGES: [string, number][] = [
   ["30 D", 30],
 ];
 
-// Colores de las series comparadas. El primero sale del tema; el resto son
-// fijos y legibles sobre cualquiera de los cinco temas.
+// Colors of the compared series. The first comes from the theme; the rest are
+// fixed and legible over any of the five themes.
 const SERIES_COLORS = [ACCENT, "#ffb000", "#5ccfe6", "#b3a5e3"];
 
 export default function Telemetry() {
@@ -50,8 +50,8 @@ export default function Telemetry() {
   const plotDiv = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
   const [withData, setWithData] = useState<Set<number>>(new Set());
-  // ponytail: refresco periódico en vez de por s.version — la malla muta
-  // decenas de veces/s y reconstruir la gráfica en cada mutación cuelga el webview
+  // ponytail: periodic refresh instead of reacting to s.version — the mesh
+  // mutates dozens of times/s and rebuilding the chart each time hangs the webview
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function Telemetry() {
     });
   }, [effectiveNode, tick]);
 
-  // al cambiar de nodo principal, dejar de comparar contra él mismo
+  // when the main node changes, stop comparing it against itself
   useEffect(() => {
     setCompare((c) => c.filter((n) => n !== effectiveNode));
   }, [effectiveNode]);
@@ -94,8 +94,8 @@ export default function Telemetry() {
     if (effectiveNode === undefined || !metric || !plotDiv.current) return;
     const since = Date.now() - days * 86_400_000;
     let cancelled = false;
-    // CHANNEL (dos métricas de un nodo) y comparar (una métrica de varios
-    // nodos) no se mezclan: al comparar, CHANNEL vale por utilización de canal.
+    // CHANNEL (two metrics of one node) and comparing (one metric of several
+    // nodes) don't mix: while comparing, CHANNEL means channel utilization.
     const dual = metric === CHANNEL && compare.length === 0;
     const realMetric = metric === CHANNEL ? "channelUtilization" : metric;
     const load = dual
@@ -113,8 +113,8 @@ export default function Telemetry() {
       plotRef.current?.destroy();
       plotRef.current = null;
       if (rows.length > 0) {
-        // ponytail: bucle en vez de Math.min(...vals) — el spread revienta
-        // con arrays grandes (RangeError: Maximum call stack size exceeded)
+        // ponytail: a loop instead of Math.min(...vals) — the spread blows up
+        // with large arrays (RangeError: Maximum call stack size exceeded)
         let min = Infinity;
         let max = -Infinity;
         let sum = 0;
@@ -130,7 +130,7 @@ export default function Telemetry() {
       }
       let data: uPlot.AlignedData;
       if (dual) {
-        // ambas métricas llegan en el mismo paquete ⇒ mismo ts, join directo
+        // both metrics arrive in the same packet ⇒ same ts, direct join
         const byTs = new Map((rows2 ?? []).map((r) => [r.ts, r.value]));
         data = [
           rows.map((r) => r.ts / 1000),
@@ -140,9 +140,9 @@ export default function Telemetry() {
       } else if (compare.length === 0) {
         data = [rows.map((r) => r.ts / 1000), rows.map((r) => r.value)];
       } else {
-        // Cada nodo emite cuando le toca, así que los ts no coinciden: eje X con
-        // la unión de todos y hueco (null) donde ese nodo no midió. spanGaps en
-        // las series une los huecos para que no salgan líneas despedazadas.
+        // Each node transmits when it feels like it, so timestamps don't line
+        // up: the X axis is the union of all of them, with a null gap where a
+        // node didn't measure. spanGaps joins the gaps so lines aren't shredded.
         const all = [rows, ...extra];
         const xs = [...new Set(all.flatMap((rs) => rs.map((r) => r.ts)))].sort(
           (a, b) => a - b,
@@ -216,9 +216,9 @@ export default function Telemetry() {
 
   useEffect(() => () => plotRef.current?.destroy(), []);
 
-  // CSV en formato largo (una fila por muestra) en vez de una columna por nodo:
-  // los nodos no comparten timestamps, así que el formato ancho saldría lleno
-  // de huecos. Cualquier hoja de cálculo lo pivota si hace falta.
+  // CSV in long format (one row per sample) instead of one column per node:
+  // nodes don't share timestamps, so the wide format would be full of holes.
+  // Any spreadsheet can pivot it if needed.
   const onExportCsv = async () => {
     if (effectiveNode === undefined || !metric) return;
     setExporting(true);
@@ -232,7 +232,7 @@ export default function Telemetry() {
       );
       const rows = ["fecha_iso,epoch_ms,nodo,id_nodo,metrica,valor"];
       targets.forEach((num, i) => {
-        // comillas en el nombre: podría llevar comas y romper el CSV
+        // quote the name: it could contain commas and break the CSV
         const name = `"${shortName(num).replace(/"/g, '""')}"`;
         for (const r of series[i]) {
           rows.push(

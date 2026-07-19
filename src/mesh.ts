@@ -4,16 +4,16 @@ export interface MeshSummary {
   total: number;
   activos1h: number;
   activos24h: number;
-  nuncaOidos: number; // lastHeard 0: vienen de la NodeDB, no los hemos oído
+  nuncaOidos: number; // lastHeard 0: they come from the NodeDB, we never heard them
   conPosicion: number;
   viaMqtt: number;
   conPki: number;
-  bateriaBaja: number; // <= 20 % (>100 es alimentación externa, no cuenta)
-  saltos: Map<number | "?", number>; // hopsAway → nº de nodos
-  mudos: NodeEntry[]; // favoritos callados, el que más primero
+  bateriaBaja: number; // <= 20 % (>100 is external power, doesn't count)
+  saltos: Map<number | "?", number>; // hopsAway → number of nodes
+  mudos: NodeEntry[]; // silent favorites, the quietest first
 }
 
-/** Foto de la malla a partir de la lista de nodos. Pura: la pantalla solo pinta. */
+/** Snapshot of the mesh from the node list. Pure: the screen only paints. */
 export function summarize(
   nodes: Iterable<NodeEntry>,
   now = Date.now(),
@@ -40,7 +40,7 @@ export function summarize(
       if (h < 24) r.activos24h++;
       if (n.fav && h >= mudoDesdeH) r.mudos.push(n);
     }
-    // (0,0) es GPS basura, el mismo criterio que usa el mapa
+    // (0,0) is junk GPS, the same criterion the map uses
     if (
       n.lat !== undefined &&
       n.lon !== undefined &&
@@ -58,8 +58,8 @@ export function summarize(
   return r;
 }
 
-/** PRNG determinista (mulberry32): la misma malla da siempre el mismo dibujo,
- *  si no el grafo cambiaría en cada render y sería imposible juzgarlo. */
+/** Deterministic PRNG (mulberry32): the same mesh always yields the same
+ *  drawing, otherwise the graph would change on every render and be unjudgeable. */
 function rng(seed: number) {
   let a = seed >>> 0;
   return () => {
@@ -70,12 +70,12 @@ function rng(seed: number) {
   };
 }
 
-/** Enlaces inventados a partir de los nodos reales, para probar el dibujo del
- *  grafo sin esperar a que la malla emita NeighborInfo. NO se guardan en la
- *  base: viven solo en memoria mientras la vista previa está activa. */
+/** Made-up links from the real nodes, to test the graph drawing without
+ *  waiting for the mesh to emit NeighborInfo. They are NOT stored in the
+ *  database: they live in memory only while the preview is on. */
 export function demoEdges(nodes: NodeEntry[], me?: number): Edge[] {
   const r = rng(nodes.length * 7919 + (me ?? 0));
-  // por saltos reales cuando se conocen; si no, un nivel estable por nodo
+  // by real hops when known; otherwise a stable level per node
   const tier = (n: NodeEntry) =>
     n.num === me ? 0 : (n.hopsAway ?? (n.num % 3) + 1);
   const porNivel = new Map<number, NodeEntry[]>();
@@ -92,16 +92,16 @@ export function demoEdges(nodes: NodeEntry[], me?: number): Edge[] {
   };
   const niveles = [...porNivel.keys()].sort((a, b) => a - b);
   for (const nivel of niveles) {
-    // el nivel de arriba es el padre natural; el 0 (yo) no tiene padre
+    // the level above is the natural parent; level 0 (me) has none
     const padres = porNivel.get(nivel - 1) ?? porNivel.get(niveles[0]) ?? [];
     const hijos = porNivel.get(nivel) ?? [];
     for (const h of hijos) {
       if (padres.length === 0) continue;
       add(h.num, padres[Math.floor(r() * padres.length)].num);
-      // algunos nodos oyen a dos padres: da grafo, no árbol
+    // some nodes hear two parents: makes a graph, not a tree
       if (r() < 0.35) add(h.num, padres[Math.floor(r() * padres.length)].num);
     }
-    // enlaces laterales dentro del mismo nivel
+    // lateral links within the same level
     for (let i = 0; i < hijos.length; i++) {
       if (r() < 0.2) add(hijos[i].num, hijos[Math.floor(r() * hijos.length)].num);
     }
@@ -119,8 +119,8 @@ export interface Edge {
 export const edgeKey = (a: number, b: number) =>
   a < b ? `${a}-${b}` : `${b}-${a}`;
 
-/** Enlaces de la malla: NeighborInfo (directo) + traceroutes (tramos de ruta).
- *  Si un par aparece por ambas vías gana NeighborInfo, que mide el enlace real. */
+/** Mesh links: NeighborInfo (direct) + traceroutes (route segments).
+ *  When a pair shows up through both, NeighborInfo wins: it measures the real link. */
 export function buildEdges(
   neighbors: { node: number; neighbor: number; snr: number }[],
   traces: { node: number; route: number[]; snr: number[] }[],
@@ -128,7 +128,7 @@ export function buildEdges(
 ): Edge[] {
   const out = new Map<string, Edge>();
   for (const tr of traces) {
-    // la ruta no incluye los extremos: yo → hop… → destino
+    // the route doesn't include the endpoints: me → hop… → destination
     const chain = [...(me !== undefined ? [me] : []), ...tr.route, tr.node];
     for (let i = 0; i < chain.length - 1; i++) {
       const a = chain[i];
@@ -140,7 +140,7 @@ export function buildEdges(
       out.set(k, {
         a,
         b,
-        snr: snr !== undefined ? snr / 4 : undefined, // el firmware manda dB×4
+        snr: snr !== undefined ? snr / 4 : undefined, // the firmware sends dB×4
         src: "traceroute",
       });
     }

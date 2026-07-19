@@ -14,35 +14,35 @@ const node = (p: Partial<NodeEntry>): NodeEntry => ({
   ...p,
 });
 
-// apagado = nada, aunque haya motivos de sobra
+// off = nothing, even with plenty of reasons
 assert.equal(
   evalAlerts([node({ fav: true, batteryLevel: 5 })], { ...cfg, on: false }, new Map(), NOW)
     .length,
   0,
 );
 
-// solo favoritos: un nodo normal con la batería en las últimas no avisa
+// favorites only: a regular node on its last legs doesn't warn
 assert.equal(
   evalAlerts([node({ batteryLevel: 5 })], cfg, new Map(), NOW).length,
   0,
 );
 
-// batería por debajo del umbral
+// battery below the threshold
 const bat = evalAlerts([node({ fav: true, batteryLevel: 12 })], cfg, new Map(), NOW);
 assert.equal(bat.length, 1);
 assert.ok(bat[0].key.startsWith("bat:"));
 
-// justo en el umbral también avisa; por encima no
+// exactly at the threshold it warns; above it doesn't
 assert.equal(evalAlerts([node({ fav: true, batteryLevel: 20 })], cfg, new Map(), NOW).length, 1);
 assert.equal(evalAlerts([node({ fav: true, batteryLevel: 21 })], cfg, new Map(), NOW).length, 0);
 
-// >100 es alimentación externa, no batería agonizante
+// >100 is external power, not a dying battery
 assert.equal(
   evalAlerts([node({ fav: true, batteryLevel: 101 })], cfg, new Map(), NOW).length,
   0,
 );
 
-// silencio: 13 h sin señal supera el umbral de 12
+// silence: 13 h without a signal passes the 12 h threshold
 const mudo = evalAlerts(
   [node({ fav: true, lastHeard: Math.floor(NOW / 1000) - 13 * 3600 })],
   cfg,
@@ -52,19 +52,19 @@ const mudo = evalAlerts(
 assert.equal(mudo.length, 1);
 assert.ok(mudo[0].key.startsWith("mudo:"));
 
-// lastHeard 0 = nunca oído, no es un silencio medible
+// lastHeard 0 = never heard, not measurable silence
 assert.equal(
   evalAlerts([node({ fav: true, lastHeard: 0 })], cfg, new Map(), NOW).length,
   0,
 );
 
-// el nodo propio no se alerta a sí mismo
+// our own node doesn't alert about itself
 assert.equal(
   evalAlerts([node({ num: 7, fav: true, batteryLevel: 3 })], cfg, new Map(), NOW, 7).length,
   0,
 );
 
-// antirrepetición: mismo motivo no vuelve a saltar hasta pasado el cooldown
+// cooldown: the same reason doesn't fire again until it has passed
 const fired = new Map<string, number>();
 const n = [node({ fav: true, batteryLevel: 10 })];
 assert.equal(evalAlerts(n, cfg, fired, NOW).length, 1);
@@ -75,7 +75,7 @@ assert.equal(
   "debe volver a avisar pasado el cooldown",
 );
 
-// dos motivos a la vez en el mismo nodo = dos avisos distintos
+// two reasons at once on the same node = two separate warnings
 const dos = evalAlerts(
   [node({ fav: true, batteryLevel: 5, lastHeard: Math.floor(NOW / 1000) - 20 * 3600 })],
   cfg,
@@ -94,24 +94,24 @@ const prev = (horasRestantes?: number, ajuste = 0.9): Prevision => ({
   ultimo: 40,
 });
 
-// por debajo del umbral: avisa
+// below the threshold: warns
 const av = evalAutonomia(fav, prev(6), cfg, new Map(), NOW);
 assert.ok(av);
 assert.equal(av.kind, "autonomia");
 assert.equal(av.value, 6);
 
-// justo en el umbral avisa; por encima no
+// exactly at the threshold it warns; above it doesn't
 assert.ok(evalAutonomia(fav, prev(12), cfg, new Map(), NOW));
 assert.equal(evalAutonomia(fav, prev(13), cfg, new Map(), NOW), undefined);
 
-// previsión poco fiable: mejor callarse que dar una hora inventada
+// unreliable forecast: better to stay quiet than to invent an hour
 assert.equal(evalAutonomia(fav, prev(3, 0.2), cfg, new Map(), NOW), undefined);
 
-// sin previsión (cargando o estable) no hay nada que avisar
+// no forecast (charging or steady) means nothing to warn about
 assert.equal(evalAutonomia(fav, prev(undefined), cfg, new Map(), NOW), undefined);
 assert.equal(evalAutonomia(fav, undefined, cfg, new Map(), NOW), undefined);
 
-// solo favoritos, y solo con las alertas activas
+// favorites only, and only with alerts enabled
 assert.equal(
   evalAutonomia({ ...fav, fav: false }, prev(3), cfg, new Map(), NOW),
   undefined,
@@ -120,13 +120,13 @@ assert.equal(
   evalAutonomia(fav, prev(3), { ...cfg, on: false }, new Map(), NOW),
   undefined,
 );
-// 0 h = desactivado
+// 0 h = disabled
 assert.equal(
   evalAutonomia(fav, prev(3), { ...cfg, autonomiaH: 0 }, new Map(), NOW),
   undefined,
 );
 
-// antirrepetición compartida con el resto de alertas
+// cooldown shared with the rest of the alerts
 const f2 = new Map<string, number>();
 assert.ok(evalAutonomia(fav, prev(5), cfg, f2, NOW));
 assert.equal(evalAutonomia(fav, prev(5), cfg, f2, NOW + 60_000), undefined);

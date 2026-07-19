@@ -1,5 +1,5 @@
-// ponytail: shim de os/path/util para el bundle de @meshtastic/core (tslog);
-// en runtime de navegador tslog no llama a estas funciones.
+// ponytail: os/path/util shim for the @meshtastic/core bundle (tslog);
+// in a browser runtime tslog never calls these functions.
 export function hostname(): string {
   return "tauri";
 }

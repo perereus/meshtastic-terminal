@@ -8,13 +8,13 @@ import { t } from "../i18n";
 import { ACCENT, fg } from "../theme";
 
 interface Draft {
-  id?: number; // definido = edición
+  id?: number; // defined = editing
   lat: number;
   lon: number;
   name: string;
   desc: string;
-  icon: string; // un emoji
-  expireH: number; // horas · 0 = no caduca
+  icon: string; // a single emoji
+  expireH: number; // hours · 0 = never expires
 }
 
 export default function MapView({
@@ -70,13 +70,13 @@ export default function MapView({
       (n) =>
         n.lat !== undefined &&
         n.lon !== undefined &&
-        // GPS basura: posiciones pegadas a (0,0)
+        // junk GPS: positions stuck at (0,0)
         (Math.abs(n.lat) > 0.1 || Math.abs(n.lon) > 0.1),
     );
 
-    // El firmware reduce la precisión de la posición → MUCHOS nodos comparten
-    // coordenada exacta y se pintarían uno encima de otro. Un marcador por
-    // coordenada, con contador y popup listando todos los nodos del punto.
+    // The firmware reduces position precision → MANY nodes share the exact
+    // same coordinate and would be drawn on top of each other. One marker per
+    // coordinate, with a counter and a popup listing every node at that point.
     const byCoord = new Map<string, typeof positioned>();
     for (const n of positioned) {
       const key = `${n.lat},${n.lon}`;
@@ -106,7 +106,7 @@ export default function MapView({
         group.length > 1
           ? `${group[0].shortName} +${group.length - 1}`
           : group[0].shortName;
-      // Popup en DOM (no string) para poder colgar el onclick de [+INFO]
+      // Popup built in the DOM (not a string) so the [+INFO] onclick can be attached
       const box = document.createElement("div");
       box.innerHTML =
         `<div style="font-size:10px;letter-spacing:2px;opacity:.6;">POS ${lat.toFixed(4)}N ${lon.toFixed(4)}E · ${group.length} ${t("NODO")}${group.length > 1 ? "S" : ""}</div>` +
@@ -126,8 +126,8 @@ export default function MapView({
         .addTo(layer);
     }
 
-    // Waypoints: chincheta con emoji. Popup en DOM (no HTML) para colgar los
-    // botones de editar/borrar directamente.
+    // Waypoints: emoji pin. Popup in the DOM (not HTML) so the edit/delete
+    // buttons can be attached directly.
     for (const w of s.waypoints.values()) {
       const emoji = w.icon ? String.fromCodePoint(w.icon) : "📍";
       const box = document.createElement("div");
@@ -188,7 +188,7 @@ export default function MapView({
       fittedRef.current = true;
     }
 
-    // Diagnóstico: qué pinta el mapa (solo cuando cambia el nº)
+    // Diagnostics: what the map is drawing (only when the count changes)
     if (positioned.length !== loggedRef.current) {
       loggedRef.current = positioned.length;
       addLog(

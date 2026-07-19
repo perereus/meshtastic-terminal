@@ -3,10 +3,10 @@ import assert from "node:assert";
 import { buildEdges, demoEdges, edgeKey, summarize } from "./mesh.ts";
 import type { NodeEntry } from "./store.ts";
 
-// clave sin dirección: (a,b) y (b,a) son el mismo enlace
+// undirected key: (a,b) and (b,a) are the same link
 assert.equal(edgeKey(2, 1), edgeKey(1, 2));
 
-// traceroute yo(1) → 2 → 3: dos tramos, SNR del firmware viene en dB×4
+// traceroute me(1) → 2 → 3: two segments, firmware SNR comes in dB×4
 const tr = buildEdges([], [{ node: 3, route: [2], snr: [20, 8] }], 1);
 assert.equal(tr.length, 2);
 assert.deepEqual(
@@ -18,7 +18,7 @@ assert.deepEqual(
 );
 assert.ok(tr.every((e) => e.src === "traceroute"));
 
-// NeighborInfo pisa el mismo par visto por traceroute (mide el enlace real)
+// NeighborInfo overrides the same pair seen by traceroute (it measures the real link)
 const both = buildEdges(
   [{ node: 2, neighbor: 1, snr: -3 }],
   [{ node: 3, route: [2], snr: [20, 8] }],
@@ -29,11 +29,11 @@ const link12 = both.find((e) => edgeKey(e.a, e.b) === edgeKey(1, 2));
 assert.equal(link12?.src, "vecinos");
 assert.equal(link12?.snr, -3);
 
-// un tramo sin SNR queda sin dato, no en 0 (0 dB es un valor legítimo)
+// a segment without SNR stays undefined, not 0 (0 dB is a legitimate value)
 const [noSnr] = buildEdges([], [{ node: 2, route: [], snr: [] }], 1);
 assert.equal(noSnr.snr, undefined);
 
-// autoenlaces descartados
+// self-links discarded
 assert.equal(buildEdges([{ node: 5, neighbor: 5, snr: 9 }], []).length, 0);
 
 // ── summarize ────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ const sum = summarize(
     nd({ num: 1, lastHeard: hAgo(0.5), hopsAway: 0, lat: 39.5, lon: 2.6 }),
     nd({ num: 2, lastHeard: hAgo(5), hopsAway: 2, viaMqtt: true, hasKey: true }),
     nd({ num: 3, lastHeard: hAgo(50), hopsAway: 2, batteryLevel: 15 }),
-    nd({ num: 4, lastHeard: 0 }), // en la NodeDB pero nunca oído
+    nd({ num: 4, lastHeard: 0 }), // in the NodeDB but never heard
     nd({ num: 5, lastHeard: hAgo(2), lat: 0, lon: 0 }), // GPS basura
   ],
   NOW,
@@ -68,16 +68,16 @@ assert.equal(sum.bateriaBaja, 1);
 assert.equal(sum.saltos.get(2), 2);
 assert.equal(sum.saltos.get("?"), 2, "sin hopsAway van al cubo '?'");
 
-// batería >100 = alimentación externa, no es batería baja
+// battery >100 = external power, not a low battery
 assert.equal(summarize([nd({ batteryLevel: 101 })], NOW).bateriaBaja, 0);
 
-// mudos: solo favoritos pasados de 24 h, el más callado primero
+// silent: favorites past 24 h only, the quietest first
 const mudos = summarize(
   [
     nd({ num: 1, fav: true, lastHeard: hAgo(30) }),
     nd({ num: 2, fav: true, lastHeard: hAgo(80) }),
-    nd({ num: 3, fav: true, lastHeard: hAgo(2) }), // hablando, no es mudo
-    nd({ num: 4, lastHeard: hAgo(90) }), // callado pero no favorito
+    nd({ num: 3, fav: true, lastHeard: hAgo(2) }), // talking, not silent
+    nd({ num: 4, lastHeard: hAgo(90) }), // silent but not a favorite
   ],
   NOW,
 ).mudos;
@@ -105,10 +105,10 @@ assert.equal(
   d1.length,
   "sin enlaces duplicados",
 );
-// casi todos los nodos deberían acabar conectados a algo
+// almost every node should end up connected to something
 const tocados = new Set(d1.flatMap((e) => [e.a, e.b]));
 assert.ok(tocados.size >= demoNodes.length - 1, `nodos sueltos: ${demoNodes.length - tocados.size}`);
-// una malla distinta da un dibujo distinto
+// a different mesh yields a different drawing
 assert.notDeepEqual(d1, demoEdges(demoNodes.slice(0, 20), 100));
 
 console.log("mesh.test.ts OK");

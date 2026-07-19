@@ -21,7 +21,7 @@ import { t } from "../i18n";
 
 type SortKey = "visto" | "nombre" | "corto" | "saltos" | "snr" | "bateria" | "pos";
 
-// dirección por defecto la primera vez que se pulsa cada columna
+// default direction the first time each column is clicked
 const DEFAULT_DIR: Record<SortKey, 1 | -1> = {
   visto: -1,
   nombre: 1,
@@ -36,11 +36,11 @@ function distKm(aLat: number, aLon: number, bLat: number, bLon: number) {
   const r = Math.PI / 180;
   const x = (bLon - aLon) * r * Math.cos(((aLat + bLat) / 2) * r);
   const y = (bLat - aLat) * r;
-  // ponytail: equirectangular, sobra para ordenar dentro de una malla
+  // ponytail: equirectangular, plenty for sorting within one mesh
   return Math.sqrt(x * x + y * y) * 6371;
 }
 
-// undefined siempre al final
+// undefined always last
 function cmpOpt(a: number | undefined, b: number | undefined, dir: 1 | -1) {
   if (a === undefined && b === undefined) return 0;
   if (a === undefined) return 1;
@@ -50,7 +50,7 @@ function cmpOpt(a: number | undefined, b: number | undefined, dir: 1 | -1) {
 
 function sortNodes(nodes: NodeEntry[], key: SortKey, dir: 1 | -1, me?: NodeEntry) {
   const base = sortNodesBy(nodes, key, dir, me);
-  // favoritos siempre arriba, respetando el orden elegido dentro de cada grupo
+  // favorites always on top, keeping the chosen order within each group
   return base.sort((a, b) => Number(!!b.fav) - Number(!!a.fav));
 }
 
@@ -108,12 +108,12 @@ function Th(props: {
 function RouteLine(props: {
   label: string;
   hops: number[]; // nodos intermedios
-  snrs: number[]; // dB ×4, un valor por segmento (nodo receptor)
+  snrs: number[]; // dB ×4, one value per segment (receiving node)
   from: string;
   to: string;
   short: (num: number) => string;
 }) {
-  // secuencia completa de nodos y flechas con la SNR de cada segmento
+  // full sequence of nodes and arrows with the SNR of each segment
   const nodes = [props.from, ...props.hops.map(props.short), props.to];
   const arrow = (snr: number | undefined) =>
     snr !== undefined ? ` ─(${(snr / 4).toFixed(1)} dB)→ ` : " → ";
@@ -129,7 +129,7 @@ function Detail(props: {
   node: NodeEntry;
   isMe: boolean;
   trace?: Traceroute;
-  posTs?: number; // ts del último PositionPacket recibido de este nodo
+  posTs?: number; // ts of the last PositionPacket received from this node
   short: (num: number) => string;
   onOpenDm: (num: number) => void;
   onClose: () => void;
@@ -138,10 +138,10 @@ function Detail(props: {
   const [tracing, setTracing] = useState(false);
   const [traceErr, setTraceErr] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  // "" | "waiting" | "ok" | "timeout" | mensaje de error
+  // "" | "waiting" | "ok" | "timeout" | error message
   const [posState, setPosState] = useState("");
   const [confirmDel, setConfirmDel] = useState(false);
-  // "" | "reboot" | "shutdown" — confirmación de acción admin remota
+  // "" | "reboot" | "shutdown" — confirmation of a remote admin action
   const [adminArm, setAdminArm] = useState("");
   const [adminMsg, setAdminMsg] = useState("");
   const posTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -165,7 +165,7 @@ function Detail(props: {
     };
   }, [n.num, n.hopsAway]);
 
-  // previsión de autonomía a partir del histórico de batería en SQLite
+  // runtime forecast from the battery history in SQLite
   useEffect(() => {
     let cancelled = false;
     setBat(undefined);
@@ -260,7 +260,7 @@ function Detail(props: {
     setTraceErr("");
     setTracing(true);
     clearTimeout(timer.current);
-    // la respuesta llega por evento; esperamos hasta 60 s pase lo que pase con el ack
+    // the reply arrives by event; we wait up to 60 s whatever the ack does
     timer.current = setTimeout(() => {
       setTracing(false);
       setTraceErr(t("SIN RESPUESTA (60 s)"));
@@ -597,7 +597,7 @@ export default function Nodes({
   const s = useSyncExternalStore(subscribe, getSnapshot);
   const [selected, setSelected] = useState<number | undefined>(initialSelected);
 
-  // Al llegar desde el mapa con nodo preseleccionado, llevar su fila a la vista
+  // When arriving from the map with a preselected node, scroll its row into view
   useEffect(() => {
     document.querySelector("tbody tr.sel")?.scrollIntoView({ block: "center" });
   }, []);

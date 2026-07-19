@@ -6,7 +6,7 @@ use tokio::net::tcp::OwnedWriteHalf;
 use tauri::async_runtime::JoinHandle;
 use tokio::net::TcpStream;
 
-// ponytail: una sola conexión TCP a la vez, suficiente para este cliente
+// ponytail: a single TCP connection at a time, enough for this client
 #[derive(Default)]
 pub struct TcpState {
     writer: tokio::sync::Mutex<Option<OwnedWriteHalf>>,

@@ -12,13 +12,13 @@ import {
 } from "../mesh";
 import { ago } from "../fmt";
 
-/** Layout Fruchterman-Reingold, iteraciones fijas (sin animación).
- *  ponytail: O(n²) por iteración; con ~100 nodos sobra y evita un quadtree.
+/** Fruchterman-Reingold layout, fixed iterations (no animation).
+ *  ponytail: O(n²) per iteration; with ~100 nodes that's fine and avoids a quadtree.
  *
- *  Las dos fuerzas tienen que estar en la misma escala: repulsión k²/d entre
- *  todos los pares y atracción d²/k por enlace. Con una atracción más floja
- *  (p.ej. proporcional a d) la repulsión de 90 nodos gana siempre y el grafo
- *  se despliega contra los bordes del lienzo. */
+ *  Both forces must be on the same scale: k²/d repulsion between every pair
+ *  and d²/k attraction per link. With a weaker attraction (proportional to d,
+ *  say) the repulsion of 90 nodes always wins and the graph unfolds against
+ *  the edges of the canvas. */
 function layout(
   ids: number[],
   edges: Edge[],
@@ -29,8 +29,8 @@ function layout(
   const idx = new Map<number, number>();
   ids.forEach((id, i) => {
     idx.set(id, i);
-    // arranque en espiral: reparte mejor que un círculo cuando hay muchos
-    const ang = i * 2.399963; // ángulo áureo
+    // spiral start: spreads better than a circle when there are many nodes
+    const ang = i * 2.399963; // golden angle
     const rad = (Math.min(w, h) / 2.5) * Math.sqrt(i / Math.max(1, ids.length));
     pos.set(id, { x: w / 2 + Math.cos(ang) * rad, y: h / 2 + Math.sin(ang) * rad });
   });
@@ -41,7 +41,7 @@ function layout(
   const n = arr.length;
   const k = Math.sqrt((w * h) / Math.max(1, n)); // distancia ideal entre nodos
   const ITERS = 400;
-  let temp = w / 8; // desplazamiento máximo por iteración, se enfría a 0
+  let temp = w / 8; // max displacement per iteration, cools down to 0
 
   for (let iter = 0; iter < ITERS; iter++) {
     const dx = new Float64Array(n);
@@ -52,8 +52,8 @@ function layout(
         let vy = arr[i].y - arr[j].y;
         let d = Math.hypot(vx, vy);
         if (d < 0.01) {
-          // superpuestos: separarlos por una dirección estable, no aleatoria,
-          // para que el dibujo siga siendo el mismo en cada render
+          // overlapping: separate them along a stable direction, not a random
+          // one, so the drawing stays the same on every render
           vx = ((i * 37 + j) % 17) - 8;
           vy = ((i * 53 + j) % 13) - 6;
           d = Math.hypot(vx, vy) || 1;
@@ -76,7 +76,7 @@ function layout(
       dy[j] += (vy / d) * att;
     }
     for (let i = 0; i < n; i++) {
-      // gravedad al centro: junta los subgrafos que no tienen enlaces entre sí
+      // gravity towards the center: keeps subgraphs with no links together
       dx[i] += (w / 2 - arr[i].x) * 0.03;
       dy[i] += (h / 2 - arr[i].y) * 0.03;
       const d = Math.hypot(dx[i], dy[i]) || 1;
@@ -87,8 +87,8 @@ function layout(
     temp = (w / 8) * (1 - (iter + 1) / ITERS);
   }
 
-  // Encajar el resultado en el lienzo escalando, en vez de recortar contra el
-  // borde: recortar amontona nodos en los laterales y miente sobre la forma.
+  // Fit the result into the canvas by scaling instead of clamping against the
+  // edge: clamping piles nodes up on the sides and lies about the shape.
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const p of arr) {
     if (p.x < minX) minX = p.x;
@@ -96,7 +96,7 @@ function layout(
     if (p.y < minY) minY = p.y;
     if (p.y > maxY) maxY = p.y;
   }
-  const pad = 60; // sitio para las etiquetas, que van a la derecha del nodo
+  const pad = 60; // room for the labels, which sit to the right of the node
   const sc = Math.min(
     (w - pad * 2) / Math.max(1, maxX - minX),
     (h - pad * 2) / Math.max(1, maxY - minY),
@@ -123,8 +123,8 @@ export default function Mesh() {
   >([]);
   const [sel, setSel] = useState<number | undefined>();
   const [reload, setReload] = useState(0);
-  // enlaces inventados para poder juzgar el dibujo sin datos reales; nunca
-  // se escriben en la base
+  // made-up links to judge the drawing without real data; never written
+  // to the database
   const [demo, setDemo] = useState(false);
   const [vista, setVista] = useState<"grafo" | "actividad">("grafo");
   const [act, setAct] = useState<{ node: number; hora: number; n: number }[]>([]);
@@ -166,7 +166,7 @@ export default function Mesh() {
   const long = (num: number) =>
     s.nodes.get(num)?.longName ?? `!${num.toString(16)}`;
 
-  // grosor/opacidad por SNR: enlace fuerte = línea marcada
+  // width/opacity by SNR: a strong link is a bolder line
   const edgeStyle = (snr?: number) => {
     if (snr === undefined) return { w: 1, o: 0.25 };
     if (snr >= 5) return { w: 2, o: 0.85 };
@@ -177,10 +177,10 @@ export default function Mesh() {
   const selEdges = sel !== undefined ? edges.filter((e) => e.a === sel || e.b === sel) : [];
   const vecinosSel = new Set(selEdges.map((e) => (e.a === sel ? e.b : e.a)));
 
-  // s.version cambia con cada paquete: recalcular la foto es barato
+  // s.version changes with every packet: recomputing the snapshot is cheap
   const sum = useMemo(() => summarize(s.nodes.values()), [s]);
 
-  // rejilla de actividad: filas = nodos, columnas = horas
+  // activity grid: rows = nodes, columns = hours
   const rejilla = useMemo(() => {
     const ahora = Math.floor(Date.now() / 3_600_000);
     const horas = Array.from(
@@ -214,7 +214,7 @@ export default function Mesh() {
     </div>
   );
 
-  // saltos ordenados, con el cubo de desconocidos al final
+  // hops sorted, with the unknown bucket last
   const saltos = [...sum.saltos.entries()].sort((a, b) =>
     a[0] === "?" ? 1 : b[0] === "?" ? -1 : Number(a[0]) - Number(b[0]),
   );
@@ -385,7 +385,7 @@ export default function Mesh() {
                       </td>
                       {rejilla.horas.map((h) => {
                         const n = f.celdas.get(h) ?? 0;
-                        // intensidad relativa al máximo, con suelo visible
+                        // intensity relative to the max, with a visible floor
                         const op = n === 0 ? 0 : 0.25 + 0.75 * (n / rejilla.max);
                         const d = new Date(h * 3_600_000);
                         return (
@@ -454,8 +454,8 @@ export default function Mesh() {
                   if (!p) return null;
                   const isMe = id === s.myNodeNum;
                   const dim = sel !== undefined && id !== sel ? 0.35 : 1;
-                  // con muchos nodos las etiquetas se pisan: solo el nodo
-                  // propio, el seleccionado y sus vecinos llevan nombre
+                  // with many nodes the labels overlap: only our own node,
+                  // the selected one and its neighbors get a name
                   const label =
                     ids.length <= 45 ||
                     isMe ||
