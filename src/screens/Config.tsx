@@ -193,6 +193,7 @@ export default function Config() {
   const [mqRoot, setMqRoot] = useState("");
   const [nbOn, setNbOn] = useState(false);
   const [nbInt, setNbInt] = useState(0);
+  const [nbLora, setNbLora] = useState(false);
 
   const [posLat, setPosLat] = useState("");
   const [posLon, setPosLon] = useState("");
@@ -251,6 +252,7 @@ export default function Config() {
     if (neigh) {
       setNbOn(neigh.enabled);
       setNbInt(neigh.updateInterval);
+      setNbLora(neigh.transmitOverLora);
     }
   }, [neigh]);
 
@@ -414,13 +416,18 @@ export default function Config() {
       }),
     });
 
+  // El firmware exige 14400 s (4 h) como mínimo: por debajo rechaza el cambio
+  // y devuelve la config anterior, que parece "no se guarda".
+  const NEIGH_MIN = 14_400;
+
   const saveNeigh = () =>
     saveModule({
       case: "neighborInfo",
       value: create(Protobuf.ModuleConfig.ModuleConfig_NeighborInfoConfigSchema, {
         ...neigh,
         enabled: nbOn,
-        updateInterval: nbInt,
+        updateInterval: nbOn ? Math.max(NEIGH_MIN, nbInt) : nbInt,
+        transmitOverLora: nbLora,
       }),
     });
 
@@ -1141,12 +1148,39 @@ export default function Config() {
             <label>{t("INTERVALO (s)")}</label>
             <input
               type="number"
-              min={0}
+              min={NEIGH_MIN}
+              step={3600}
               value={nbInt}
               style={{ width: 100 }}
               onChange={(e) => setNbInt(Number(e.target.value))}
             />
+            <label
+              title={t(
+                "Sin esto los vecinos solo van por MQTT/USB, no por radio: la malla no los ve",
+              )}
+            >
+              {t("EMITIR POR LORA")}
+            </label>
+            <input
+              type="checkbox"
+              checked={nbLora}
+              style={{ justifySelf: "start", width: "auto" }}
+              onChange={(e) => setNbLora(e.target.checked)}
+            />
           </div>
+          <p className="dim" style={{ padding: "0 14px 12px", fontSize: 11 }}>
+            {nbOn && nbInt < NEIGH_MIN && (
+              <span className="warn">
+                {t(
+                  "El firmware exige 14400 s (4 h) como mínimo; por debajo rechaza el cambio. Al guardar se subirá a 14400.",
+                )}
+                <br />
+              </span>
+            )}
+            {t(
+              "EMITIR POR LORA no funciona en un canal con nombre y clave por defecto: usa un canal propio si quieres ver vecinos en la pestaña MALLA.",
+            )}
+          </p>
         </Section>
 
         <Section title="MÓDULO // RANGE TEST" onSave={saveRangeTest}>

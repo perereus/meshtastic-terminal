@@ -260,6 +260,13 @@ const en: Record<string, string> = {
   CONTRASEÑA: "PASSWORD",
   CIFRADO: "ENCRYPTION",
   "INTERVALO (s)": "INTERVAL (s)",
+  "EMITIR POR LORA": "TRANSMIT OVER LORA",
+  "Sin esto los vecinos solo van por MQTT/USB, no por radio: la malla no los ve":
+    "Without this, neighbors only go over MQTT/USB, not radio: the mesh never sees them",
+  "El firmware exige 14400 s (4 h) como mínimo; por debajo rechaza el cambio. Al guardar se subirá a 14400.":
+    "The firmware requires 14400 s (4 h) minimum; below that it rejects the change. Saving will raise it to 14400.",
+  "EMITIR POR LORA no funciona en un canal con nombre y clave por defecto: usa un canal propio si quieres ver vecinos en la pestaña MALLA.":
+    "TRANSMIT OVER LORA does not work on a channel with the default name and key: use your own channel if you want to see neighbors in the MESH tab.",
   "EMITIR CADA (s)": "SEND EVERY (s)",
   "GUARDAR EN SD": "SAVE TO SD",
   "0 en EMITIR = sólo recibe. Emitir satura el canal: úsalo en pruebas cortas y vuelve a 0. Los paquetes recibidos salen en el LOG.":
