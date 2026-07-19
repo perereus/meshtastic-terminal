@@ -16,6 +16,7 @@ import { parseChannelSetUrl } from "../channelUrl";
 import { buildChannelSetUrl } from "../channelUrl";
 import { getLang, setLang, t, type Lang } from "../i18n";
 import { getTheme, setTheme, THEMES, type Theme } from "../theme";
+import { getAlertCfg, setAlertCfg, type AlertCfg } from "../alerts";
 
 type LoRa = Protobuf.Config.Config_LoRaConfig;
 type Dev = Protobuf.Config.Config_DeviceConfig;
@@ -144,6 +145,12 @@ export default function Config() {
     >
   >({});
   const [theme, setThemeSel] = useState<Theme>(getTheme);
+  const [alerts, setAlerts] = useState<AlertCfg>(getAlertCfg);
+  const saveAlerts = (patch: Partial<AlertCfg>) => {
+    const next = { ...alerts, ...patch };
+    setAlerts(next);
+    setAlertCfg(next);
+  };
   const [chMsg, setChMsg] = useState("");
   const [chCls, setChCls] = useState("");
   const [maint, setMaint] = useState("");
@@ -522,7 +529,49 @@ export default function Config() {
                 </option>
               ))}
             </select>
+
+            <label
+              title={t("Avisos del sistema sobre los nodos marcados favoritos")}
+            >
+              {t("ALERTAS FAVORITOS")}
+            </label>
+            <input
+              type="checkbox"
+              checked={alerts.on}
+              style={{ justifySelf: "start", width: "auto" }}
+              onChange={(e) => saveAlerts({ on: e.target.checked })}
+            />
+            <label>{t("AVISAR BATERÍA <")}</label>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                disabled={!alerts.on}
+                value={alerts.battery}
+                style={{ width: 80 }}
+                onChange={(e) => saveAlerts({ battery: Number(e.target.value) })}
+              />
+              <span className="dim">%</span>
+            </div>
+            <label>{t("AVISAR SIN SEÑAL")}</label>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="number"
+                min={1}
+                disabled={!alerts.on}
+                value={alerts.silentH}
+                style={{ width: 80 }}
+                onChange={(e) => saveAlerts({ silentH: Number(e.target.value) })}
+              />
+              <span className="dim">{t("h")}</span>
+            </div>
           </div>
+          <p className="dim" style={{ padding: "0 14px 12px", fontSize: 11 }}>
+            {t(
+              "Solo avisa de los nodos marcados con ★ en NODOS, y como mucho una vez cada 6 h por nodo y motivo.",
+            )}
+          </p>
         </Section>
 
         <Section title={t("CONFIG // USUARIO")} onSave={saveOwner}>

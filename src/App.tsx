@@ -10,8 +10,10 @@ import {
   connectTcp,
   disconnect,
   loadHistory,
+  notify,
   setConnectionLostHandler,
 } from "./radio";
+import { evalAlerts, getAlertCfg } from "./alerts";
 import { getSnapshot, subscribe } from "./store";
 import Chat from "./screens/Chat";
 import Nodes from "./screens/Nodes";
@@ -167,6 +169,36 @@ function App() {
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  // Alertas de nodos favoritos (batería baja / sin señal). Cada minuto basta:
+  // son condiciones de horas, y evalAlerts ya lleva su propio antirrepetición.
+  useEffect(() => {
+    const fired = new Map<string, number>();
+    const check = () => {
+      const st = getSnapshot();
+      for (const a of evalAlerts(
+        st.nodes.values(),
+        getAlertCfg(),
+        fired,
+        Date.now(),
+        st.myNodeNum,
+      )) {
+        if (a.kind === "bateria") {
+          void notify(
+            t("{0} · batería {1}%", a.name, a.value),
+            t("Por debajo del umbral ({0}%)", a.threshold),
+          );
+        } else {
+          void notify(
+            t("{0} · sin señal", a.name),
+            t("{0} h sin dar señal", a.value),
+          );
+        }
+      }
+    };
+    const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
   }, []);
 
   const scanBle = () => {

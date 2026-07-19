@@ -50,17 +50,23 @@ export async function loadHistory(): Promise<void> {
   });
 }
 
-// Notificación OS solo si la ventana no tiene el foco (si estás mirando el
-// chat no hace falta). Permiso se pide la primera vez.
-async function notifyIncoming(title: string, body: string): Promise<void> {
+// Notificación del sistema. Permiso se pide la primera vez.
+export async function notify(title: string, body: string): Promise<void> {
   try {
-    if (await getCurrentWindow().isFocused()) return;
     let ok = await isPermissionGranted();
     if (!ok) ok = (await requestPermission()) === "granted";
     if (ok) sendNotification({ title, body });
   } catch {
     // sin soporte de notificaciones: no es crítico
   }
+}
+
+// Mensajes entrantes: solo si la ventana no tiene el foco (si estás mirando el
+// chat no hace falta). Las alertas de nodo sí avisan siempre: no dependen de
+// que estés mirando la pantalla correcta.
+async function notifyIncoming(title: string, body: string): Promise<void> {
+  if (await getCurrentWindow().isFocused().catch(() => false)) return;
+  await notify(title, body);
 }
 
 function upsertNode(num: number, patch: Partial<NodeEntry>): void {

@@ -198,6 +198,18 @@ const en: Record<string, string> = {
   "CONFIG // APLICACIÓN": "CONFIG // APPLICATION",
   IDIOMA: "LANGUAGE",
   COLOR: "COLOR",
+  "Avisos del sistema sobre los nodos marcados favoritos":
+    "System notifications about nodes marked as favorites",
+  "ALERTAS FAVORITOS": "FAVORITE ALERTS",
+  "{0} · batería {1}%": "{0} · battery {1}%",
+  "Por debajo del umbral ({0}%)": "Below the threshold ({0}%)",
+  "{0} · sin señal": "{0} · no signal",
+  "{0} h sin dar señal": "{0} h without a signal",
+  "AVISAR BATERÍA <": "WARN BATTERY <",
+  "AVISAR SIN SEÑAL": "WARN NO SIGNAL",
+  h: "h",
+  "Solo avisa de los nodos marcados con ★ en NODOS, y como mucho una vez cada 6 h por nodo y motivo.":
+    "Only warns about nodes marked ★ in NODES, and at most once every 6 h per node and reason.",
   "VERDE FÓSFORO": "PHOSPHOR GREEN",
   ÁMBAR: "AMBER",
   CIAN: "CYAN",
