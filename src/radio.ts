@@ -254,10 +254,14 @@ function wireEvents(d: MeshDevice): void {
     saveMessage(msg).catch(() => {});
     const { nodes, channels } = getSnapshot();
     const who = nodes.get(pkt.from)?.longName ?? `!${pkt.from.toString(16)}`;
-    const where = msg.convo.startsWith("dm:")
-      ? "DM"
-      : `#${channels.get(pkt.channel)?.name ?? pkt.channel}`;
-    void notifyIncoming(`${who} · ${where}`, pkt.data);
+    const isDm = msg.convo.startsWith("dm:");
+    const where = isDm ? "DM" : `#${channels.get(pkt.channel)?.name ?? pkt.channel}`;
+    // MUTE del canal (casilla en CONFIG // CANALES) silencia solo el canal:
+    // un DM sigue avisando aunque llegue por un canal silenciado.
+    const muted =
+      !isDm &&
+      (channels.get(pkt.channel)?.settings?.moduleSettings?.isMuted ?? false);
+    if (!muted) void notifyIncoming(`${who} · ${where}`, pkt.data);
   });
 
   d.events.onTraceRoutePacket.subscribe((pkt) => {
