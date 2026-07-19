@@ -5,6 +5,7 @@ import { addLog, getSnapshot, subscribe } from "../store";
 import { deleteWaypoint, sendWaypoint } from "../radio";
 import { ago, asciiBattery } from "../fmt";
 import { t } from "../i18n";
+import { ACCENT, fg } from "../theme";
 
 interface Draft {
   id?: number; // definido = edición
@@ -98,7 +99,7 @@ export default function MapView({
 
     for (const group of byCoord.values()) {
       const hasMe = group.some((n) => n.num === s.myNodeNum);
-      const color = hasMe ? "#00e5ff" : "#39ff5a";
+      const color = hasMe ? ACCENT : fg();
       const lat = group[0].lat as number;
       const lon = group[0].lon as number;
       const label =

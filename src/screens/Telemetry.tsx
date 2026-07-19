@@ -4,6 +4,7 @@ import "uplot/dist/uPlot.min.css";
 import { getSnapshot, subscribe } from "../store";
 import { listMetrics, listTelemetryNodes, loadTelemetry } from "../db";
 import { t } from "../i18n";
+import { ACCENT, fg } from "../theme";
 
 // pseudo-métrica: ChUtil + AirUtilTx en la misma gráfica
 const CHANNEL = "__canal";
@@ -117,7 +118,7 @@ export default function Telemetry() {
             {},
             {
               label: dual ? t("UTIL. CANAL (%)") : (METRIC_LABELS[metric] ?? metric),
-              stroke: "#39ff5a",
+              stroke: fg(),
               width: 2,
               points: { show: false },
             },
@@ -125,7 +126,7 @@ export default function Telemetry() {
               ? [
                   {
                     label: t("AIRE TX (%)"),
-                    stroke: "#00e5ff",
+                    stroke: ACCENT,
                     width: 2,
                     points: { show: false },
                   },
@@ -134,15 +135,15 @@ export default function Telemetry() {
           ],
           axes: [
             {
-              stroke: "#39ff5a88",
-              grid: { stroke: "#39ff5a22", dash: [2, 6] },
-              ticks: { stroke: "#39ff5a44" },
+              stroke: fg("88"),
+              grid: { stroke: fg("22"), dash: [2, 6] },
+              ticks: { stroke: fg("44") },
               font: "11px JetBrains Mono",
             },
             {
-              stroke: "#39ff5a88",
-              grid: { stroke: "#39ff5a22", dash: [2, 6] },
-              ticks: { stroke: "#39ff5a44" },
+              stroke: fg("88"),
+              grid: { stroke: fg("22"), dash: [2, 6] },
+              ticks: { stroke: fg("44") },
               font: "11px JetBrains Mono",
             },
           ],

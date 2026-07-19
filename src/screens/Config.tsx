@@ -15,6 +15,7 @@ import { mutate } from "../store";
 import { parseChannelSetUrl } from "../channelUrl";
 import { buildChannelSetUrl } from "../channelUrl";
 import { getLang, setLang, t, type Lang } from "../i18n";
+import { getTheme, setTheme, THEMES, type Theme } from "../theme";
 
 type LoRa = Protobuf.Config.Config_LoRaConfig;
 type Dev = Protobuf.Config.Config_DeviceConfig;
@@ -41,6 +42,14 @@ const PRECISION_OPTS: [number, string][] = [
   [19, "±45 m"],
   [32, t("EXACTA")],
 ];
+
+const THEME_LABELS: Record<Theme, string> = {
+  verde: "VERDE FÓSFORO",
+  ambar: "ÁMBAR",
+  cian: "CIAN",
+  hueso: "HUESO",
+  violeta: "VIOLETA",
+};
 
 function enumOptions(schema: {
   values: readonly { name: string; number: number }[];
@@ -134,6 +143,7 @@ export default function Config() {
       }
     >
   >({});
+  const [theme, setThemeSel] = useState<Theme>(getTheme);
   const [chMsg, setChMsg] = useState("");
   const [chCls, setChCls] = useState("");
   const [maint, setMaint] = useState("");
@@ -506,6 +516,11 @@ export default function Config() {
                 ? `!${s.myNodeNum.toString(16)} · ${t("SOLO LECTURA")}`
                 : "—"}
             </span>
+          </div>
+        </Section>
+
+        <Section title={t("CONFIG // APLICACIÓN")}>
+          <div className="form-grid">
             <label>{t("IDIOMA")}</label>
             <select
               value={getLang()}
@@ -514,6 +529,22 @@ export default function Config() {
             >
               <option value="es">ESPAÑOL</option>
               <option value="en">ENGLISH</option>
+            </select>
+            <label>{t("COLOR")}</label>
+            <select
+              value={theme}
+              style={{ width: 140 }}
+              onChange={(e) => {
+                const v = e.target.value as Theme;
+                setTheme(v);
+                setThemeSel(v);
+              }}
+            >
+              {(Object.keys(THEMES) as Theme[]).map((name) => (
+                <option key={name} value={name}>
+                  {t(THEME_LABELS[name])}
+                </option>
+              ))}
             </select>
           </div>
         </Section>
