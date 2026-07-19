@@ -7,6 +7,7 @@ import { scanBleDevices, type BleDeviceInfo } from "./transport/ble";
 import {
   connectBle,
   connectSerial,
+  connectFake,
   connectTcp,
   disconnect,
   loadHistory,
@@ -105,7 +106,7 @@ function Titlebar() {
 
 // Última conexión recordada (localStorage). Para BLE guardamos también el
 // nombre para poder mostrarlo en el desplegable antes de escanear.
-type Mode = "serie" | "tcp" | "ble";
+type Mode = "serie" | "tcp" | "ble" | "sim";
 interface LastConn {
   mode: Mode;
   id: string;
@@ -331,7 +332,9 @@ function App() {
       ? connectSerial(id)
       : m === "tcp"
         ? connectTcp(id)
-        : connectBle(id);
+        : m === "sim"
+          ? connectFake()
+          : connectBle(id);
 
   const clearReconnect = () => {
     if (reconnectTimerRef.current !== undefined) {
@@ -461,8 +464,13 @@ function App() {
           <option value="serie">{t("SERIE")}</option>
           <option value="tcp">TCP</option>
           <option value="ble">BLE</option>
+          <option value="sim">{t("SIMULADO")}</option>
         </select>
-        {mode === "serie" ? (
+        {mode === "sim" ? (
+          <span className="warn" style={{ fontSize: 11 }}>
+            {t("RADIO FALSA · escribe en la misma base que una real")}
+          </span>
+        ) : mode === "serie" ? (
           <>
             <select
               value={selected}
@@ -532,7 +540,9 @@ function App() {
                 ? !selected
                 : mode === "tcp"
                   ? !host.trim()
-                  : !bleSel
+                  : mode === "sim"
+                    ? false
+                    : !bleSel
             }
           >
             {t("CONECTAR")}

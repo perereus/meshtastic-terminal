@@ -208,6 +208,9 @@ const en: Record<string, string> = {
   "Reconexión fallida, reintento en {0}s": "Reconnect failed, retrying in {0}s",
   "Conexión cancelada": "Connection cancelled",
   SERIE: "SERIAL",
+  SIMULADO: "SIMULATED",
+  "RADIO FALSA · escribe en la misma base que una real":
+    "FAKE RADIO · writes to the same database as a real one",
   "SIN PUERTOS": "NO PORTS",
   Refrescar: "Refresh",
   "IP DEL NODO : 4403": "NODE IP : 4403",

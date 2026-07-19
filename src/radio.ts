@@ -12,6 +12,7 @@ import { t } from "./i18n";
 import { createSerialTransport } from "./transport/serial";
 import { createTcpTransport } from "./transport/tcp";
 import { createBleTransport } from "./transport/ble";
+import { createFakeTransport } from "./transport/fake";
 import {
   addLog,
   convoKey,
@@ -393,6 +394,13 @@ export async function connectSerial(path: string): Promise<void> {
 
 export async function connectTcp(host: string): Promise<void> {
   await connect(await createTcpTransport(host, handleLost));
+}
+
+/** Radio simulada: para probar sin hardware ni vecinos. Escribe en la misma
+ *  base que una conexión real, así que sus nodos (!7f00…) se mezclan con los
+ *  de verdad; purgar o filtrar por ese prefijo si molestan. */
+export async function connectFake(): Promise<void> {
+  await connect(await createFakeTransport());
 }
 
 // La app registra aquí qué hacer cuando el enlace se cae solo (no un
