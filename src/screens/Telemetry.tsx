@@ -3,19 +3,20 @@ import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import { getSnapshot, subscribe } from "../store";
 import { listMetrics, listTelemetryNodes, loadTelemetry } from "../db";
+import { t } from "../i18n";
 
 // pseudo-métrica: ChUtil + AirUtilTx en la misma gráfica
 const CHANNEL = "__canal";
 
 const METRIC_LABELS: Record<string, string> = {
-  [CHANNEL]: "CANAL OCUPADO (%)",
-  batteryLevel: "NIVEL BATERÍA (%)",
-  voltage: "TENSIÓN BATERÍA (V)",
-  channelUtilization: "UTIL. CANAL (%)",
-  airUtilTx: "AIRE TX (%)",
-  temperature: "TEMPERATURA (°C)",
-  relativeHumidity: "HUMEDAD (%)",
-  barometricPressure: "PRESIÓN (hPa)",
+  [CHANNEL]: t("CANAL OCUPADO (%)"),
+  batteryLevel: t("NIVEL BATERÍA (%)"),
+  voltage: t("TENSIÓN BATERÍA (V)"),
+  channelUtilization: t("UTIL. CANAL (%)"),
+  airUtilTx: t("AIRE TX (%)"),
+  temperature: t("TEMPERATURA (°C)"),
+  relativeHumidity: t("HUMEDAD (%)"),
+  barometricPressure: t("PRESIÓN (hPa)"),
 };
 
 const RANGES: [string, number][] = [
@@ -115,7 +116,7 @@ export default function Telemetry() {
           series: [
             {},
             {
-              label: dual ? "UTIL. CANAL (%)" : (METRIC_LABELS[metric] ?? metric),
+              label: dual ? t("UTIL. CANAL (%)") : (METRIC_LABELS[metric] ?? metric),
               stroke: "#39ff5a",
               width: 2,
               points: { show: false },
@@ -123,7 +124,7 @@ export default function Telemetry() {
             ...(dual
               ? [
                   {
-                    label: "AIRE TX (%)",
+                    label: t("AIRE TX (%)"),
                     stroke: "#00e5ff",
                     width: 2,
                     points: { show: false },
@@ -169,13 +170,15 @@ export default function Telemetry() {
     <main style={{ flexDirection: "column" }}>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
         <span className="dim" style={{ fontSize: 10, letterSpacing: 2 }}>
-          TELEMETRÍA //
+          {t("TELEMETRÍA //")}
         </span>
         <select
           value={effectiveNode ?? ""}
           onChange={(e) => setNode(Number(e.target.value))}
         >
-          {nodes.length === 0 && <option value="">SIN DATOS DE TELEMETRÍA</option>}
+          {nodes.length === 0 && (
+            <option value="">{t("SIN DATOS DE TELEMETRÍA")}</option>
+          )}
           {nodes.map((n) => (
             <option key={n.num} value={n.num}>
               {n.shortName} · !{n.num.toString(16)}
@@ -183,7 +186,7 @@ export default function Telemetry() {
           ))}
         </select>
         <select value={metric} onChange={(e) => setMetric(e.target.value)}>
-          {metrics.length === 0 && <option value="">SIN MÉTRICAS</option>}
+          {metrics.length === 0 && <option value="">{t("SIN MÉTRICAS")}</option>}
           {metrics.map((m) => (
             <option key={m} value={m}>
               {METRIC_LABELS[m] ?? m.toUpperCase()}
@@ -203,22 +206,21 @@ export default function Telemetry() {
         </div>
         <span style={{ flex: 1 }} />
         <span className="dim" style={{ fontSize: 11 }}>
-          {stats ? `${stats.n} MUESTRAS` : "SIN DATOS"}
+          {stats ? t("{0} MUESTRAS", stats.n) : t("SIN DATOS")}
         </span>
       </div>
 
       <div style={{ flex: 1, display: "flex", gap: 12, minHeight: 0 }}>
         <div className="panel" style={{ flex: 1 }}>
           <div className="panel-title">
-            GRÁFICA // {nodeLabel} · {METRIC_LABELS[metric] ?? (metric || "—")}
+            {t("GRÁFICA")} // {nodeLabel} · {METRIC_LABELS[metric] ?? (metric || "—")}
           </div>
           <div
             style={{ flex: 1, padding: 14, overflow: "hidden", position: "relative" }}
           >
             {!stats && (
               <p className="dim" style={{ position: "absolute" }}>
-                NO DATA — la telemetría se acumula mientras la app está
-                conectada_
+                {t("NO DATA — la telemetría se acumula mientras la app está conectada_")}
               </p>
             )}
             {/* ponytail: div dedicado a uPlot, SIN hijos de React — si React
@@ -260,10 +262,11 @@ export default function Telemetry() {
             }}
           >
             <span className="dim" style={{ fontSize: 10, letterSpacing: 1 }}>
-              MUESTREO PASIVO —<br />
-              SE GUARDA TODO LO
+              {t("MUESTREO PASIVO —")}
               <br />
-              QUE EMITE LA MALLA
+              {t("SE GUARDA TODO LO")}
+              <br />
+              {t("QUE EMITE LA MALLA")}
             </span>
           </div>
         </div>

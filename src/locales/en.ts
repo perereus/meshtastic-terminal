@@ -27,6 +27,27 @@ const en: Record<string, string> = {
   "escribe un mensaje_": "type a message_",
   "ENTER=TX · {0} B LIBRES": "ENTER=TX · {0} B FREE",
   YO: "ME",
+
+  // Telemetría
+  "CANAL OCUPADO (%)": "CHANNEL BUSY (%)",
+  "NIVEL BATERÍA (%)": "BATTERY LEVEL (%)",
+  "TENSIÓN BATERÍA (V)": "BATTERY VOLTAGE (V)",
+  "UTIL. CANAL (%)": "CHANNEL UTIL. (%)",
+  "AIRE TX (%)": "TX AIRTIME (%)",
+  "TEMPERATURA (°C)": "TEMPERATURE (°C)",
+  "HUMEDAD (%)": "HUMIDITY (%)",
+  "PRESIÓN (hPa)": "PRESSURE (hPa)",
+  "TELEMETRÍA //": "TELEMETRY //",
+  "SIN DATOS DE TELEMETRÍA": "NO TELEMETRY DATA",
+  "SIN MÉTRICAS": "NO METRICS",
+  "{0} MUESTRAS": "{0} SAMPLES",
+  "SIN DATOS": "NO DATA",
+  GRÁFICA: "CHART",
+  "NO DATA — la telemetría se acumula mientras la app está conectada_":
+    "NO DATA — telemetry accumulates while the app is connected_",
+  "MUESTREO PASIVO —": "PASSIVE SAMPLING —",
+  "SE GUARDA TODO LO": "EVERYTHING THE MESH",
+  "QUE EMITE LA MALLA": "TRANSMITS IS STORED",
 };
 
 export default en;
