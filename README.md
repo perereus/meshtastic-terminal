@@ -92,11 +92,13 @@ lets you see how the route to a node shifts over days.
   and restore from file.
 - **System tray**: closing the window doesn't quit the app, which keeps
   recording what the mesh says.
-- **Bilingual (ES/EN) with automated verification**: a self-check walks the
-  translation calls in the source and fails if any string is missing from the
-  dictionary, because an untranslated key silently falls back to Spanish.
-- **Five muted color themes**; the color propagates even to the charts and the
-  map markers.
+- **Bilingual (ES/EN), auto-detected** from the system language, with automated
+  verification: a self-check walks the translation calls in the source and fails
+  if any string is missing from the dictionary, because an untranslated key
+  silently falls back to Spanish.
+- **12/24-hour clock**, following the system locale or forced either way.
+- **Five muted color themes**; the color propagates to the charts, the mesh
+  graph and even the map tiles, not just the markers.
 - **Optional automatic purge** on startup, with configurable retention.
 
 ---

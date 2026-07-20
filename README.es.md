@@ -94,11 +94,13 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
   incluidos, y restauración desde archivo.
 - **Bandeja del sistema**: cerrar la ventana no cierra la app, que sigue
   registrando lo que oye la malla.
-- **Bilingüe (ES/EN) con verificación automática**: un self-check recorre las
-  llamadas de traducción del código y falla si alguna cadena no está en el
-  diccionario, porque una clave sin traducir cae al español en silencio.
-- **Cinco temas de color** sobrios; el color se propaga incluso a las gráficas y
-  a los marcadores del mapa.
+- **Bilingüe (ES/EN), autodetectado** según el idioma del sistema, con
+  verificación automática: un self-check recorre las llamadas de traducción del
+  código y falla si alguna cadena no está en el diccionario, porque una clave
+  sin traducir cae al español en silencio.
+- **Reloj de 12/24 h**, siguiendo el locale del sistema o forzado a uno u otro.
+- **Cinco temas de color** sobrios; el color se propaga a las gráficas, al grafo
+  de malla e incluso a las teselas del mapa, no solo a los marcadores.
 - **Purga automática opcional** al arrancar, con retención configurable.
 
 ---
