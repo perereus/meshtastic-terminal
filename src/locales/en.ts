@@ -155,6 +155,8 @@ const en: Record<string, string> = {
   "ERROR EN PANTALLA": "SCREEN ERROR",
   Minimizar: "Minimize",
   Maximizar: "Maximize",
+  "Pantalla completa": "Fullscreen",
+  "Salir de pantalla completa": "Exit fullscreen",
   Cerrar: "Close",
   NODOS: "NODES",
   MAPA: "MAP",

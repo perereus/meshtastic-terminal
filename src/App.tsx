@@ -71,6 +71,12 @@ class ScreenBoundary extends Component<
 const appWindow = getCurrentWindow();
 
 function Titlebar() {
+  const [fs, setFs] = useState(false);
+  const toggleFullscreen = async () => {
+    const next = !(await appWindow.isFullscreen());
+    await appWindow.setFullscreen(next);
+    setFs(next);
+  };
   return (
     <div className="titlebar" data-tauri-drag-region>
       <span className="titlebar-label" data-tauri-drag-region>
@@ -90,6 +96,13 @@ function Titlebar() {
           title={t("Maximizar")}
         >
           ▢
+        </button>
+        <button
+          className="tb-btn"
+          onClick={toggleFullscreen}
+          title={fs ? t("Salir de pantalla completa") : t("Pantalla completa")}
+        >
+          ⛶
         </button>
         <button
           className="tb-btn tb-close"
