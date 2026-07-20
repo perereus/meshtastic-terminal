@@ -130,6 +130,19 @@ function saveLast(v: LastConn): void {
 
 // Grace period before the first reconnect: the node is still booting.
 const RECONNECT_WAIT_MS = 6000;
+// Ceiling for one attempt (BLE scan 12 s + handshake 25 s + margin). Nobody is
+// watching the automatic path, so an attempt that hangs would leave the busy
+// flag set forever and kill the retry chain in silence.
+const RECONNECT_ATTEMPT_MS = 45_000;
+
+function conTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, rej) =>
+      setTimeout(() => rej(new Error(`${what} no respondió en ${ms / 1000}s`)), ms),
+    ),
+  ]);
+}
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -330,6 +343,7 @@ function App() {
       // config does) or out of range. Either way it takes 10-20 s to answer
       // again, so retrying immediately only burns the first attempt.
       setError(t("Enlace perdido · reconectando en {0}s", RECONNECT_WAIT_MS / 1000));
+      addLog(`RECONEXION: programada en ${RECONNECT_WAIT_MS / 1000}s`);
       scheduleReconnect(RECONNECT_WAIT_MS);
     });
     return () => setConnectionLostHandler(undefined);
@@ -364,15 +378,16 @@ function App() {
     setError("");
     setConnecting(true);
     canceledRef.current = false;
+    wantRef.current = true;
+    lastRef.current = { mode, id };
     try {
       await doConnect(mode, id);
       if (canceledRef.current) return;
       setConnectedAt(Date.now());
-      wantRef.current = true;
-      lastRef.current = { mode, id };
       const name = mode === "ble" ? bleDevices.find((d) => d.address === id)?.name : undefined;
       saveLast({ mode, id, name });
     } catch (e) {
+      wantRef.current = false; // manual connect failed: don't retry behind their back
       if (!canceledRef.current) setError(String(e));
     } finally {
       setConnecting(false);
@@ -382,20 +397,31 @@ function App() {
   // Retries the last connection with exponential backoff (2s→15s cap) while
   // the user still wants to be connected. Only BLE reports drops today.
   const tryReconnect = async () => {
-    if (!wantRef.current || !lastRef.current) return;
-    if (reconnectBusyRef.current) return; // an attempt is already running
+    if (!wantRef.current || !lastRef.current) {
+      addLog("RECONEXION: cancelada (desconexión manual)");
+      return;
+    }
+    if (reconnectBusyRef.current) {
+      addLog("RECONEXION: ya hay un intento en curso");
+      return;
+    }
     reconnectBusyRef.current = true;
     const { mode: m, id } = lastRef.current;
     setConnecting(true);
     setError(t("Reconectando… (intento {0})", attemptRef.current + 1));
+    addLog(`RECONEXION: intento ${attemptRef.current + 1} por ${m}`);
     try {
-      await doConnect(m, id);
+      await conTimeout(doConnect(m, id), RECONNECT_ATTEMPT_MS, "la reconexión");
       if (!wantRef.current) return; // the user cancelled while reconnecting
       setConnectedAt(Date.now());
       setError("");
       attemptRef.current = 0;
-    } catch {
+      addLog("RECONEXION: conectado");
+    } catch (e) {
       if (!wantRef.current) return;
+      // Swallowing this was why a failed reconnect left no trace anywhere:
+      // the header string is the next thing to overwrite itself.
+      addLog(`RECONEXION: intento ${attemptRef.current + 1} fallido: ${e}`);
       attemptRef.current++;
       const delay = Math.min(15000, 2000 * 2 ** (attemptRef.current - 1));
       setError(t("Reconexión fallida, reintento en {0}s", delay / 1000));

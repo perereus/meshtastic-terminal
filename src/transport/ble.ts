@@ -73,6 +73,7 @@ export async function createBleTransport(
 ): Promise<Types.Transport> {
   // btleplug only connects to peripherals seen in an active scan. We rediscover
   // and connect as soon as the node shows up (scan still active → cached).
+  addLog(`BLE: abriendo transporte hacia ${address}`);
   const norm = (a: string) => a.replace(/[:-]/g, "").toUpperCase();
   const target = norm(address);
   await stopScan().catch(() => {});
@@ -116,6 +117,7 @@ export async function createBleTransport(
     // The plugin reports the disconnection itself: waiting for a read to fail
     // is slower and misses the case where reads just return empty.
     await connect(address, perdido);
+    addLog("BLE: conectado, suscribiendo");
   } finally {
     await stopScan().catch(() => {}); // stop scanning whatever happens
   }
