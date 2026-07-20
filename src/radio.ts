@@ -381,9 +381,11 @@ function wireEvents(d: MeshDevice): void {
   });
 }
 
-// A node that has just applied a config reboots and takes a while to answer.
-// Anything shorter reports a failure that was only the reboot.
-const CONFIG_TIMEOUT_MS = 25_000;
+// Budget for the whole handshake. Generous on purpose: over BLE the initial
+// NodeDB dump is slow, and a real reconnect measured 26 s with ~90 nodes. This
+// only bites when the link is up but silent — an actual drop rejects at once
+// via DeviceDisconnected, so a long ceiling costs nothing in the common case.
+const CONFIG_TIMEOUT_MS = 90_000;
 
 /** Takes a factory, not a transport, so the previous device is torn down
  *  BEFORE the new link exists: the BLE plugin holds a single global connection
