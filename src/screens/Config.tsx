@@ -19,7 +19,7 @@ import {
 import { mutate } from "../store";
 import { parseChannelSetUrl } from "../channelUrl";
 import { buildChannelSetUrl } from "../channelUrl";
-import { getLang, setLang, t, type Lang } from "../i18n";
+import { getLang, getLangPref, setLang, t, type Lang } from "../i18n";
 import { getTheme, setTheme, THEMES, type Theme } from "../theme";
 import { getAlertCfg, setAlertCfg, type AlertCfg } from "../alerts";
 
@@ -519,10 +519,13 @@ export default function Config() {
           <div className="form-grid">
             <label>{t("IDIOMA")}</label>
             <select
-              value={getLang()}
+              value={getLangPref()}
               style={{ width: 140 }}
-              onChange={(e) => setLang(e.target.value as Lang)}
+              onChange={(e) => setLang(e.target.value as Lang | "auto")}
             >
+              <option value="auto">
+                {t("AUTOMÁTICO")} · {getLang().toUpperCase()}
+              </option>
               <option value="es">ESPAÑOL</option>
               <option value="en">ENGLISH</option>
             </select>

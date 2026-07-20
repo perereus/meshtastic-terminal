@@ -56,4 +56,43 @@ assert.deepEqual(faltan, [], `sin traducir en en.ts:\n  ${faltan.join("\n  ")}`)
 const faltanDin = DINAMICAS.filter((k) => !(k in en));
 assert.deepEqual(faltanDin, [], `claves dinámicas sin traducir: ${faltanDin}`);
 
+// ── automatic language ───────────────────────────────────────────────────
+// i18n.ts reads localStorage and navigator, which don't exist in Node
+const guardado = new Map<string, string>();
+const stub = (lang: string) => {
+  Object.defineProperty(globalThis, "navigator", {
+    value: { language: lang },
+    configurable: true,
+  });
+};
+Object.defineProperty(globalThis, "localStorage", {
+  value: {
+    getItem: (k: string) => guardado.get(k) ?? null,
+    setItem: (k: string, v: string) => void guardado.set(k, v),
+    removeItem: (k: string) => void guardado.delete(k),
+  },
+  configurable: true,
+});
+stub("es-ES");
+
+const { getLang, getLangPref } = await import("./i18n.ts");
+
+assert.equal(getLangPref(), "auto", "sin nada guardado, automático");
+assert.equal(getLang(), "es");
+stub("es"); // without a region
+assert.equal(getLang(), "es");
+stub("ES-MX"); // capitals: Windows sometimes reports them
+assert.equal(getLang(), "es");
+// "est" is Estonian: a prefix match would take it for Spanish
+for (const otro of ["en-US", "ca-ES", "fr", "de-DE", "est-EE", "eu-ES"]) {
+  stub(otro);
+  assert.equal(getLang(), "en", `${otro} no es español, toca inglés`);
+}
+// a manual choice wins over the system
+guardado.set("lang", "es");
+assert.equal(getLangPref(), "es");
+assert.equal(getLang(), "es", "en-US de sistema pero español elegido a mano");
+guardado.set("lang", "basura");
+assert.equal(getLangPref(), "auto", "un valor corrupto vuelve a automático");
+
 console.log(`i18n.test.ts OK · ${usadas.size} claves usadas, todas traducidas`);

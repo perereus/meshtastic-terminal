@@ -237,6 +237,7 @@ const en: Record<string, string> = {
   "SOLO LECTURA": "READ ONLY",
   "CONFIG // APLICACIÓN": "CONFIG // APPLICATION",
   IDIOMA: "LANGUAGE",
+  AUTOMÁTICO: "AUTOMATIC",
   COLOR: "COLOR",
   "Avisos del sistema sobre los nodos marcados favoritos":
     "System notifications about nodes marked as favorites",
