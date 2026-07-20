@@ -136,6 +136,7 @@ export async function createBleTransport(
   // (no framing). We read while there is data; once empty we wait for a
   // FROMNUM notification (or a backup poll) before reading again.
   const readLoop = async () => {
+    let paquetes = 0;
     while (!closed) {
       let got = false;
       try {
@@ -143,11 +144,16 @@ export async function createBleTransport(
         if (bytes && bytes.length) {
           controller?.enqueue({ type: "packet", data: new Uint8Array(bytes) });
           got = true;
+          // Trace whether the stream is actually flowing: a handshake stuck at
+          // DeviceConfiguring with 0 packets means the node isn't answering the
+          // wantConfigId; with packets, the problem is in decoding.
+          if (++paquetes === 1) addLog("BLE: primer paquete recibido");
         }
-      } catch {
+      } catch (e) {
         // A read can also fail with the link technically alive (GATT timeout):
         // close the plugin side too, or the next attempt inherits a zombie.
         if (!closed) {
+          addLog(`BLE: lectura falló tras ${paquetes} paquetes: ${e}`);
           await cerrarPlugin();
           perdido();
         }
