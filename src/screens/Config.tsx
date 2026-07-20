@@ -747,6 +747,8 @@ export default function Config() {
           </div>
         </Section>
 
+        </div>
+        <div className="cfg-col">
         <Section title={t("CONFIG // POSICIÓN FIJA")}>
           <div
             style={{
@@ -828,8 +830,6 @@ export default function Config() {
           </div>
         </Section>
 
-        </div>
-        <div className="cfg-col">
         <Section title={t("CONFIG // CANALES")}>
           <div
             style={{
