@@ -1,4 +1,5 @@
 import type { Protobuf, Types } from "@meshtastic/core";
+import { hora } from "./fmt";
 
 export interface NodeEntry {
   num: number;
@@ -114,7 +115,7 @@ export function addLog(text: string): void {
     // ponytail: log capped at 500 lines, enough for diagnosis
     s.log = [
       ...s.log.slice(-499),
-      `${new Date().toLocaleTimeString()} ${text}`,
+      `${hora(Date.now())} ${text}`,
     ];
   });
 }

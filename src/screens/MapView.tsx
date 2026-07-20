@@ -3,7 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { addLog, getSnapshot, subscribe } from "../store";
 import { deleteWaypoint, sendWaypoint } from "../radio";
-import { ago, asciiBattery } from "../fmt";
+import { ago, asciiBattery, fechaHora, useHourTick } from "../fmt";
 import { t } from "../i18n";
 import { ACCENT, fg, useThemeTick } from "../theme";
 
@@ -25,6 +25,7 @@ export default function MapView({
   const s = useSyncExternalStore(subscribe, getSnapshot);
   // the markers are drawn with fg(): they have to be redrawn on a theme change
   const tema = useThemeTick();
+  const horaFmt = useHourTick();
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -139,7 +140,7 @@ export default function MapView({
         (w.description ? `<div style="margin-bottom:4px;">${w.description}</div>` : "") +
         `<div style="opacity:.6;font-size:11px;">${t("de {0}", getSnapshot().nodes.get(w.from)?.shortName ?? w.from.toString(16))}` +
         (w.expire
-          ? ` · ${t("caduca {0}", new Date(w.expire * 1000).toLocaleString())}`
+          ? ` · ${t("caduca {0}", fechaHora(w.expire * 1000))}`
           : ` · ${t("sin caducidad")}`) +
         `</div>`;
       const row = document.createElement("div");
@@ -197,7 +198,7 @@ export default function MapView({
         `MAPA: ${positioned.length} nodos en ${byCoord.size} puntos (coords compartidas por precisión reducida)`,
       );
     }
-  }, [s, tema]);
+  }, [s, tema, horaFmt]);
 
   const all = [...s.nodes.values()];
   const withFix = all.filter(

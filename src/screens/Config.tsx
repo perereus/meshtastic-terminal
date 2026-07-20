@@ -21,6 +21,7 @@ import { parseChannelSetUrl } from "../channelUrl";
 import { buildChannelSetUrl } from "../channelUrl";
 import { getLang, getLangPref, setLang, t, type Lang } from "../i18n";
 import { getTheme, setTheme, THEMES, type Theme } from "../theme";
+import { getHourPref, is12h, setHourPref, type HourPref } from "../fmt";
 import { getAlertCfg, setAlertCfg, type AlertCfg } from "../alerts";
 
 type LoRa = Protobuf.Config.Config_LoRaConfig;
@@ -150,6 +151,7 @@ export default function Config() {
     >
   >({});
   const [theme, setThemeSel] = useState<Theme>(getTheme);
+  const [horaFmt, setHoraFmt] = useState<HourPref>(getHourPref);
   const [alerts, setAlerts] = useState<AlertCfg>(getAlertCfg);
   const saveAlerts = (patch: Partial<AlertCfg>) => {
     const next = { ...alerts, ...patch };
@@ -528,6 +530,22 @@ export default function Config() {
               </option>
               <option value="es">ESPAÑOL</option>
               <option value="en">ENGLISH</option>
+            </select>
+            <label>{t("HORA")}</label>
+            <select
+              value={horaFmt}
+              style={{ width: 140 }}
+              onChange={(e) => {
+                const v = e.target.value as HourPref;
+                setHourPref(v);
+                setHoraFmt(v);
+              }}
+            >
+              <option value="auto">
+                {t("AUTOMÁTICO")} · {is12h() ? "12 H" : "24 H"}
+              </option>
+              <option value="24">24 H · 15:04</option>
+              <option value="12">12 H · 3:04 PM</option>
             </select>
             <label>{t("COLOR")}</label>
             <select

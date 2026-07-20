@@ -238,6 +238,7 @@ const en: Record<string, string> = {
   "CONFIG // APLICACIÓN": "CONFIG // APPLICATION",
   IDIOMA: "LANGUAGE",
   AUTOMÁTICO: "AUTOMATIC",
+  HORA: "TIME",
   COLOR: "COLOR",
   "Avisos del sistema sobre los nodos marcados favoritos":
     "System notifications about nodes marked as favorites",

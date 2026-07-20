@@ -3,16 +3,11 @@ import { clearUnread, getSnapshot, subscribe } from "../store";
 import { retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
 import { t } from "../i18n";
+import { hora } from "../fmt";
 
 // in search results the time alone isn't enough: they may be from another day
 const fecha = (ms: number) =>
   new Date(ms).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
-
-function ts(ms: number): string {
-  const d = new Date(ms);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
 
 export default function Chat({
   convo,
@@ -232,7 +227,7 @@ export default function Chat({
                   <span className="warn">{labelOf(m.convo)}</span>{" "}
                 </>
               )}
-              <span className="dim">[{ts(m.ts)}]</span>{" "}
+              <span className="dim">[{hora(m.ts)}]</span>{" "}
               <span
                 className={m.mine ? "" : "warn"}
                 style={m.mine ? { fontWeight: 700 } : undefined}

@@ -1,4 +1,68 @@
+import { useEffect, useState } from "react";
 import { Protobuf } from "@meshtastic/core";
+
+/** Clock format. "auto" follows the system locale, which is what most people
+ *  expect; the other two force it. Dates always follow the locale. */
+export type HourPref = "auto" | "12" | "24";
+
+const HOUR_KEY = "hourFormat";
+const HOUR_EVENT = "hourformatchange";
+
+export function getHourPref(): HourPref {
+  const v = localStorage.getItem(HOUR_KEY);
+  return v === "12" || v === "24" ? v : "auto";
+}
+
+export function setHourPref(p: HourPref): void {
+  if (p === "auto") localStorage.removeItem(HOUR_KEY);
+  else localStorage.setItem(HOUR_KEY, p);
+  window.dispatchEvent(new Event(HOUR_EVENT));
+}
+
+/** undefined = let the locale decide */
+function hour12(): boolean | undefined {
+  const p = getHourPref();
+  return p === "auto" ? undefined : p === "12";
+}
+
+/** True when the format in force is 12 h, whatever decided it. */
+export function is12h(): boolean {
+  return (
+    hour12() ??
+    (new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions()
+      .hour12 === true)
+  );
+}
+
+/** Re-renders on a format change. Used at the root so the whole UI follows. */
+export function useHourTick(): number {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const on = () => setTick((v) => v + 1);
+    window.addEventListener(HOUR_EVENT, on);
+    return () => window.removeEventListener(HOUR_EVENT, on);
+  }, []);
+  return tick;
+}
+
+/** hh:mm:ss. 2-digit even in 12 h: the width has to stay fixed in a monospace UI. */
+export function hora(ms: number, segundos = true): string {
+  return new Date(ms).toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(segundos ? { second: "2-digit" as const } : {}),
+    hour12: hour12(),
+  });
+}
+
+/** Date + time, for anything not from today. */
+export function fechaHora(ms: number): string {
+  return new Date(ms).toLocaleString(undefined, {
+    dateStyle: "short",
+    timeStyle: "medium",
+    hour12: hour12(),
+  });
+}
 
 export function ago(epochS: number): string {
   if (!epochS) return "—";

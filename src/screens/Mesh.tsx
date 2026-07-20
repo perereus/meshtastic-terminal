@@ -4,7 +4,7 @@ import { loadActividad, loadAllTraceroutes, loadNeighbors } from "../db";
 import { t } from "../i18n";
 import { ACCENT, fg, useThemeTick } from "../theme";
 import { buildEdges, edgeKey as key, summarize, type Edge } from "../mesh";
-import { ago } from "../fmt";
+import { ago, fechaHora } from "../fmt";
 
 /** Fruchterman-Reingold layout, fixed iterations (no animation).
  *  ponytail: O(n²) per iteration; with ~100 nodes that's fine and avoids a quadtree.
@@ -360,7 +360,7 @@ export default function Mesh() {
                         return (
                           <td
                             key={h}
-                            title={`${short(f.node)} · ${d.toLocaleString()} · ${t("{0} paquetes", n)}`}
+                            title={`${short(f.node)} · ${fechaHora(d.getTime())} · ${t("{0} paquetes", n)}`}
                             style={{
                               width: 9,
                               height: 14,

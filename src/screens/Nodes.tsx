@@ -14,7 +14,7 @@ import {
   toggleFav,
   toggleIgnored,
 } from "../radio";
-import { ago, asciiBattery, hwName, snrClass } from "../fmt";
+import { ago, asciiBattery, fechaHora, hwName, snrClass } from "../fmt";
 import { loadHopChanges, loadTelemetry, loadTraceroutes } from "../db";
 import { preverBateria, textoPrevision, type Prevision } from "../battery";
 import { t } from "../i18n";
@@ -318,7 +318,7 @@ function Detail(props: {
             title={hops
               .map(
                 (h) =>
-                  `${new Date(h.ts).toLocaleString()} · ${h.antes ?? "?"} → ${h.hops}`,
+                  `${fechaHora(h.ts)} · ${h.antes ?? "?"} → ${h.hops}`,
               )
               .join("\n")}
           >
@@ -419,7 +419,7 @@ function Detail(props: {
                   {history.map((h) => (
                     <div key={h.ts} style={{ marginBottom: 6 }}>
                       <div className="dim" style={{ fontSize: 10 }}>
-                        {new Date(h.ts).toLocaleString()} ·{" "}
+                        {fechaHora(h.ts)} ·{" "}
                         {t("{0} saltos", h.route.length + 1)}
                       </div>
                       <RouteLine

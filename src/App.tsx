@@ -23,7 +23,7 @@ import MapView from "./screens/MapView";
 import Mesh from "./screens/Mesh";
 import Config from "./screens/Config";
 import Telemetry from "./screens/Telemetry";
-import { hwName, regionName } from "./fmt";
+import { hora, hwName, regionName, useHourTick } from "./fmt";
 import { saveText, stamp } from "./export";
 import { t } from "./i18n";
 import "./App.css";
@@ -139,6 +139,8 @@ function hms(ms: number): string {
 
 function App() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
+  // at the root: a clock format change repaints every screen
+  useHourTick();
   const [tab, setTab] = useState<Tab>("CHAT");
   const [chatConvo, setChatConvo] = useState("ch:0");
   // node to preselect when jumping MAP → NODES with [+INFO]
@@ -401,8 +403,7 @@ function App() {
     await stopAndForget();
   };
 
-  const d = new Date(now);
-  const clock = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  const clock = hora(now);
 
   const ledClass = connected ? "on" : connecting || configuring ? "connecting" : "";
   const connText = connected
