@@ -128,6 +128,9 @@ function saveLast(v: LastConn): void {
   }
 }
 
+// Grace period before the first reconnect: the node is still booting.
+const RECONNECT_WAIT_MS = 6000;
+
 function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
@@ -322,7 +325,12 @@ function App() {
 
     // When the link drops on its own, start auto-reconnecting
     setConnectionLostHandler(() => {
-      if (wantRef.current) void tryReconnect();
+      if (!wantRef.current) return;
+      // A node that just dropped is either rebooting (that's what applying a
+      // config does) or out of range. Either way it takes 10-20 s to answer
+      // again, so retrying immediately only burns the first attempt.
+      setError(t("Enlace perdido · reconectando en {0}s", RECONNECT_WAIT_MS / 1000));
+      scheduleReconnect(RECONNECT_WAIT_MS);
     });
     return () => setConnectionLostHandler(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,6 +345,18 @@ function App() {
       reconnectTimerRef.current = undefined;
     }
     attemptRef.current = 0;
+  };
+
+  // The link-lost handler and the backoff both schedule retries: going through
+  // here keeps a single live timer instead of one silently replacing the other.
+  const scheduleReconnect = (ms: number) => {
+    if (reconnectTimerRef.current !== undefined) {
+      clearTimeout(reconnectTimerRef.current);
+    }
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = undefined;
+      void tryReconnect();
+    }, ms) as unknown as number;
   };
 
   const onConnect = async () => {
@@ -379,7 +399,7 @@ function App() {
       attemptRef.current++;
       const delay = Math.min(15000, 2000 * 2 ** (attemptRef.current - 1));
       setError(t("Reconexión fallida, reintento en {0}s", delay / 1000));
-      reconnectTimerRef.current = setTimeout(tryReconnect, delay) as unknown as number;
+      scheduleReconnect(delay);
     } finally {
       reconnectBusyRef.current = false;
       setConnecting(false);

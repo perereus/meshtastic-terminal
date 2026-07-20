@@ -10,6 +10,7 @@ import { parseChannelSetUrl } from "./channelUrl";
 import { COOLDOWN_MS, getAlertCfg } from "./alerts";
 import { t } from "./i18n";
 import { createSerialTransport } from "./transport/serial";
+import { waitConfigured } from "./handshake";
 import { createTcpTransport } from "./transport/tcp";
 import { createBleTransport } from "./transport/ble";
 import {
@@ -380,19 +381,45 @@ function wireEvents(d: MeshDevice): void {
   });
 }
 
-async function connect(transport: Types.Transport): Promise<void> {
-  device = new MeshDevice(transport);
-  wireEvents(device);
-  await device.configure();
-  device.setHeartbeatInterval(60_000);
+// A node that has just applied a config reboots and takes a while to answer.
+// Anything shorter reports a failure that was only the reboot.
+const CONFIG_TIMEOUT_MS = 25_000;
+
+/** Takes a factory, not a transport, so the previous device is torn down
+ *  BEFORE the new link exists: the BLE plugin holds a single global connection
+ *  and disconnecting the old one afterwards would kill the new one. */
+async function connect(make: () => Promise<Types.Transport>): Promise<void> {
+  // The old MeshDevice keeps its heartbeat timer running (only disconnect()
+  // clears it) and would write into whatever link is current.
+  const prev = device;
+  device = undefined;
+  if (prev) await prev.disconnect().catch(() => {});
+
+  const d = new MeshDevice(await make());
+  wireEvents(d);
+  device = d;
+  try {
+    // subscribe before configure(): the reply can arrive first
+    const configured = waitConfigured(d, CONFIG_TIMEOUT_MS);
+    configured.catch(() => {}); // if configure() throws first, nobody awaits it
+    await d.configure();
+    await configured;
+  } catch (e) {
+    device = undefined;
+    // leave nothing half-open, or the next attempt finds the plugin still
+    // believing it is connected and returns OK without reconnecting
+    await d.disconnect().catch(() => {});
+    throw e;
+  }
+  d.setHeartbeatInterval(60_000);
 }
 
 export async function connectSerial(path: string): Promise<void> {
-  await connect(await createSerialTransport(path, handleLost));
+  await connect(() => createSerialTransport(path, handleLost));
 }
 
 export async function connectTcp(host: string): Promise<void> {
-  await connect(await createTcpTransport(host, handleLost));
+  await connect(() => createTcpTransport(host, handleLost));
 }
 
 // The app registers here what to do when the link drops on its own (not a
@@ -413,7 +440,7 @@ function handleLost(): void {
 }
 
 export async function connectBle(address: string): Promise<void> {
-  await connect(await createBleTransport(address, handleLost));
+  await connect(() => createBleTransport(address, handleLost));
 }
 
 // Imports channels from a Meshtastic URL (https://meshtastic.org/e/#<b64url>).

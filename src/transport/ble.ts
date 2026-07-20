@@ -90,16 +90,35 @@ export async function createBleTransport(
     new Promise<boolean>((r) => setTimeout(() => r(false), 12000)),
   ]);
   addLog(`BLE reconnect visto=${ok} addrs=[${[...addrs].join(", ")}]`);
-  try {
-    await connect(address, null);
-  } finally {
-    await stopScan().catch(() => {}); // stop scanning whatever happens
-  }
 
   let controller: ReadableStreamDefaultController<Types.DeviceOutput> | null =
     null;
   let closed = false;
   let wake: (() => void) | null = null;
+
+  // Closes the plugin side. It holds ONE global connection with no device
+  // handle, so leaving it half-open makes the next connect() see it as still
+  // connected and return OK without reconnecting for real.
+  const cerrarPlugin = async () => {
+    await unsubscribe(FROMNUM, SERVICE).catch(() => {});
+    await disconnect().catch(() => {});
+  };
+
+  // Report the drop once, whoever notices it first.
+  const perdido = () => {
+    if (closed) return;
+    closed = true;
+    wake?.();
+    onLost?.();
+  };
+
+  try {
+    // The plugin reports the disconnection itself: waiting for a read to fail
+    // is slower and misses the case where reads just return empty.
+    await connect(address, perdido);
+  } finally {
+    await stopScan().catch(() => {}); // stop scanning whatever happens
+  }
 
   const fromDevice = new ReadableStream<Types.DeviceOutput>({
     start(c) {
@@ -124,7 +143,12 @@ export async function createBleTransport(
           got = true;
         }
       } catch {
-        if (!closed) onLost?.(); // unexpected drop (not a manual disconnect)
+        // A read can also fail with the link technically alive (GATT timeout):
+        // close the plugin side too, or the next attempt inherits a zombie.
+        if (!closed) {
+          await cerrarPlugin();
+          perdido();
+        }
         break; // desconectado
       }
       if (!got && !closed) {
@@ -170,10 +194,9 @@ export async function createBleTransport(
     toDevice,
     fromDevice,
     async disconnect() {
-      closed = true;
+      closed = true; // set before cerrarPlugin: this is not a lost link
       wake?.();
-      await unsubscribe(FROMNUM, SERVICE).catch(() => {});
-      await disconnect().catch(() => {});
+      await cerrarPlugin();
     },
   };
 }

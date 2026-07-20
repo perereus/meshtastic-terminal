@@ -196,6 +196,7 @@ const en: Record<string, string> = {
   "BLE: {0} dispositivos ({1} Meshtastic)": "BLE: {0} devices ({1} Meshtastic)",
   "Reconectando… (intento {0})": "Reconnecting… (attempt {0})",
   "Reconexión fallida, reintento en {0}s": "Reconnect failed, retrying in {0}s",
+  "Enlace perdido · reconectando en {0}s": "Link lost · reconnecting in {0}s",
   "Conexión cancelada": "Connection cancelled",
   SERIE: "SERIAL",
   "SIN PUERTOS": "NO PORTS",
