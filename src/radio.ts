@@ -381,11 +381,28 @@ function wireEvents(d: MeshDevice): void {
   });
 }
 
-// Budget for the whole handshake. Generous on purpose: over BLE the initial
-// NodeDB dump is slow, and a real reconnect measured 26 s with ~90 nodes. This
-// only bites when the link is up but silent — an actual drop rejects at once
-// via DeviceDisconnected, so a long ceiling costs nothing in the common case.
+// Handshake budget. Generous: over BLE the initial NodeDB dump is slow, and a
+// real reconnect measured 26 s with ~90 nodes. It only bites when the link is
+// up but silent — an actual drop rejects at once via DeviceDisconnected.
 const CONFIG_TIMEOUT_MS = 90_000;
+// Ceilings for the two steps that can hang with no error of their own: opening
+// the transport (the BLE plugin's connect) and configure() (a stuck BLE write).
+const OPEN_TIMEOUT_MS = 40_000;
+const WRITE_TIMEOUT_MS = 15_000;
+
+/** connect() must never hang forever: it is the only thing gating the retry
+ *  loop, and a caller-side timeout can't cancel it, only race it — leaving a
+ *  zombie connect that finishes in the background and fights the next attempt
+ *  for the single global BLE link. So every await that can hang is bounded
+ *  here instead. */
+function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, rej) =>
+      setTimeout(() => rej(new Error(`${what} no respondió en ${ms / 1000}s`)), ms),
+    ),
+  ]);
+}
 
 /** Takes a factory, not a transport, so the previous device is torn down
  *  BEFORE the new link exists: the BLE plugin holds a single global connection
@@ -397,14 +414,15 @@ async function connect(make: () => Promise<Types.Transport>): Promise<void> {
   device = undefined;
   if (prev) await prev.disconnect().catch(() => {});
 
-  const d = new MeshDevice(await make());
+  const transport = await withTimeout(make(), OPEN_TIMEOUT_MS, "la conexión");
+  const d = new MeshDevice(transport);
   wireEvents(d);
   device = d;
   try {
     // subscribe before configure(): the reply can arrive first
     const configured = waitConfigured(d, CONFIG_TIMEOUT_MS);
     configured.catch(() => {}); // if configure() throws first, nobody awaits it
-    await d.configure();
+    await withTimeout(d.configure(), WRITE_TIMEOUT_MS, "configure");
     await configured;
   } catch (e) {
     device = undefined;

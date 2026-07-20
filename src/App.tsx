@@ -130,21 +130,6 @@ function saveLast(v: LastConn): void {
 
 // Grace period before the first reconnect: the node is still booting.
 const RECONNECT_WAIT_MS = 6000;
-// Ceiling for one attempt: BLE scan 12 s + plugin connect ~10 s + handshake up
-// to 90 s. It has to sit ABOVE the sum, or it would abort connections that
-// were going to succeed. It exists only so that an attempt hung in the BLE
-// stack can't leave the busy flag set forever and kill the retry chain.
-const RECONNECT_ATTEMPT_MS = 150_000;
-
-function conTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error(`${what} no respondió en ${ms / 1000}s`)), ms),
-    ),
-  ]);
-}
-
 function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
@@ -424,7 +409,10 @@ function App() {
     setError(t("Reconectando… (intento {0})", attemptRef.current + 1));
     addLog(`RECONEXION: intento ${attemptRef.current + 1} por ${m}`);
     try {
-      await conTimeout(doConnect(m, id), RECONNECT_ATTEMPT_MS, "la reconexión");
+      // connect() bounds its own steps, so no timeout wrapper here: racing it
+      // can't cancel the real connect and would spawn overlapping attempts
+      // that fight over the single BLE link.
+      await doConnect(m, id);
       if (!wantRef.current) return; // the user cancelled while reconnecting
       setConnectedAt(Date.now());
       setError("");
