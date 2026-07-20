@@ -73,24 +73,20 @@ export async function createBleTransport(
 ): Promise<Types.Transport> {
   // btleplug only connects to peripherals seen in an active scan. We rediscover
   // and connect as soon as the node shows up (scan still active → cached).
-  addLog(`BLE: abriendo transporte hacia ${address}`);
   const norm = (a: string) => a.replace(/[:-]/g, "").toUpperCase();
   const target = norm(address);
   await stopScan().catch(() => {});
-  const addrs = new Set<string>();
   let seenResolve: (v: boolean) => void;
   const seen = new Promise<boolean>((r) => (seenResolve = r));
   void startScan((devices) => {
     for (const d of devices) {
-      addrs.add(d.address);
       if (norm(d.address) === target) seenResolve(true);
     }
   }, 20000).catch((e) => addLog(`BLE scan err: ${e}`));
-  const ok = await Promise.race([
+  await Promise.race([
     seen,
     new Promise<boolean>((r) => setTimeout(() => r(false), 12000)),
   ]);
-  addLog(`BLE reconnect visto=${ok} addrs=[${[...addrs].join(", ")}]`);
 
   let controller: ReadableStreamDefaultController<Types.DeviceOutput> | null =
     null;
@@ -117,7 +113,6 @@ export async function createBleTransport(
     // The plugin reports the disconnection itself: waiting for a read to fail
     // is slower and misses the case where reads just return empty.
     await connect(address, perdido);
-    addLog("BLE: conectado, suscribiendo");
   } finally {
     await stopScan().catch(() => {}); // stop scanning whatever happens
   }
@@ -136,7 +131,6 @@ export async function createBleTransport(
   // (no framing). We read while there is data; once empty we wait for a
   // FROMNUM notification (or a backup poll) before reading again.
   const readLoop = async () => {
-    let paquetes = 0;
     while (!closed) {
       let got = false;
       try {
@@ -144,16 +138,12 @@ export async function createBleTransport(
         if (bytes && bytes.length) {
           controller?.enqueue({ type: "packet", data: new Uint8Array(bytes) });
           got = true;
-          // Trace whether the stream is actually flowing: a handshake stuck at
-          // DeviceConfiguring with 0 packets means the node isn't answering the
-          // wantConfigId; with packets, the problem is in decoding.
-          if (++paquetes === 1) addLog("BLE: primer paquete recibido");
         }
       } catch (e) {
         // A read can also fail with the link technically alive (GATT timeout):
         // close the plugin side too, or the next attempt inherits a zombie.
         if (!closed) {
-          addLog(`BLE: lectura falló tras ${paquetes} paquetes: ${e}`);
+          addLog(`BLE: enlace caído: ${e}`);
           await cerrarPlugin();
           perdido();
         }
