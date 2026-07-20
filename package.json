@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test src/channelUrl.test.ts src/mesh.test.ts src/alerts.test.ts src/battery.test.ts src/i18n.test.ts",
+    "test": "node --experimental-strip-types --test src/channelUrl.test.ts src/mesh.test.ts src/alerts.test.ts src/battery.test.ts src/i18n.test.ts src/theme.test.ts",
     "tauri": "tauri"
   },
   "dependencies": {

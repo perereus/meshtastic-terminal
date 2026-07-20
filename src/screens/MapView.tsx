@@ -5,7 +5,7 @@ import { addLog, getSnapshot, subscribe } from "../store";
 import { deleteWaypoint, sendWaypoint } from "../radio";
 import { ago, asciiBattery } from "../fmt";
 import { t } from "../i18n";
-import { ACCENT, fg } from "../theme";
+import { ACCENT, fg, useThemeTick } from "../theme";
 
 interface Draft {
   id?: number; // defined = editing
@@ -23,6 +23,8 @@ export default function MapView({
   onOpenNode: (num: number) => void;
 }) {
   const s = useSyncExternalStore(subscribe, getSnapshot);
+  // the markers are drawn with fg(): they have to be redrawn on a theme change
+  const tema = useThemeTick();
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -195,7 +197,7 @@ export default function MapView({
         `MAPA: ${positioned.length} nodos en ${byCoord.size} puntos (coords compartidas por precisión reducida)`,
       );
     }
-  }, [s]);
+  }, [s, tema]);
 
   const all = [...s.nodes.values()];
   const withFix = all.filter(

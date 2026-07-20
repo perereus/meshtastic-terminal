@@ -22,6 +22,8 @@
   --bg: #0a0f0a;
   --panel: #0b110b;
   --fg: #39ff5a;
+  /* tinte de las teselas del mapa; lo sobrescribe theme.ts */
+  --map-tint: hue-rotate(65deg) saturate(2.2);
   --fg-dim: color-mix(in srgb, var(--fg) 55%, transparent);
   --border: color-mix(in srgb, var(--fg) 25%, transparent);
   --glow: color-mix(in srgb, var(--fg) 40%, transparent);
@@ -592,15 +594,15 @@ table.grid tbody tr.sel .err {
 }
 .map-wrap .leaflet-container {
   height: 100%;
-  background: #060b06;
+  background: var(--bg);
   font-family: inherit;
 }
 .map-wrap .leaflet-tile {
-  filter: grayscale(1) invert(1) sepia(1) hue-rotate(65deg) saturate(2.2)
+  filter: grayscale(1) invert(1) sepia(1) var(--map-tint)
     brightness(0.5) contrast(1.15);
 }
 .map-wrap .leaflet-control-zoom a {
-  background: #060b06;
+  background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--fg);
   border-radius: 0;
@@ -611,7 +613,7 @@ table.grid tbody tr.sel .err {
 }
 .map-wrap .leaflet-popup-content-wrapper,
 .map-wrap .leaflet-popup-tip {
-  background: #060b06;
+  background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--fg);
   border-radius: 0;
@@ -623,7 +625,7 @@ table.grid tbody tr.sel .err {
   margin: 10px 12px;
 }
 .map-wrap .leaflet-tooltip {
-  background: #060b06;
+  background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--border);
   border-radius: 0;
@@ -640,7 +642,7 @@ table.grid tbody tr.sel .err {
   color: var(--fg-dim);
   z-index: 400;
   pointer-events: none;
-  background: color-mix(in srgb, #060b06 80%, transparent);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
   padding: 1px 6px;
 }
 

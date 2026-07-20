@@ -4,7 +4,7 @@ import "uplot/dist/uPlot.min.css";
 import { getSnapshot, subscribe } from "../store";
 import { listMetrics, listTelemetryNodes, loadTelemetry } from "../db";
 import { t } from "../i18n";
-import { ACCENT, fg } from "../theme";
+import { ACCENT, fg, useThemeTick } from "../theme";
 import { saveText, stamp } from "../export";
 
 // pseudo-metric: ChUtil + AirUtilTx on the same chart
@@ -34,6 +34,8 @@ const SERIES_COLORS = [ACCENT, "#ffb000", "#5ccfe6", "#b3a5e3"];
 
 export default function Telemetry() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
+  // uPlot draws on canvas with fg(): the chart is rebuilt on a theme change
+  const tema = useThemeTick();
   const [node, setNode] = useState<number | undefined>();
   const [compare, setCompare] = useState<number[]>([]);
   const [csvMsg, setCsvMsg] = useState("");
@@ -212,7 +214,7 @@ export default function Telemetry() {
     return () => {
       cancelled = true;
     };
-  }, [effectiveNode, metric, days, tick, compare]);
+  }, [effectiveNode, metric, days, tick, compare, tema]);
 
   useEffect(() => () => plotRef.current?.destroy(), []);
 
