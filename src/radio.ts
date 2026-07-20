@@ -385,10 +385,9 @@ function wireEvents(d: MeshDevice): void {
 // real reconnect measured 26 s with ~90 nodes. It only bites when the link is
 // up but silent — an actual drop rejects at once via DeviceDisconnected.
 const CONFIG_TIMEOUT_MS = 90_000;
-// Ceilings for the two steps that can hang with no error of their own: opening
-// the transport (the BLE plugin's connect) and configure() (a stuck BLE write).
+// Opening the transport (the BLE plugin's connect) can hang with no error of
+// its own, and nothing else bounds it.
 const OPEN_TIMEOUT_MS = 40_000;
-const WRITE_TIMEOUT_MS = 15_000;
 
 /** connect() must never hang forever: it is the only thing gating the retry
  *  loop, and a caller-side timeout can't cancel it, only race it — leaving a
@@ -421,8 +420,13 @@ async function connect(make: () => Promise<Types.Transport>): Promise<void> {
   try {
     // subscribe before configure(): the reply can arrive first
     const configured = waitConfigured(d, CONFIG_TIMEOUT_MS);
-    configured.catch(() => {}); // if configure() throws first, nobody awaits it
-    await withTimeout(d.configure(), WRITE_TIMEOUT_MS, "configure");
+    configured.catch(() => {}); // in case configure() reports the failure first
+    // Fire-and-forget: what matters is reaching DeviceConfigured, not the
+    // write resolving. Over BLE the wantConfigId write can take 15-20 s after a
+    // reconnect (MTU/service negotiation); awaiting it would abort a handshake
+    // that was about to succeed. A real write failure surfaces as no reply,
+    // which waitConfigured catches at CONFIG_TIMEOUT_MS.
+    void d.configure().catch((e) => addLog(`configure error: ${e}`));
     await configured;
   } catch (e) {
     device = undefined;
