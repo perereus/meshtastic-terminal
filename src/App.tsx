@@ -327,6 +327,10 @@ function App() {
     // Prefill the last connection used
     const last = loadLast();
     if (last) {
+      // Also seed the reconnect target: these refs reset on every remount
+      // (HMR in dev, or a reload), and without this an already-open link
+      // would drop with nothing left saying what to reconnect to.
+      lastRef.current = { mode: last.mode, id: last.id };
       setMode(last.mode);
       if (last.mode === "serie") setSelected(last.id);
       else if (last.mode === "tcp") setHost(last.id);
@@ -338,7 +342,15 @@ function App() {
 
     // When the link drops on its own, start auto-reconnecting
     setConnectionLostHandler(() => {
-      if (!wantRef.current) return;
+      // No wantRef check here: handleLost() only fires on an unexpected drop
+      // (a manual disconnect clears `device` first and never gets this far),
+      // so reaching this point already means we want to be back. Checking a
+      // ref that resets on remount is what left the drop silently unhandled.
+      if (!lastRef.current) {
+        addLog("RECONEXION: no hay conexión previa que reintentar");
+        return;
+      }
+      wantRef.current = true;
       // A node that just dropped is either rebooting (that's what applying a
       // config does) or out of range. Either way it takes 10-20 s to answer
       // again, so retrying immediately only burns the first attempt.

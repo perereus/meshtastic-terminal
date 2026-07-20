@@ -436,7 +436,13 @@ function handleLost(): void {
     s.status = Types.DeviceStatusEnum.DeviceDisconnected;
   });
   addLog("Enlace perdido");
-  onConnectionLost?.();
+  // A missing handler used to be an invisible dead end: the log said the link
+  // dropped and nothing else ever happened.
+  if (!onConnectionLost) {
+    addLog("RECONEXION: sin manejador registrado, no se reintenta");
+    return;
+  }
+  onConnectionLost();
 }
 
 export async function connectBle(address: string): Promise<void> {
