@@ -1,6 +1,6 @@
 // Self-check: node --experimental-strip-types src/mesh.test.ts
 import assert from "node:assert";
-import { buildEdges, demoEdges, edgeKey, summarize } from "./mesh.ts";
+import { buildEdges, edgeKey, summarize } from "./mesh.ts";
 import type { NodeEntry } from "./store.ts";
 
 // undirected key: (a,b) and (b,a) are the same link
@@ -85,30 +85,5 @@ assert.deepEqual(
   mudos.map((n) => n.num),
   [2, 1],
 );
-
-// ── demoEdges ────────────────────────────────────────────────────────────
-const demoNodes: NodeEntry[] = Array.from({ length: 40 }, (_, i) =>
-  nd({ num: 100 + i, shortName: `N${i}`, hopsAway: i % 4 }),
-);
-const d1 = demoEdges(demoNodes, 100);
-const d2 = demoEdges(demoNodes, 100);
-assert.deepEqual(d1, d2, "debe ser determinista o el grafo bailaría en cada render");
-assert.ok(d1.length > 0);
-const conocidos = new Set(demoNodes.map((n) => n.num));
-assert.ok(
-  d1.every((e) => conocidos.has(e.a) && conocidos.has(e.b)),
-  "no puede inventar nodos que no existen",
-);
-assert.ok(d1.every((e) => e.a !== e.b), "sin autoenlaces");
-assert.equal(
-  new Set(d1.map((e) => edgeKey(e.a, e.b))).size,
-  d1.length,
-  "sin enlaces duplicados",
-);
-// almost every node should end up connected to something
-const tocados = new Set(d1.flatMap((e) => [e.a, e.b]));
-assert.ok(tocados.size >= demoNodes.length - 1, `nodos sueltos: ${demoNodes.length - tocados.size}`);
-// a different mesh yields a different drawing
-assert.notDeepEqual(d1, demoEdges(demoNodes.slice(0, 20), 100));
 
 console.log("mesh.test.ts OK");

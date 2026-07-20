@@ -58,57 +58,6 @@ export function summarize(
   return r;
 }
 
-/** Deterministic PRNG (mulberry32): the same mesh always yields the same
- *  drawing, otherwise the graph would change on every render and be unjudgeable. */
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** Made-up links from the real nodes, to test the graph drawing without
- *  waiting for the mesh to emit NeighborInfo. They are NOT stored in the
- *  database: they live in memory only while the preview is on. */
-export function demoEdges(nodes: NodeEntry[], me?: number): Edge[] {
-  const r = rng(nodes.length * 7919 + (me ?? 0));
-  // by real hops when known; otherwise a stable level per node
-  const tier = (n: NodeEntry) =>
-    n.num === me ? 0 : (n.hopsAway ?? (n.num % 3) + 1);
-  const porNivel = new Map<number, NodeEntry[]>();
-  for (const n of nodes) {
-    const k = Math.min(4, tier(n));
-    porNivel.set(k, [...(porNivel.get(k) ?? []), n]);
-  }
-  const out = new Map<string, Edge>();
-  const add = (a: number, b: number) => {
-    if (a === b) return;
-    const k = edgeKey(a, b);
-    if (out.has(k)) return;
-    out.set(k, { a, b, snr: Math.round((r() * 20 - 8) * 10) / 10, src: "vecinos" });
-  };
-  const niveles = [...porNivel.keys()].sort((a, b) => a - b);
-  for (const nivel of niveles) {
-    // the level above is the natural parent; level 0 (me) has none
-    const padres = porNivel.get(nivel - 1) ?? porNivel.get(niveles[0]) ?? [];
-    const hijos = porNivel.get(nivel) ?? [];
-    for (const h of hijos) {
-      if (padres.length === 0) continue;
-      add(h.num, padres[Math.floor(r() * padres.length)].num);
-    // some nodes hear two parents: makes a graph, not a tree
-      if (r() < 0.35) add(h.num, padres[Math.floor(r() * padres.length)].num);
-    }
-    // lateral links within the same level
-    for (let i = 0; i < hijos.length; i++) {
-      if (r() < 0.2) add(hijos[i].num, hijos[Math.floor(r() * hijos.length)].num);
-    }
-  }
-  return [...out.values()];
-}
-
 export interface Edge {
   a: number;
   b: number;

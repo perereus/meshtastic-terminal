@@ -3,13 +3,7 @@ import { getSnapshot, subscribe } from "../store";
 import { loadActividad, loadAllTraceroutes, loadNeighbors } from "../db";
 import { t } from "../i18n";
 import { ACCENT, fg } from "../theme";
-import {
-  buildEdges,
-  demoEdges,
-  edgeKey as key,
-  summarize,
-  type Edge,
-} from "../mesh";
+import { buildEdges, edgeKey as key, summarize, type Edge } from "../mesh";
 import { ago } from "../fmt";
 
 /** Fruchterman-Reingold layout, fixed iterations (no animation).
@@ -123,9 +117,6 @@ export default function Mesh() {
   >([]);
   const [sel, setSel] = useState<number | undefined>();
   const [reload, setReload] = useState(0);
-  // made-up links to judge the drawing without real data; never written
-  // to the database
-  const [demo, setDemo] = useState(false);
   const [vista, setVista] = useState<"grafo" | "actividad">("grafo");
   const [act, setAct] = useState<{ node: number; hora: number; n: number }[]>([]);
   const [actHoras, setActHoras] = useState(48);
@@ -143,11 +134,8 @@ export default function Mesh() {
   }, [reload]);
 
   const edges = useMemo(
-    () =>
-      demo
-        ? demoEdges([...s.nodes.values()], s.myNodeNum)
-        : buildEdges(neighbors, traces, s.myNodeNum),
-    [demo, s.nodes, neighbors, traces, s.myNodeNum],
+    () => buildEdges(neighbors, traces, s.myNodeNum),
+    [neighbors, traces, s.myNodeNum],
   );
 
   const ids = useMemo(() => {
@@ -322,38 +310,17 @@ export default function Mesh() {
                   {h === 168 ? t("7 D") : `${h} H`}
                 </button>
               ))}
-            {vista === "grafo" && (
-              <button
-                className={demo ? "primary" : ""}
-                style={{ fontSize: 10, padding: "0 6px" }}
-                title={t(
-                  "Enlaces inventados sobre tus nodos reales para ver cómo queda el grafo. No se guarda nada.",
-                )}
-                onClick={() => {
-                  setSel(undefined);
-                  setDemo((v) => !v);
-                }}
-              >
-                {demo ? t("◉ VISTA PREVIA") : t("○ VISTA PREVIA")}
-              </button>
-            )}
             <button
               style={{ fontSize: 10, padding: "0 6px" }}
               title={t("Releer vecinos y traceroutes de la base de datos")}
-              disabled={demo}
               onClick={() => setReload((v) => v + 1)}
             >
               ⟳ {t("RECARGAR")}
             </button>
-            <span className={demo ? "warn" : "dim"} style={{ fontSize: 11 }}>
+            <span className="dim" style={{ fontSize: 11 }}>
               {vista === "actividad"
                 ? t("UNA CELDA = UNA HORA")
-                : demo
-                  ? t("DATOS FALSOS")
-                  : t(
-                      "{0} POR VECINOS",
-                      edges.filter((e) => e.src === "vecinos").length,
-                    )}
+                : t("{0} POR VECINOS", edges.filter((e) => e.src === "vecinos").length)}
             </span>
           </span>
         </div>
@@ -418,8 +385,6 @@ export default function Mesh() {
             {t(
               "SIN ENLACES — activa NEIGHBOR INFO en CONFIG o lanza traceroutes desde NODOS_",
             )}
-            <br />
-            {t("Para ver cómo quedaría el grafo, prueba VISTA PREVIA.")}
           </p>
         ) : (
           <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
@@ -550,20 +515,12 @@ export default function Mesh() {
         )}
 
         <div className="panel-foot">
-          {demo ? (
-            <span className="warn">
-              {t("VISTA PREVIA: enlaces inventados, no hay nada de esto en la base")}
-            </span>
-          ) : (
-            <>
-              <span>{t("LÍNEA CONTINUA = VECINO DIRECTO")}</span>
-              <span style={{ flex: 1 }} />
-              {ids.length > 45 && (
-                <span className="dim">{t("CLIC EN UN NODO PARA VER NOMBRES")} · </span>
-              )}
-              <span>{t("DISCONTINUA = TRAMO DE TRACEROUTE")}</span>
-            </>
+          <span>{t("LÍNEA CONTINUA = VECINO DIRECTO")}</span>
+          <span style={{ flex: 1 }} />
+          {ids.length > 45 && (
+            <span className="dim">{t("CLIC EN UN NODO PARA VER NOMBRES")} · </span>
           )}
+          <span>{t("DISCONTINUA = TRAMO DE TRACEROUTE")}</span>
         </div>
       </div>
     </main>

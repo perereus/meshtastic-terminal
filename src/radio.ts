@@ -12,7 +12,6 @@ import { t } from "./i18n";
 import { createSerialTransport } from "./transport/serial";
 import { createTcpTransport } from "./transport/tcp";
 import { createBleTransport } from "./transport/ble";
-import { createFakeTransport } from "./transport/fake";
 import {
   addLog,
   convoKey,
@@ -394,13 +393,6 @@ export async function connectSerial(path: string): Promise<void> {
 
 export async function connectTcp(host: string): Promise<void> {
   await connect(await createTcpTransport(host, handleLost));
-}
-
-/** Simulated radio: for testing without hardware or neighbors. It writes to
- *  the same database as a real connection, so its nodes (!7f00…) mix with the
- *  real ones; purge or filter by that prefix if they get in the way. */
-export async function connectFake(): Promise<void> {
-  await connect(await createFakeTransport());
 }
 
 // The app registers here what to do when the link drops on its own (not a

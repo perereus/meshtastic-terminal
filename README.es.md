@@ -55,10 +55,6 @@ para encajar en el lienzo. El grosor y la opacidad de cada enlace salen del
 SNR. Pulsando un nodo se aíslan sus enlaces y se listan sus vecinos ordenados
 por calidad.
 
-Incluye un modo **vista previa** que genera enlaces plausibles sobre los nodos
-reales —deterministas, en memoria, sin tocar la base— para poder juzgar el
-dibujo antes de que la malla emita NeighborInfo, que puede tardar horas.
-
 ### Mapa de actividad temporal
 
 Una rejilla de nodos × horas donde cada celda se ilumina según cuánto se oyó
@@ -77,18 +73,6 @@ registra el cambio, se anota en el log y, si es favorito, se notifica. Es la
 señal temprana de que un repetidor ha caído o de que alguien ha movido una
 antena. Solo se guardan los cambios, no el valor de cada paquete, así que la
 tabla queda minúscula.
-
-### Radio simulada
-
-Un transporte que **habla el mismo protocolo por bytes** que una radio real
-—framing `0x94 0xc3`, protobuf, handshake de `wantConfigId`— y entra por la
-misma puerta que serie/TCP/BLE. No es un mock que se salte la pila: ejercita
-decodificación, eventos y persistencia igual que el hardware.
-
-Responde a los traceroutes con ruta e intermedios, emite NeighborInfo, cambia
-un nodo de distancia periódicamente, manda telemetría con una batería que baja
-de verdad y contesta con ACK. Permite probar sin hardware y sin vecinos justo
-lo que de otro modo es imposible verificar.
 
 ### Historial de traceroutes
 
@@ -153,12 +137,7 @@ Hace falta el [entorno de Rust para Tauri](https://tauri.app/start/prerequisites
 
 La lógica que se puede probar sin hardware vive en módulos puros
 (`mesh.ts`, `alerts.ts`, `battery.ts`, `channelUrl.ts`) con self-checks que
-corren con el runner nativo de Node, sin frameworks. El arnés de integración
-del transporte simulado se lanza aparte:
-
-```bash
-node --experimental-strip-types src/transport/fake.test.ts
-```
+corren con el runner nativo de Node, sin frameworks.
 
 ## Compilar el instalador
 

@@ -54,10 +54,6 @@ repulsion and d²/k attraction, a cooling temperature and a final rescale to fit
 the canvas. Each link's width and opacity come from its SNR. Clicking a node
 isolates its links and lists its neighbors sorted by quality.
 
-It includes a **preview mode** that generates plausible links over the real
-nodes —deterministic, in memory, never touching the database— so the layout can
-be judged before the mesh emits any NeighborInfo, which may take hours.
-
 ### Activity heatmap
 
 A grid of nodes × hours where each cell lights up according to how much that
@@ -76,19 +72,6 @@ When a node changes distance —from direct to two hops, say— the change is
 recorded, logged, and notified if the node is a favorite. It's the early sign
 that a repeater went down or somebody moved an antenna. Only changes are
 stored, not the value of every packet, so the table stays tiny.
-
-### Simulated radio
-
-A transport that **speaks the same byte protocol** as a real radio —`0x94 0xc3`
-framing, protobuf, the `wantConfigId` handshake— and comes in through the same
-door as serial/TCP/BLE. It isn't a mock that bypasses the stack: it exercises
-decoding, events and persistence exactly like hardware does.
-
-It answers traceroutes with a route and intermediate hops, emits NeighborInfo,
-periodically moves a node to a different distance, sends telemetry with a
-battery that actually drains, and replies with ACKs. It makes it possible to
-test —without hardware and without neighbors— precisely what is otherwise
-impossible to verify.
 
 ### Traceroute history
 
@@ -152,14 +135,7 @@ Requires the [Rust toolchain for Tauri](https://tauri.app/start/prerequisites/).
 
 The logic that can be tested without hardware lives in pure modules
 (`mesh.ts`, `alerts.ts`, `battery.ts`, `channelUrl.ts`) with self-checks that
-run on Node's native test runner, no frameworks. The integration harness for
-the simulated transport runs separately:
-
-```bash
-node --experimental-strip-types src/transport/fake.test.ts
-```
-
-Source comments are in Spanish.
+run on Node's native test runner, no frameworks.
 
 ## Building the installer
 

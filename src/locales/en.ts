@@ -184,16 +184,7 @@ const en: Record<string, string> = {
   "Releer vecinos y traceroutes de la base de datos":
     "Reload neighbors and traceroutes from the database",
   RECARGAR: "RELOAD",
-  "◉ VISTA PREVIA": "◉ PREVIEW",
-  "○ VISTA PREVIA": "○ PREVIEW",
-  "Enlaces inventados sobre tus nodos reales para ver cómo queda el grafo. No se guarda nada.":
-    "Made-up links over your real nodes to see how the graph looks. Nothing is saved.",
-  "DATOS FALSOS": "FAKE DATA",
   "CLIC EN UN NODO PARA VER NOMBRES": "CLICK A NODE TO SEE NAMES",
-  "Para ver cómo quedaría el grafo, prueba VISTA PREVIA.":
-    "To see how the graph would look, try PREVIEW.",
-  "VISTA PREVIA: enlaces inventados, no hay nada de esto en la base":
-    "PREVIEW: made-up links, none of this is in the database",
   "{0} POR VECINOS": "{0} FROM NEIGHBORS",
   "SIN ENLACES — activa NEIGHBOR INFO en CONFIG o lanza traceroutes desde NODOS_":
     "NO LINKS — enable NEIGHBOR INFO in CONFIG or run traceroutes from NODES_",
@@ -207,9 +198,6 @@ const en: Record<string, string> = {
   "Reconexión fallida, reintento en {0}s": "Reconnect failed, retrying in {0}s",
   "Conexión cancelada": "Connection cancelled",
   SERIE: "SERIAL",
-  SIMULADO: "SIMULATED",
-  "RADIO FALSA · escribe en la misma base que una real":
-    "FAKE RADIO · writes to the same database as a real one",
   "SIN PUERTOS": "NO PORTS",
   Refrescar: "Refresh",
   "IP DEL NODO : 4403": "NODE IP : 4403",

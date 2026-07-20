@@ -7,7 +7,6 @@ import { scanBleDevices, type BleDeviceInfo } from "./transport/ble";
 import {
   connectBle,
   connectSerial,
-  connectFake,
   connectTcp,
   disconnect,
   loadHistory,
@@ -106,7 +105,7 @@ function Titlebar() {
 
 // Last connection remembered (localStorage). For BLE we also store the name
 // so it can be shown in the dropdown before scanning.
-type Mode = "serie" | "tcp" | "ble" | "sim";
+type Mode = "serie" | "tcp" | "ble";
 interface LastConn {
   mode: Mode;
   id: string;
@@ -328,13 +327,7 @@ function App() {
   }, []);
 
   const doConnect = (m: Mode, id: string) =>
-    m === "serie"
-      ? connectSerial(id)
-      : m === "tcp"
-        ? connectTcp(id)
-        : m === "sim"
-          ? connectFake()
-          : connectBle(id);
+    m === "serie" ? connectSerial(id) : m === "tcp" ? connectTcp(id) : connectBle(id);
 
   const clearReconnect = () => {
     if (reconnectTimerRef.current !== undefined) {
@@ -464,13 +457,8 @@ function App() {
           <option value="serie">{t("SERIE")}</option>
           <option value="tcp">TCP</option>
           <option value="ble">BLE</option>
-          <option value="sim">{t("SIMULADO")}</option>
         </select>
-        {mode === "sim" ? (
-          <span className="warn" style={{ fontSize: 11 }}>
-            {t("RADIO FALSA · escribe en la misma base que una real")}
-          </span>
-        ) : mode === "serie" ? (
+        {mode === "serie" ? (
           <>
             <select
               value={selected}
@@ -536,13 +524,7 @@ function App() {
             className="primary"
             onClick={onConnect}
             disabled={
-              mode === "serie"
-                ? !selected
-                : mode === "tcp"
-                  ? !host.trim()
-                  : mode === "sim"
-                    ? false
-                    : !bleSel
+              mode === "serie" ? !selected : mode === "tcp" ? !host.trim() : !bleSel
             }
           >
             {t("CONECTAR")}
