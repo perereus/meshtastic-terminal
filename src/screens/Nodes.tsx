@@ -14,7 +14,7 @@ import {
   toggleFav,
   toggleIgnored,
 } from "../radio";
-import { ago, asciiBattery, fechaHora, hwName, snrClass } from "../fmt";
+import { ago, asciiBattery, distKm, fechaHora, fmtDist, hwName, snrClass } from "../fmt";
 import { loadHopChanges, loadTelemetry, loadTraceroutes } from "../db";
 import { preverBateria, textoPrevision, type Prevision } from "../battery";
 import { t } from "../i18n";
@@ -32,12 +32,16 @@ const DEFAULT_DIR: Record<SortKey, 1 | -1> = {
   pos: 1,
 };
 
-function distKm(aLat: number, aLon: number, bLat: number, bLon: number) {
-  const r = Math.PI / 180;
-  const x = (bLon - aLon) * r * Math.cos(((aLat + bLat) / 2) * r);
-  const y = (bLat - aLat) * r;
-  // ponytail: equirectangular, plenty for sorting within one mesh
-  return Math.sqrt(x * x + y * y) * 6371;
+// Distance from my node, ready to append after the coordinates. Empty when
+// there's no fix on either side or the node is mine.
+function distDesde(
+  n: NodeEntry,
+  me: NodeEntry | undefined,
+  isMe: boolean,
+): string {
+  if (isMe || n.lat === undefined || n.lon === undefined) return "";
+  if (me?.lat === undefined || me.lon === undefined) return "";
+  return ` · ${fmtDist(distKm(me.lat, me.lon, n.lat, n.lon))}`;
 }
 
 // undefined always last
@@ -128,6 +132,7 @@ function RouteLine(props: {
 function Detail(props: {
   node: NodeEntry;
   isMe: boolean;
+  me?: NodeEntry; // my node, to measure distance from
   trace?: Traceroute;
   posTs?: number; // ts of the last PositionPacket received from this node
   short: (num: number) => string;
@@ -333,7 +338,7 @@ function Detail(props: {
     [
       t("POSICIÓN"),
       n.lat !== undefined && n.lon !== undefined
-        ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`
+        ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E${distDesde(n, props.me, props.isMe)}`
         : t("SIN GPS FIX"),
     ],
     [t("VISTO HACE"), ago(n.lastHeard)],
@@ -455,7 +460,7 @@ function Detail(props: {
             <span style={{ fontSize: 11 }}>
               {t("RECIBIDA ✓")}{" "}
               {n.lat !== undefined && n.lon !== undefined
-                ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`
+                ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E${distDesde(n, props.me, props.isMe)}`
                 : t("(SIN GPS FIX)")}
             </span>
           )}
@@ -689,9 +694,16 @@ export default function Nodes({
                   </td>
                   <td>{n.hopsAway ?? "—"}</td>
                   <td>
-                    {n.lat !== undefined && n.lon !== undefined
-                      ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`
-                      : t("SIN GPS FIX")}
+                    {n.lat !== undefined && n.lon !== undefined ? (
+                      <>
+                        {`${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`}
+                        <span className="dim">
+                          {distDesde(n, me, n.num === s.myNodeNum)}
+                        </span>
+                      </>
+                    ) : (
+                      t("SIN GPS FIX")
+                    )}
                   </td>
                   <td>{ago(n.lastHeard)}</td>
                 </tr>
@@ -721,6 +733,7 @@ export default function Nodes({
         <Detail
           node={selectedNode}
           isMe={selectedNode.num === s.myNodeNum}
+          me={me}
           trace={s.traceroutes.get(selectedNode.num)}
           posTs={s.posUpdates.get(selectedNode.num)}
           short={short}

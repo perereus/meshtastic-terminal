@@ -12,7 +12,8 @@ Object.defineProperty(globalThis, "localStorage", {
   configurable: true,
 });
 
-const { asciiBattery, fechaHora, getHourPref, hora, is12h } = await import("./fmt.ts");
+const { asciiBattery, distKm, fechaHora, fmtDist, getHourPref, hora, is12h } =
+  await import("./fmt.ts");
 
 const T = new Date("2026-07-20T15:04:05").getTime();
 const MEDIANOCHE = new Date("2026-07-20T00:30:00").getTime();
@@ -57,5 +58,21 @@ const anchos = new Set(
 assert.equal(anchos.size, 1, `la barra cambia de ancho: ${[...anchos]}`);
 assert.ok(asciiBattery(101).includes("PWR"), ">100 % es alimentación externa");
 assert.equal(asciiBattery(undefined), "—");
+
+// ── distance ─────────────────────────────────────────────────────────────
+// same point is zero
+assert.equal(distKm(39.57, 2.65, 39.57, 2.65), 0);
+// ~1° of latitude is ~111 km, regardless of longitude
+assert.ok(Math.abs(distKm(39, 2, 40, 2) - 111.2) < 1, `1° lat: ${distKm(39, 2, 40, 2)}`);
+// symmetric
+assert.ok(Math.abs(distKm(39.5, 2.6, 39.7, 2.9) - distKm(39.7, 2.9, 39.5, 2.6)) < 1e-9);
+// known short leg (Palma → Inca, ~28 km) within a few percent of haversine
+const d = distKm(39.5696, 2.6502, 39.7217, 2.9106);
+assert.ok(d > 26 && d < 30, `Palma-Inca fuera de rango: ${d}`);
+
+assert.equal(fmtDist(0.84), "840 m");
+assert.equal(fmtDist(0.999), "999 m");
+assert.equal(fmtDist(1), "1.0 km");
+assert.equal(fmtDist(12.37), "12.4 km");
 
 console.log("fmt.test.ts OK");

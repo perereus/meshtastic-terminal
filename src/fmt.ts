@@ -73,6 +73,20 @@ export function ago(epochS: number): string {
   return `${Math.floor(s / 86400)}d`;
 }
 
+/** Distance between two coordinates, km. Equirectangular approximation:
+ *  within one mesh (tens of km) the error vs haversine is well under 1 %. */
+export function distKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+  const r = Math.PI / 180;
+  const x = (bLon - aLon) * r * Math.cos(((aLat + bLat) / 2) * r);
+  const y = (bLat - aLat) * r;
+  return Math.sqrt(x * x + y * y) * 6371;
+}
+
+/** "840 m" under a km, "12.4 km" above. */
+export function fmtDist(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
 /** [███████░░░]  72% — or PWR when plugged in.
  *  The U+2588/U+2591 blocks depend on the JetBrains Mono bundled in
  *  App.css: Google Fonts subsets cut that range and break the alignment.
