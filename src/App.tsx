@@ -25,7 +25,7 @@ import Config from "./screens/Config";
 import Telemetry from "./screens/Telemetry";
 import { hora, hwName, regionName, useHourTick } from "./fmt";
 import { saveText, stamp } from "./export";
-import { t } from "./i18n";
+import { t, useLangTick } from "./i18n";
 import "./App.css";
 
 const TABS = [
@@ -154,8 +154,9 @@ function hms(ms: number): string {
 
 function App() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
-  // at the root: a clock format change repaints every screen
+  // at the root: a clock format or language change repaints every screen
   useHourTick();
+  useLangTick();
   const [tab, setTab] = useState<Tab>("CHAT");
   const [chatConvo, setChatConvo] = useState("ch:0");
   // node to preselect when jumping MAP → NODES with [+INFO]

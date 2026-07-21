@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { addLog, getSnapshot, subscribe } from "../store";
 import { deleteWaypoint, sendWaypoint } from "../radio";
 import { ago, asciiBattery, fechaHora, useHourTick } from "../fmt";
-import { t } from "../i18n";
+import { t, useLangTick } from "../i18n";
 import { ACCENT, fg, useThemeTick } from "../theme";
 
 interface Draft {
@@ -26,6 +26,7 @@ export default function MapView({
   // the markers are drawn with fg(): they have to be redrawn on a theme change
   const tema = useThemeTick();
   const horaFmt = useHourTick();
+  const idioma = useLangTick();
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -198,7 +199,7 @@ export default function MapView({
         `MAPA: ${positioned.length} nodos en ${byCoord.size} puntos (coords compartidas por precisión reducida)`,
       );
     }
-  }, [s, tema, horaFmt]);
+  }, [s, tema, horaFmt, idioma]);
 
   const all = [...s.nodes.values()];
   const withFix = all.filter(

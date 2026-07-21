@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 // explicit .ts: Vite doesn't care, but Node's loader needs it for the self-check
 import en from "./locales/en.ts";
 
@@ -7,6 +8,7 @@ import en from "./locales/en.ts";
 export type Lang = "es" | "en";
 
 const LANG_KEY = "lang";
+const LANG_EVENT = "langchange";
 
 /** What the selector shows: "auto" while nothing has been chosen by hand. */
 export function getLangPref(): Lang | "auto" {
@@ -25,13 +27,25 @@ export function getLang(): Lang {
 export function setLang(l: Lang | "auto"): void {
   if (l === "auto") localStorage.removeItem(LANG_KEY);
   else localStorage.setItem(LANG_KEY, l);
-  // ponytail: reload instead of a reactive re-render; changing language is
-  // exceptional, and this way no component needs to subscribe
-  location.reload();
+  // Switch live instead of reloading: a reload would drop the radio connection.
+  lang = getLang();
+  window.dispatchEvent(new Event(LANG_EVENT));
 }
 
-// a single read per page load (changing the language reloads)
-const lang = getLang();
+// current resolved language; setLang refreshes it
+let lang = getLang();
+
+/** Re-renders on a language change. Called once at the root so the whole UI
+ *  re-translates without a reload. */
+export function useLangTick(): number {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const on = () => setTick((v) => v + 1);
+    window.addEventListener(LANG_EVENT, on);
+    return () => window.removeEventListener(LANG_EVENT, on);
+  }, []);
+  return tick;
+}
 
 /** t("texto en español") · t("hace {0}", x) to interpolate */
 export function t(es: string, ...args: (string | number)[]): string {

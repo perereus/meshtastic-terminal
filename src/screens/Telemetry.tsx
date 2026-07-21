@@ -3,7 +3,7 @@ import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import { getSnapshot, subscribe } from "../store";
 import { listMetrics, listTelemetryNodes, loadTelemetry } from "../db";
-import { t } from "../i18n";
+import { t, useLangTick } from "../i18n";
 import { ACCENT, fg, useThemeTick } from "../theme";
 import { saveText, stamp } from "../export";
 
@@ -36,6 +36,7 @@ export default function Telemetry() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
   // uPlot draws on canvas with fg(): the chart is rebuilt on a theme change
   const tema = useThemeTick();
+  const idioma = useLangTick();
   const [node, setNode] = useState<number | undefined>();
   const [compare, setCompare] = useState<number[]>([]);
   const [csvMsg, setCsvMsg] = useState("");
@@ -214,7 +215,7 @@ export default function Telemetry() {
     return () => {
       cancelled = true;
     };
-  }, [effectiveNode, metric, days, tick, compare, tema]);
+  }, [effectiveNode, metric, days, tick, compare, tema, idioma]);
 
   useEffect(() => () => plotRef.current?.destroy(), []);
 
