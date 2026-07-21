@@ -27,6 +27,8 @@ const en: Record<string, string> = {
   "escribe un mensaje_": "type a message_",
   "ENTER=TX · {0} B LIBRES": "ENTER=TX · {0} B FREE",
   YO: "ME",
+  HOY: "TODAY",
+  AYER: "YESTERDAY",
   "buscar en todo el historial_": "search the whole history_",
   'SIN RESULTADOS PARA "{0}"_': 'NO RESULTS FOR "{0}"_',
   "{0} RESULTADOS · CLIC PARA IR A LA CONVERSACIÓN":

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { clearUnread, getSnapshot, subscribe } from "../store";
 import { retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
@@ -8,6 +8,27 @@ import { hora } from "../fmt";
 // in search results the time alone isn't enough: they may be from another day
 const fecha = (ms: number) =>
   new Date(ms).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
+
+// midnight-to-midnight day key: two timestamps in the same local day match
+const diaKey = (ms: number) => new Date(ms).toDateString();
+
+// Day separator between messages: HOY/AYER for the recent ones, the full date
+// (with weekday) for the rest, so a long backlog doesn't blur across days.
+const fechaSep = (ms: number): string => {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const dias = Math.round((hoy.getTime() - d.getTime()) / 86_400_000);
+  if (dias === 0) return t("HOY");
+  if (dias === 1) return t("AYER");
+  return new Date(ms).toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
 
 export default function Chat({
   convo,
@@ -207,9 +228,15 @@ export default function Chat({
               {t("{0} RESULTADOS · CLIC PARA IR A LA CONVERSACIÓN", msgs.length)}
             </div>
           )}
-          {msgs.map((m) => (
+          {msgs.map((m, i) => {
+            // a separator when the day changes from the previous message; not in
+            // search, where results aren't a single day-ordered thread
+            const sep =
+              !q && (i === 0 || diaKey(m.ts) !== diaKey(msgs[i - 1].ts));
+            return (
+            <Fragment key={`${m.id}-${m.ts}`}>
+            {sep && <div className="chat-daysep">{fechaSep(m.ts)}</div>}
             <div
-              key={`${m.id}-${m.ts}`}
               className={m.mine ? `msg-mine ${m.state === "failed" ? "failed" : ""}` : ""}
               style={q ? { cursor: "pointer" } : undefined}
               onClick={
@@ -257,7 +284,9 @@ export default function Chat({
                 </>
               )}
             </div>
-          ))}
+            </Fragment>
+            );
+          })}
           <div ref={endRef} />
         </div>
         {error && <p className="error">{error}</p>}

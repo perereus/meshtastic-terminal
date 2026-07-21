@@ -474,6 +474,24 @@ table.grid tbody tr.sel .err {
   border-left-color: var(--err);
 }
 
+/* day separator between chat messages */
+.chat-daysep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.chat-daysep::before,
+.chat-daysep::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
 .chat-input {
   display: flex;
   align-items: center;
