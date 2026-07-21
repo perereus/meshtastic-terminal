@@ -33,8 +33,8 @@ const TABS = [
   "NODOS",
   "MAPA",
   "MALLA",
-  "CONFIG",
   "TELEMETRÍA",
+  "CONFIG",
   "DEBUG",
 ] as const;
 type Tab = (typeof TABS)[number];
