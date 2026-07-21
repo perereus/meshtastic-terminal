@@ -99,6 +99,9 @@ lets you see how the route to a node shifts over days.
 - **12/24-hour clock**, following the system locale or forced either way.
 - **Five muted color themes**; the color propagates to the charts, the mesh
   graph and even the map tiles, not just the markers.
+- **Language, theme and clock apply live** — no reload, so changing them never
+  drops the radio connection.
+- **Custom title bar** with minimize, maximize, fullscreen and close.
 - **Optional automatic purge** on startup, with configurable retention.
 
 ---
@@ -106,21 +109,22 @@ lets you see how the route to a node shifts over days.
 ## Screens
 
 - **CHAT** — channels and direct messages, send state (queued / sent /
-  delivered / failed) with retry, and a search across the whole history that
-  jumps to the conversation of each result.
+  delivered / failed) with retry, day separators between messages, and a search
+  across the whole history that jumps to the conversation of each result.
 - **NODES** — sortable and filterable list, detail with traceroute and history,
-  battery forecast, position request, favorites, ignored nodes, plus remote
-  reboot and shutdown over the admin channel.
+  battery forecast, distance from your node next to each GPS position, position
+  request, favorites, ignored nodes, plus remote reboot and shutdown over the
+  admin channel.
 - **MAP** — nodes and waypoints over OpenStreetMap. The firmware reduces
   position precision, so nodes sharing a coordinate are grouped into a single
   marker listing all of them.
 - **MESH** — network summary (active in 1 h and 24 h, hop distribution, silent
   favorites, low battery) plus the graph and activity views.
-- **CONFIG** — user, LoRa, device, channels, modules, fixed position, backup and
-  database maintenance.
 - **TELEMETRY** — charts with ranges from 6 h to 30 days, **comparison of
   several nodes on the same chart** (aligning series that don't share sampling
   instants) and CSV export.
+- **CONFIG** — user, LoRa, device, channels, modules, fixed position, backup and
+  database maintenance.
 
 Shortcuts: `Ctrl+1…7` for the tabs, `Ctrl+F` to search.
 

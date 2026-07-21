@@ -101,6 +101,9 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
 - **Reloj de 12/24 h**, siguiendo el locale del sistema o forzado a uno u otro.
 - **Cinco temas de color** sobrios; el color se propaga a las gráficas, al grafo
   de malla e incluso a las teselas del mapa, no solo a los marcadores.
+- **Idioma, tema y hora se aplican en caliente** — sin recargar, así que
+  cambiarlos nunca corta la conexión con la radio.
+- **Barra de título propia** con minimizar, maximizar, pantalla completa y cerrar.
 - **Purga automática opcional** al arrancar, con retención configurable.
 
 ---
@@ -108,21 +111,21 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
 ## Pantallas
 
 - **CHAT** — canales y mensajes directos, estado de envío (en cola / enviado /
-  entregado / fallo) con reintento, y búsqueda sobre todo el historial que
-  salta a la conversación del resultado.
+  entregado / fallo) con reintento, separadores de día entre mensajes, y
+  búsqueda sobre todo el historial que salta a la conversación del resultado.
 - **NODOS** — lista ordenable y filtrable, detalle con traceroute e historial,
-  previsión de batería, petición de posición, favoritos, ignorados, y reboot y
-  apagado remotos por canal admin.
+  previsión de batería, distancia a tu nodo junto a cada posición GPS, petición
+  de posición, favoritos, ignorados, y reboot y apagado remotos por canal admin.
 - **MAPA** — nodos y waypoints sobre OpenStreetMap. El firmware reduce la
   precisión de las posiciones, así que los nodos que comparten coordenada se
   agrupan en un marcador con su lista.
 - **MALLA** — resumen de la red (activos en 1 h y 24 h, reparto de saltos,
   favoritos callados, batería baja) más las vistas de grafo y de actividad.
-- **CONFIG** — usuario, LoRa, dispositivo, canales, módulos, posición fija,
-  backup y mantenimiento de la base.
 - **TELEMETRÍA** — gráficas con rangos de 6 h a 30 días, **comparación de varios
   nodos en la misma gráfica** (alineando series que no comparten instantes de
   muestreo) y exportación a CSV.
+- **CONFIG** — usuario, LoRa, dispositivo, canales, módulos, posición fija,
+  backup y mantenimiento de la base.
 
 Atajos: `Ctrl+1…7` para las pestañas, `Ctrl+F` para buscar.
 
