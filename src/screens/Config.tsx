@@ -20,7 +20,14 @@ import { mutate } from "../store";
 import { parseChannelSetUrl } from "../channelUrl";
 import { buildChannelSetUrl } from "../channelUrl";
 import { getLang, getLangPref, setLang, t, type Lang } from "../i18n";
-import { getTheme, setTheme, THEMES, type Theme } from "../theme";
+import {
+  getHiContrast,
+  getTheme,
+  setHiContrast,
+  setTheme,
+  THEMES,
+  type Theme,
+} from "../theme";
 import { getHourPref, is12h, setHourPref, type HourPref } from "../fmt";
 import { getAlertCfg, setAlertCfg, type AlertCfg } from "../alerts";
 
@@ -151,6 +158,7 @@ export default function Config() {
     >
   >({});
   const [theme, setThemeSel] = useState<Theme>(getTheme);
+  const [hc, setHcSel] = useState(getHiContrast);
   const [horaFmt, setHoraFmt] = useState<HourPref>(getHourPref);
   const [alerts, setAlerts] = useState<AlertCfg>(getAlertCfg);
   const saveAlerts = (patch: Partial<AlertCfg>) => {
@@ -548,21 +556,38 @@ export default function Config() {
               <option value="12">12 H · 3:04 PM</option>
             </select>
             <label>{t("COLOR")}</label>
-            <select
-              value={theme}
-              style={{ width: 140 }}
-              onChange={(e) => {
-                const v = e.target.value as Theme;
-                setTheme(v);
-                setThemeSel(v);
-              }}
-            >
-              {(Object.keys(THEMES) as Theme[]).map((name) => (
-                <option key={name} value={name}>
-                  {t(THEME_LABELS[name])}
-                </option>
-              ))}
-            </select>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <select
+                value={theme}
+                style={{ width: 140 }}
+                onChange={(e) => {
+                  const v = e.target.value as Theme;
+                  setTheme(v);
+                  setThemeSel(v);
+                }}
+              >
+                {(Object.keys(THEMES) as Theme[]).map((name) => (
+                  <option key={name} value={name}>
+                    {t(THEME_LABELS[name])}
+                  </option>
+                ))}
+              </select>
+              <label
+                style={{ display: "flex", gap: 6, alignItems: "center", whiteSpace: "nowrap" }}
+                title={t("Mismo color, fondo negro puro y trazo más vivo")}
+              >
+                <input
+                  type="checkbox"
+                  checked={hc}
+                  style={{ width: "auto" }}
+                  onChange={(e) => {
+                    setHiContrast(e.target.checked);
+                    setHcSel(e.target.checked);
+                  }}
+                />
+                {t("ALTO CONTRASTE")}
+              </label>
+            </div>
 
             <label
               title={t("Avisos del sistema sobre los nodos marcados favoritos")}

@@ -32,6 +32,16 @@
   color-scheme: dark;
 }
 
+/* Alto contraste: theme.ts pone --fg vivo y el fondo negro puro; aquí suben
+   las mezclas derivadas, que es de donde sale casi toda la legibilidad. */
+:root.hc {
+  --fg-dim: color-mix(in srgb, var(--fg) 80%, transparent);
+  --border: color-mix(in srgb, var(--fg) 55%, transparent);
+  --glow: color-mix(in srgb, var(--fg) 55%, transparent);
+  --warn: #ffc933;
+  --err: #ff6b61;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -120,6 +130,12 @@ body {
   background:
     repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px),
     radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+/* las scanlines apagan un 16 % de las filas y la viñeta oscurece los bordes:
+   lo primero que sobra en alto contraste */
+:root.hc .app::after {
+  display: none;
 }
 
 /* ── titlebar personalizada (decorations:false) ── */

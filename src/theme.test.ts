@@ -97,6 +97,38 @@ for (const [name, th] of Object.entries(THEMES)) {
   assert.ok(salida.s > 0.15, `${name}: mapa lavado (sat ${salida.s.toFixed(2)})`);
 }
 
+// ── alto contraste ──
+// El modo mantiene el tono del tema y cambia el fondo a negro puro. Vale la
+// pena solo si de verdad sube el contraste: un color más saturado puede ser
+// más oscuro que el original y salir perdiendo (el violeta, sin ir más lejos).
+const lum = (c: RGB) => {
+  const [r, g, b] = c.map((v) =>
+    v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4,
+  ) as RGB;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const ratio = (a: RGB, b: RGB) => (lum(a) + 0.05) / (lum(b) + 0.05);
+
+const AAA = 7;
+
+for (const [name, th] of Object.entries(THEMES)) {
+  const normal = ratio(hex(th.fg), hex(th.bg));
+  const alto = ratio(hex(th.hc), [0, 0, 0]);
+  assert.ok(alto > normal, `${name}: alto contraste ${alto.toFixed(1)}:1 no mejora ${normal.toFixed(1)}:1`);
+  assert.ok(alto >= AAA, `${name}: alto contraste ${alto.toFixed(1)}:1 por debajo de AAA`);
+
+  const base = hsl(hex(th.fg));
+  const vivo = hsl(hex(th.hc));
+  if (name === "hueso") {
+    assert.ok(vivo.s < 0.05, `${name}: el tema neutro debe seguir sin tono`);
+    continue;
+  }
+  // mismo tema, no otro color
+  assert.ok(dist(vivo.h, base.h) < 8, `${name}: alto contraste vira de ${base.h.toFixed(0)}° a ${vivo.h.toFixed(0)}°`);
+  // >= con margen: el verde ya sale saturado al 100 % y solo se le gana brillo
+  assert.ok(vivo.s >= base.s - 0.01, `${name}: alto contraste menos saturado que el normal`);
+}
+
 console.log(
-  `theme.test.ts OK · ${Object.keys(THEMES).length} temas, tinte del mapa dentro de ±${TOL}°`,
+  `theme.test.ts OK · ${Object.keys(THEMES).length} temas, tinte del mapa dentro de ±${TOL}°, alto contraste ≥ ${AAA}:1`,
 );

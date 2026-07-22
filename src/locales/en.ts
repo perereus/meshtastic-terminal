@@ -245,6 +245,9 @@ const en: Record<string, string> = {
   AUTOMÁTICO: "AUTOMATIC",
   HORA: "TIME",
   COLOR: "COLOR",
+  "ALTO CONTRASTE": "HIGH CONTRAST",
+  "Mismo color, fondo negro puro y trazo más vivo":
+    "Same color, pure black background and a more vivid stroke",
   "Avisos del sistema sobre los nodos marcados favoritos":
     "System notifications about nodes marked as favorites",
   "ALERTAS FAVORITOS": "FAVORITE ALERTS",
