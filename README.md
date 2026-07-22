@@ -99,6 +99,11 @@ lets you see how the route to a node shifts over days.
 - **12/24-hour clock**, following the system locale or forced either way.
 - **Five muted color themes**; the color propagates to the charts, the mesh
   graph and even the map tiles, not just the markers.
+- **High contrast mode** on top of any theme: pure black background, the main
+  color at full saturation, stronger borders and dimmed text, and the CRT veil
+  gone —the scanlines darken 16 % of the rows and the vignette dims the edges—,
+  which is where most of the gain comes from. A self-check verifies all five
+  themes reach AAA (7:1) without drifting off their hue.
 - **Language, theme and clock apply live** — no reload, so changing them never
   drops the radio connection.
 - **Custom title bar** with minimize, maximize, fullscreen and close.

@@ -101,6 +101,11 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
 - **Reloj de 12/24 h**, siguiendo el locale del sistema o forzado a uno u otro.
 - **Cinco temas de color** sobrios; el color se propaga a las gráficas, al grafo
   de malla e incluso a las teselas del mapa, no solo a los marcadores.
+- **Modo de alto contraste** sobre cualquiera de los temas: fondo negro puro,
+  color principal a saturación plena, bordes y texto atenuado más marcados, y
+  fuera el velo CRT —las scanlines apagan un 16 % de las filas y la viñeta
+  oscurece los bordes—, que es de donde sale la mayor parte de la ganancia. Un
+  self-check comprueba que los cinco temas llegan a AAA (7:1) sin virar de tono.
 - **Idioma, tema y hora se aplican en caliente** — sin recargar, así que
   cambiarlos nunca corta la conexión con la radio.
 - **Barra de título propia** con minimizar, maximizar, pantalla completa y cerrar.
