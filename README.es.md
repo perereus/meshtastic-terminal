@@ -12,13 +12,6 @@ Ese historial local es la diferencia de fondo con las apps oficiales, que
 muestran el estado actual de la malla y poco más: aquí la malla tiene memoria,
 y sobre esa memoria se construye casi todo lo que sigue.
 
-![Mapa táctico con teselas tintadas al tema](docs/img/mapa.png)
-
-| | |
-|---|---|
-| ![Lista de nodos con histórico local](docs/img/nodos.png) | ![Grafo de topología de la malla](docs/img/malla.png) |
-| ![Gráfica de telemetría](docs/img/telemetria.png) | ![Chat con separadores de día](docs/img/chat.png) |
-
 ---
 
 ## Lo que no vas a encontrar en otros clientes
