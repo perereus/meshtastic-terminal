@@ -12,6 +12,13 @@ difference with the official apps, which show the current state of the mesh and
 little else: here the mesh has a memory, and almost everything below is built
 on top of it.
 
+![Tactical map with theme-tinted tiles](docs/img/mapa.png)
+
+| | |
+|---|---|
+| ![Node list with local history](docs/img/nodos.png) | ![Mesh topology graph](docs/img/malla.png) |
+| ![Telemetry chart](docs/img/telemetria.png) | ![Chat with day separators](docs/img/chat.png) |
+
 ---
 
 ## What you won't find in other clients
