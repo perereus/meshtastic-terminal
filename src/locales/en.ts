@@ -218,6 +218,31 @@ const en: Record<string, string> = {
   REGIÓN: "REGION",
   CANAL: "CHANNEL",
 
+  // Debug log (addLog messages, shown in the DEBUG panel and the footer)
+  "BD: fallo al guardar {0}: {1}": "DB: failed to save {0}: {1}",
+  "RUTA: {0} pasa de {1} a {2} saltos": "ROUTE: {0} goes from {1} to {2} hops",
+  "Estado: {0}": "Status: {0}",
+  "WAYPOINT borrado de {0}: {1}": "WAYPOINT deleted from {0}: {1}",
+  "WAYPOINT recibido de {0}: {1}": "WAYPOINT received from {0}: {1}",
+  " · {0} saltos": " · {0} hops",
+  'RANGE TEST de {0}: "{1}"{2}{3}': 'RANGE TEST from {0}: "{1}"{2}{3}',
+  "Traceroute de !{0}: {1} saltos ida": "Traceroute from !{0}: {1} hops out",
+  "NeighborInfo de !{0}: {1} vecinos": "NeighborInfo from !{0}: {1} neighbors",
+  "Enlace perdido": "Link lost",
+  "RECONEXION: sin manejador registrado, no se reintenta":
+    "RECONNECT: no handler registered, not retrying",
+  "Importados {0} canales desde URL": "Imported {0} channels from URL",
+  "Backup restaurado: {0} mensajes de config aplicados":
+    "Backup restored: {0} config messages applied",
+  "Reboot remoto → !{0}": "Remote reboot → !{0}",
+  "Shutdown remoto → !{0}": "Remote shutdown → !{0}",
+  "Traceroute → !{0}: ack {1}": "Traceroute → !{0}: ack {1}",
+  "Nodo !{0} borrado": "Node !{0} deleted",
+  "Posición → !{0}: ack {1}": "Position → !{0}: ack {1}",
+  "BLE: permisos={0} adaptador={1}": "BLE: permissions={0} adapter={1}",
+  "BLE: {0} updates, {1} disp: {2}": "BLE: {0} updates, {1} dev: {2}",
+  "BLE: enlace caído: {0}": "BLE: link down: {0}",
+
   // Config
   "SIN POSICIÓN": "NO POSITION",
   EXACTA: "EXACT",

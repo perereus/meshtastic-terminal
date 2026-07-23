@@ -59,7 +59,7 @@ export async function loadHistory(): Promise<void> {
 // vanish either: with no trace it's impossible to tell whether a table is
 // empty because the data never arrived or because the write failed.
 function dbFail(what: string) {
-  return (e: unknown) => addLog(`BD: fallo al guardar ${what}: ${e}`);
+  return (e: unknown) => addLog(t("BD: fallo al guardar {0}: {1}", what, String(e)));
 }
 
 // System notification. Permission is requested the first time.
@@ -131,7 +131,7 @@ function avisarCambioRuta(n: NodeEntry, antes: number): void {
   const ahora = n.hopsAway as number;
   saveHopChange(n.num, ahora, antes).catch(dbFail("cambio de ruta"));
   const quien = n.longName || n.shortName;
-  addLog(`RUTA: ${quien} pasa de ${antes} a ${ahora} saltos`);
+  addLog(t("RUTA: {0} pasa de {1} a {2} saltos", quien, antes, ahora));
   if (!n.fav || !getAlertCfg().on) return;
   if (Date.now() - (rutaAvisada.get(n.num) ?? -Infinity) < COOLDOWN_MS) return;
   rutaAvisada.set(n.num, Date.now());
@@ -146,7 +146,7 @@ function wireEvents(d: MeshDevice): void {
     mutate((s) => {
       s.status = status;
     });
-    addLog(`Estado: ${Types.DeviceStatusEnum[status]}`);
+    addLog(t("Estado: {0}", Types.DeviceStatusEnum[status]));
   });
 
   d.events.onMyNodeInfo.subscribe((info) => {
@@ -222,15 +222,25 @@ function wireEvents(d: MeshDevice): void {
       else deleteWaypointDb(w.id).catch(dbFail("waypoint"));
     });
     const who = getSnapshot().nodes.get(p.from)?.shortName ?? p.from.toString(16);
-    addLog(`WAYPOINT ${expired ? "borrado" : "recibido"} de ${who}: ${w.name}`);
+    addLog(
+      expired
+        ? t("WAYPOINT borrado de {0}: {1}", who, w.name)
+        : t("WAYPOINT recibido de {0}: {1}", who, w.name),
+    );
   });
 
   d.events.onRangeTestPacket.subscribe((r) => {
     const n = getSnapshot().nodes.get(r.from);
     const snr = n?.snr !== undefined ? ` · SNR ${n.snr.toFixed(1)} dB` : "";
-    const hops = n?.hopsAway !== undefined ? ` · ${n.hopsAway} saltos` : "";
+    const hops = n?.hopsAway !== undefined ? t(" · {0} saltos", n.hopsAway) : "";
     addLog(
-      `RANGE TEST de ${n?.shortName ?? r.from.toString(16)}: "${new TextDecoder().decode(r.data)}"${snr}${hops}`,
+      t(
+        'RANGE TEST de {0}: "{1}"{2}{3}',
+        n?.shortName ?? r.from.toString(16),
+        new TextDecoder().decode(r.data),
+        snr,
+        hops,
+      ),
     );
   });
 
@@ -335,7 +345,13 @@ function wireEvents(d: MeshDevice): void {
       s.traceroutes = new Map(s.traceroutes).set(pkt.from, tr);
     });
     saveTraceroute(pkt.from, tr).catch(dbFail("traceroute"));
-    addLog(`Traceroute de !${pkt.from.toString(16)}: ${pkt.data.route.length + 1} saltos ida`);
+    addLog(
+      t(
+        "Traceroute de !{0}: {1} saltos ida",
+        pkt.from.toString(16),
+        pkt.data.route.length + 1,
+      ),
+    );
   });
 
   // NeighborInfo: each node publishes who it hears and with what SNR. It's the
@@ -346,7 +362,7 @@ function wireEvents(d: MeshDevice): void {
       (n: { nodeId: number; snr: number }) => ({ num: n.nodeId, snr: n.snr }),
     );
     saveNeighbors(src, neighbors, Date.now()).catch(dbFail("vecinos"));
-    addLog(`NeighborInfo de !${src.toString(16)}: ${neighbors.length} vecinos`);
+    addLog(t("NeighborInfo de !{0}: {1} vecinos", src.toString(16), neighbors.length));
   });
 
   d.events.onChannelPacket.subscribe((ch) => {
@@ -459,11 +475,11 @@ function handleLost(): void {
   mutate((s) => {
     s.status = Types.DeviceStatusEnum.DeviceDisconnected;
   });
-  addLog("Enlace perdido");
+  addLog(t("Enlace perdido"));
   // A missing handler used to be an invisible dead end: the log said the link
   // dropped and nothing else ever happened.
   if (!onConnectionLost) {
-    addLog("RECONEXION: sin manejador registrado, no se reintenta");
+    addLog(t("RECONEXION: sin manejador registrado, no se reintenta"));
     return;
   }
   onConnectionLost();
@@ -498,7 +514,7 @@ export async function importChannelSet(url: string): Promise<number> {
     );
   }
   await device.commitEditSettings();
-  addLog(`Importados ${set.settings.length} canales desde URL`);
+  addLog(t("Importados {0} canales desde URL", set.settings.length));
   return set.settings.length;
 }
 
@@ -585,7 +601,7 @@ export async function importConfigJson(json: string): Promise<number> {
     n++;
   }
   await device.commitEditSettings();
-  addLog(`Backup restaurado: ${n} mensajes de config aplicados`);
+  addLog(t("Backup restaurado: {0} mensajes de config aplicados", n));
   return n;
 }
 
@@ -608,12 +624,12 @@ async function sendAdminTo(
 
 export async function remoteReboot(dest: number): Promise<void> {
   await sendAdminTo(dest, { case: "rebootSeconds", value: 5 });
-  addLog(`Reboot remoto → !${dest.toString(16)}`);
+  addLog(t("Reboot remoto → !{0}", dest.toString(16)));
 }
 
 export async function remoteShutdown(dest: number): Promise<void> {
   await sendAdminTo(dest, { case: "shutdownSeconds", value: 5 });
-  addLog(`Shutdown remoto → !${dest.toString(16)}`);
+  addLog(t("Shutdown remoto → !{0}", dest.toString(16)));
 }
 
 export async function disconnect(): Promise<void> {
@@ -644,7 +660,7 @@ export async function runTraceroute(dest: number): Promise<void> {
   // we log it and let the UI wait for the real reply.
   device.traceRoute(dest).catch((e: unknown) => {
     const code = (e as { error?: number } | undefined)?.error;
-    addLog(`Traceroute → !${dest.toString(16)}: ack ${routingErrName(code)}`);
+    addLog(t("Traceroute → !{0}: ack {1}", dest.toString(16), routingErrName(code)));
   });
 }
 
@@ -667,7 +683,7 @@ export async function deleteNode(num: number): Promise<void> {
     s.nodes = m;
   });
   await deleteNodeDb(num).catch(() => {});
-  addLog(`Nodo !${num.toString(16)} borrado`);
+  addLog(t("Nodo !{0} borrado", num.toString(16)));
 }
 
 // Requests a position from a node. The reply arrives via onPositionPacket
@@ -677,7 +693,7 @@ export function requestNodePosition(dest: number): void {
   if (!device) throw new Error("Sin conexión");
   device.requestPosition(dest).catch((e: unknown) => {
     const code = (e as { error?: number } | undefined)?.error;
-    addLog(`Posición → !${dest.toString(16)}: ack ${routingErrName(code)}`);
+    addLog(t("Posición → !{0}: ack {1}", dest.toString(16), routingErrName(code)));
   });
 }
 

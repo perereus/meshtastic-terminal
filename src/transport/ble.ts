@@ -12,6 +12,7 @@ import {
   unsubscribe,
 } from "@mnlphlp/plugin-blec";
 import { addLog } from "../store";
+import { t } from "../i18n";
 
 // Meshtastic GATT (BLE)
 const SERVICE = "6ba1b218-15a8-461f-9fa8-5dcae273eafd";
@@ -31,7 +32,7 @@ export interface BleDeviceInfo {
 export async function scanBleDevices(timeoutMs = 6000): Promise<BleDeviceInfo[]> {
   const perm = await checkPermissions(true).catch((e) => `err ${e}`);
   const state = await getAdapterState().catch(() => "Unknown");
-  addLog(`BLE: permisos=${perm} adaptador=${state}`);
+  addLog(t("BLE: permisos={0} adaptador={1}", String(perm), state));
   if (state === "Off") throw new Error("Bluetooth apagado");
 
   await stopScan().catch(() => {}); // limpiar cualquier escaneo previo colgado
@@ -52,9 +53,12 @@ export async function scanBleDevices(timeoutMs = 6000): Promise<BleDeviceInfo[]>
   await new Promise((r) => setTimeout(r, 300)); // settle
   await stopScan().catch(() => {});
   addLog(
-    `BLE: ${updates} updates, ${found.size} disp: ${[...found.values()]
-      .map((d) => `${d.svc ? "●" : ""}${d.name}`)
-      .join(", ")}`,
+    t(
+      "BLE: {0} updates, {1} disp: {2}",
+      updates,
+      found.size,
+      [...found.values()].map((d) => `${d.svc ? "●" : ""}${d.name}`).join(", "),
+    ),
   );
 
   // service-first, then named, then the rest; sorted by name
@@ -143,7 +147,7 @@ export async function createBleTransport(
         // A read can also fail with the link technically alive (GATT timeout):
         // close the plugin side too, or the next attempt inherits a zombie.
         if (!closed) {
-          addLog(`BLE: enlace caído: ${e}`);
+          addLog(t("BLE: enlace caído: {0}", String(e)));
           await cerrarPlugin();
           perdido();
         }
