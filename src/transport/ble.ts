@@ -86,7 +86,7 @@ export async function createBleTransport(
     for (const d of devices) {
       if (norm(d.address) === target) seenResolve(true);
     }
-  }, 20000).catch((e) => addLog(`BLE scan err: ${e}`));
+  }, 20000).catch((e) => addLog(`BLE scan error: ${e}`));
   await Promise.race([
     seen,
     new Promise<boolean>((r) => setTimeout(() => r(false), 12000)),

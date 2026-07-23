@@ -442,7 +442,7 @@ async function connect(make: () => Promise<Types.Transport>): Promise<void> {
     // reconnect (MTU/service negotiation); awaiting it would abort a handshake
     // that was about to succeed. A real write failure surfaces as no reply,
     // which waitConfigured catches at CONFIG_TIMEOUT_MS.
-    void d.configure().catch((e) => addLog(`configure error: ${e}`));
+    void d.configure().catch((e) => addLog(`Configure error: ${e}`));
     await configured;
   } catch (e) {
     device = undefined;
