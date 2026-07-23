@@ -6,8 +6,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import en from "./locales/en.ts";
 
-// t("...") or t('...'), keeping the literal
-const CALL = /\bt\(\s*(["'])(.*?)(?<!\\)\1/gs;
+// t("...") / t('...') and addLog("...") / addLog('...'), keeping the literal.
+// addLog stores the key untranslated (fmtLog translates it at render), so its
+// keys must be in en.ts just like t()'s.
+const CALL = /\b(?:t|addLog)\(\s*(["'])(.*?)(?<!\\)\1/gs;
 
 // keys that never appear as a literal because they're built at runtime:
 // tabs (t(tab)), theme names (t(THEME_LABELS[x])) and the battery forecast

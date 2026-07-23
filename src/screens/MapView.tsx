@@ -196,7 +196,9 @@ export default function MapView({
     if (positioned.length !== loggedRef.current) {
       loggedRef.current = positioned.length;
       addLog(
-        `MAPA: ${positioned.length} nodos en ${byCoord.size} puntos (coords compartidas por precisión reducida)`,
+        "MAPA: {0} nodos en {1} puntos (coords compartidas por precisión reducida)",
+        positioned.length,
+        byCoord.size,
       );
     }
   }, [s, tema, horaFmt, idioma]);

@@ -1,5 +1,6 @@
 import type { Protobuf, Types } from "@meshtastic/core";
 import { hora } from "./fmt";
+import { t } from "./i18n";
 
 export interface NodeEntry {
   num: number;
@@ -75,7 +76,15 @@ interface State {
   waypoints: Map<number, Waypoint>; // key: waypoint id
   posUpdates: Map<number, number>; // key: node → ts ms of the last PositionPacket
   unread: Map<string, number>; // key: convo → number of unread messages
-  log: string[];
+  log: LogEntry[];
+}
+
+// Stored untranslated (key + args) so the whole log re-translates live when the
+// language changes, like the rest of the UI. Render with fmtLog().
+export interface LogEntry {
+  time: number; // epoch ms
+  key: string; // t() key, may carry {0}, {1}… placeholders
+  args: (string | number)[];
 }
 
 const state: State = {
@@ -110,14 +119,16 @@ export function getSnapshot() {
   return snapshot;
 }
 
-export function addLog(text: string): void {
+export function addLog(key: string, ...args: (string | number)[]): void {
   mutate((s) => {
     // ponytail: log capped at 500 lines, enough for diagnosis
-    s.log = [
-      ...s.log.slice(-499),
-      `${hora(Date.now())} ${text}`,
-    ];
+    s.log = [...s.log.slice(-499), { time: Date.now(), key, args }];
   });
+}
+
+/** Render a log entry in the current language. hora() is language-neutral. */
+export function fmtLog(e: LogEntry): string {
+  return `${hora(e.time)} ${t(e.key, ...e.args)}`;
 }
 
 export function markUnread(convo: string): void {

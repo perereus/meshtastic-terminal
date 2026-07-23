@@ -224,11 +224,25 @@ const en: Record<string, string> = {
   "Estado: {0}": "Status: {0}",
   "WAYPOINT borrado de {0}: {1}": "WAYPOINT deleted from {0}: {1}",
   "WAYPOINT recibido de {0}: {1}": "WAYPOINT received from {0}: {1}",
-  " · {0} saltos": " · {0} hops",
-  'RANGE TEST de {0}: "{1}"{2}{3}': 'RANGE TEST from {0}: "{1}"{2}{3}',
+  'RANGE TEST de {0}: "{1}"{2} · {3} saltos':
+    'RANGE TEST from {0}: "{1}"{2} · {3} hops',
+  'RANGE TEST de {0}: "{1}"{2}': 'RANGE TEST from {0}: "{1}"{2}',
   "Traceroute de !{0}: {1} saltos ida": "Traceroute from !{0}: {1} hops out",
   "NeighborInfo de !{0}: {1} vecinos": "NeighborInfo from !{0}: {1} neighbors",
   "Enlace perdido": "Link lost",
+  "Configure error: {0}": "Configure error: {0}",
+  "MAPA: {0} nodos en {1} puntos (coords compartidas por precisión reducida)":
+    "MAP: {0} nodes at {1} points (coords shared due to reduced precision)",
+  "RECONEXION: no hay conexión previa que reintentar":
+    "RECONNECT: no previous connection to retry",
+  "RECONEXION: programada en {0}s": "RECONNECT: scheduled in {0}s",
+  "RECONEXION: cancelada (desconexión manual)":
+    "RECONNECT: cancelled (manual disconnect)",
+  "RECONEXION: ya hay un intento en curso":
+    "RECONNECT: an attempt is already in progress",
+  "RECONEXION: intento {0} por {1}": "RECONNECT: attempt {0} over {1}",
+  "RECONEXION: conectado": "RECONNECT: connected",
+  "RECONEXION: intento {0} fallido: {1}": "RECONNECT: attempt {0} failed: {1}",
   "RECONEXION: sin manejador registrado, no se reintenta":
     "RECONNECT: no handler registered, not retrying",
   "Importados {0} canales desde URL": "Imported {0} channels from URL",
@@ -241,6 +255,7 @@ const en: Record<string, string> = {
   "Posición → !{0}: ack {1}": "Position → !{0}: ack {1}",
   "BLE: permisos={0} adaptador={1}": "BLE: permissions={0} adapter={1}",
   "BLE: {0} updates, {1} disp: {2}": "BLE: {0} updates, {1} dev: {2}",
+  "BLE scan error: {0}": "BLE scan error: {0}",
   "BLE: enlace caído: {0}": "BLE: link down: {0}",
 
   // Config

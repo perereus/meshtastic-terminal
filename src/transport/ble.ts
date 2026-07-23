@@ -12,7 +12,6 @@ import {
   unsubscribe,
 } from "@mnlphlp/plugin-blec";
 import { addLog } from "../store";
-import { t } from "../i18n";
 
 // Meshtastic GATT (BLE)
 const SERVICE = "6ba1b218-15a8-461f-9fa8-5dcae273eafd";
@@ -32,7 +31,7 @@ export interface BleDeviceInfo {
 export async function scanBleDevices(timeoutMs = 6000): Promise<BleDeviceInfo[]> {
   const perm = await checkPermissions(true).catch((e) => `err ${e}`);
   const state = await getAdapterState().catch(() => "Unknown");
-  addLog(t("BLE: permisos={0} adaptador={1}", String(perm), state));
+  addLog("BLE: permisos={0} adaptador={1}", String(perm), state);
   if (state === "Off") throw new Error("Bluetooth apagado");
 
   await stopScan().catch(() => {}); // limpiar cualquier escaneo previo colgado
@@ -53,12 +52,10 @@ export async function scanBleDevices(timeoutMs = 6000): Promise<BleDeviceInfo[]>
   await new Promise((r) => setTimeout(r, 300)); // settle
   await stopScan().catch(() => {});
   addLog(
-    t(
-      "BLE: {0} updates, {1} disp: {2}",
-      updates,
-      found.size,
-      [...found.values()].map((d) => `${d.svc ? "●" : ""}${d.name}`).join(", "),
-    ),
+    "BLE: {0} updates, {1} disp: {2}",
+    updates,
+    found.size,
+    [...found.values()].map((d) => `${d.svc ? "●" : ""}${d.name}`).join(", "),
   );
 
   // service-first, then named, then the rest; sorted by name
@@ -86,7 +83,7 @@ export async function createBleTransport(
     for (const d of devices) {
       if (norm(d.address) === target) seenResolve(true);
     }
-  }, 20000).catch((e) => addLog(`BLE scan error: ${e}`));
+  }, 20000).catch((e) => addLog("BLE scan error: {0}", String(e)));
   await Promise.race([
     seen,
     new Promise<boolean>((r) => setTimeout(() => r(false), 12000)),
@@ -147,7 +144,7 @@ export async function createBleTransport(
         // A read can also fail with the link technically alive (GATT timeout):
         // close the plugin side too, or the next attempt inherits a zombie.
         if (!closed) {
-          addLog(t("BLE: enlace caído: {0}", String(e)));
+          addLog("BLE: enlace caído: {0}", String(e));
           await cerrarPlugin();
           perdido();
         }

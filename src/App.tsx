@@ -15,7 +15,7 @@ import {
 } from "./radio";
 import { evalAlerts, evalAutonomia, getAlertCfg } from "./alerts";
 import { preverBateria } from "./battery";
-import { addLog, getSnapshot, subscribe } from "./store";
+import { addLog, fmtLog, getSnapshot, subscribe } from "./store";
 import { getAutoPurgeDays, loadTelemetry, purgeOlderThan } from "./db";
 import Chat from "./screens/Chat";
 import Nodes from "./screens/Nodes";
@@ -318,7 +318,7 @@ function App() {
     (days > 0
       ? purgeOlderThan(days)
           .then((n) => {
-            if (n > 0) addLog(t("Purga automática: {0} filas borradas", n));
+            if (n > 0) addLog("Purga automática: {0} filas borradas", n);
           })
           .catch(() => {})
       : Promise.resolve()
@@ -355,7 +355,7 @@ function App() {
       // config does) or out of range. Either way it takes 10-20 s to answer
       // again, so retrying immediately only burns the first attempt.
       setError(t("Enlace perdido · reconectando en {0}s", RECONNECT_WAIT_MS / 1000));
-      addLog(`RECONEXION: programada en ${RECONNECT_WAIT_MS / 1000}s`);
+      addLog("RECONEXION: programada en {0}s", RECONNECT_WAIT_MS / 1000);
       scheduleReconnect(RECONNECT_WAIT_MS);
     });
     return () => setConnectionLostHandler(undefined);
@@ -421,7 +421,7 @@ function App() {
     const { mode: m, id } = lastRef.current;
     setConnecting(true);
     setError(t("Reconectando… (intento {0})", attemptRef.current + 1));
-    addLog(`RECONEXION: intento ${attemptRef.current + 1} por ${m}`);
+    addLog("RECONEXION: intento {0} por {1}", attemptRef.current + 1, m);
     try {
       // connect() bounds its own steps, so no timeout wrapper here: racing it
       // can't cancel the real connect and would spawn overlapping attempts
@@ -436,7 +436,7 @@ function App() {
       if (!wantRef.current) return;
       // Swallowing this was why a failed reconnect left no trace anywhere:
       // the header string is the next thing to overwrite itself.
-      addLog(`RECONEXION: intento ${attemptRef.current + 1} fallido: ${e}`);
+      addLog("RECONEXION: intento {0} fallido: {1}", attemptRef.current + 1, String(e));
       attemptRef.current++;
       const delay = Math.min(15000, 2000 * 2 ** (attemptRef.current - 1));
       setError(t("Reconexión fallida, reintento en {0}s", delay / 1000));
@@ -651,7 +651,7 @@ function App() {
                   title={t("Exportar el log a un archivo de texto")}
                   disabled={s.log.length === 0}
                   onClick={() =>
-                    saveText(`meshtastic-log-${stamp()}.txt`, s.log.join("\n"))
+                    saveText(`meshtastic-log-${stamp()}.txt`, s.log.map(fmtLog).join("\n"))
                       .then((p) => p && setError(t("EXPORTADO → {0}", p)))
                       .catch((e) => setError(t("FALLO EXPORT: {0}", String(e))))
                   }
@@ -662,7 +662,7 @@ function App() {
               </span>
             </div>
             <pre className="debuglog">
-              {s.log.join("\n")}
+              {s.log.map(fmtLog).join("\n")}
               {"\n"}
               <span className="cursor">█</span>
             </pre>
@@ -679,7 +679,7 @@ function App() {
         {ch0 && <span>{t("CANAL")} 0 #{ch0.name}</span>}
         <span>{t("{0} NODOS", s.nodes.size)}</span>
         <span style={{ flex: 1 }} />
-        <span>{s.log[s.log.length - 1] ?? "—"}</span>
+        <span>{s.log.length ? fmtLog(s.log[s.log.length - 1]) : "—"}</span>
       </footer>
     </div>
   );
