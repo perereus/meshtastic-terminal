@@ -105,6 +105,13 @@ export async function updateMessageState(
   ]);
 }
 
+// Deletes every message of one conversation. Nodes/telemetry untouched.
+export async function deleteConvoMessages(convo: string): Promise<number> {
+  const d = await openDb();
+  const r = await d.execute(`DELETE FROM messages WHERE convo = $1`, [convo]);
+  return r.rowsAffected;
+}
+
 export async function loadMessages(limit = 2000): Promise<Message[]> {
   const d = await openDb();
   const rows = await d.select<

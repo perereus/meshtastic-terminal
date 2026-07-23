@@ -24,6 +24,7 @@ import {
   type Waypoint,
 } from "./store";
 import {
+  deleteConvoMessages,
   deleteNodeDb,
   deleteWaypointDb,
   loadMessages,
@@ -675,6 +676,15 @@ export async function deleteNode(num: number): Promise<void> {
   });
   await deleteNodeDb(num).catch(() => {});
   addLog("Nodo !{0} borrado", num.toString(16));
+}
+
+// Clears the messages of one conversation from the store and the DB.
+export async function clearConvo(convo: string): Promise<void> {
+  mutate((s) => {
+    s.messages = s.messages.filter((m) => m.convo !== convo);
+  });
+  const n = await deleteConvoMessages(convo).catch(() => 0);
+  addLog("Conversación {0} limpiada: {1} mensajes borrados", convo, n);
 }
 
 // Requests a position from a node. The reply arrives via onPositionPacket

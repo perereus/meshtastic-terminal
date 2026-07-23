@@ -12,6 +12,11 @@ const en: Record<string, string> = {
   "Exportar esta conversación a un archivo de texto":
     "Export this conversation to a text file",
   "⭳ EXPORTAR": "⭳ EXPORT",
+  "🗑 LIMPIAR": "🗑 CLEAR",
+  "Borrar todos los mensajes de esta conversación":
+    "Delete all messages in this conversation",
+  "⚠ SE BORRARÁN {0} MENSAJES · PULSA OTRA VEZ":
+    "⚠ {0} MESSAGES WILL BE DELETED · PRESS AGAIN",
   "{0} NODOS EN ESCUCHA": "{0} NODES LISTENING",
   "EXPORTADO → {0}": "EXPORTED → {0}",
   "FALLO EXPORT: {0}": "EXPORT FAILED: {0}",
@@ -252,6 +257,8 @@ const en: Record<string, string> = {
   "Shutdown remoto → !{0}": "Remote shutdown → !{0}",
   "Traceroute → !{0}: ack {1}": "Traceroute → !{0}: ack {1}",
   "Nodo !{0} borrado": "Node !{0} deleted",
+  "Conversación {0} limpiada: {1} mensajes borrados":
+    "Conversation {0} cleared: {1} messages deleted",
   "Posición → !{0}: ack {1}": "Position → !{0}: ack {1}",
   "BLE: permisos={0} adaptador={1}": "BLE: permissions={0} adapter={1}",
   "BLE: {0} updates, {1} disp: {2}": "BLE: {0} updates, {1} dev: {2}",

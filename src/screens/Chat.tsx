@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { clearUnread, getSnapshot, subscribe } from "../store";
-import { retryMessage, sendText } from "../radio";
+import { clearConvo, retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
 import { t } from "../i18n";
 import { hora } from "../fmt";
@@ -44,6 +44,7 @@ export default function Chat({
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -57,6 +58,7 @@ export default function Chat({
   const msgs = q
     ? s.messages.filter((m) => m.text.toLowerCase().includes(q))
     : s.messages.filter((m) => m.convo === convo);
+  const convoCount = s.messages.filter((m) => m.convo === convo).length;
 
   useEffect(() => {
     if (!q) endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,6 +68,11 @@ export default function Chat({
   useEffect(() => {
     clearUnread(convo);
   }, [convo, msgs.length]);
+
+  // Never carry an armed "clear" across conversations: it would wipe the wrong one
+  useEffect(() => {
+    setConfirmClear(false);
+  }, [convo]);
 
   const channelConvos = [...s.channels.values()]
     .filter((c) => c.role !== 0)
@@ -202,6 +209,27 @@ export default function Chat({
               }}
             >
               {t("⭳ EXPORTAR")}
+            </button>
+            <button
+              className="danger"
+              style={{ fontSize: 10, padding: "0 6px" }}
+              title={t("Borrar todos los mensajes de esta conversación")}
+              disabled={convoCount === 0}
+              onClick={() => {
+                if (confirmClear) {
+                  setConfirmClear(false);
+                  setError("");
+                  clearConvo(convo).catch((e) => setError(String(e)));
+                } else {
+                  setConfirmClear(true);
+                  setError(
+                    t("⚠ SE BORRARÁN {0} MENSAJES · PULSA OTRA VEZ", convoCount),
+                  );
+                  setTimeout(() => setConfirmClear(false), 3000);
+                }
+              }}
+            >
+              {confirmClear ? t("¿SEGURO?") : t("🗑 LIMPIAR")}
             </button>
             {t("{0} NODOS EN ESCUCHA", s.nodes.size)}
           </span>
