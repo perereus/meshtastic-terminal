@@ -270,7 +270,9 @@ export default function Mesh() {
                     style={{ display: "flex", gap: 10, fontSize: 12 }}
                   >
                     <span style={{ flex: 1 }}>{n.shortName}</span>
-                    <span className="dim">{t("hace {0}", ago(n.lastHeard))}</span>
+                    <span className="dim" title={fechaHora(n.lastHeard * 1000)}>
+                      {t("hace {0}", ago(n.lastHeard))}
+                    </span>
                   </div>
                 ))}
               </div>

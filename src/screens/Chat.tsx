@@ -3,7 +3,7 @@ import { clearUnread, getSnapshot, subscribe, type Message } from "../store";
 import { clearConvo, retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
 import { t } from "../i18n";
-import { hora } from "../fmt";
+import { fechaHora, hora } from "../fmt";
 
 // in search results the time alone isn't enough: they may be from another day
 const fecha = (ms: number) =>
@@ -299,7 +299,7 @@ export default function Chat({
                     </div>
                   );
                 })()}
-              <span className="dim">[{hora(m.ts)}]</span>{" "}
+              <span className="dim" title={fechaHora(m.ts)}>[{hora(m.ts)}]</span>{" "}
               <span
                 className={m.mine ? "" : "warn"}
                 style={m.mine ? { fontWeight: 700 } : undefined}

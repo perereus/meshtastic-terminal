@@ -103,7 +103,7 @@ export default function MapView({
       `<span style="opacity:.6;">ID</span><span>!${n.num.toString(16)}</span>` +
       `<span style="opacity:.6;">SNR</span><span>${n.snr !== undefined ? `${n.snr.toFixed(2)} dB` : "—"}</span>` +
       `<span style="opacity:.6;">BAT</span><span>${asciiBattery(n.batteryLevel)}</span>` +
-      `<span style="opacity:.6;">${t("VISTO")}</span><span>${t("hace {0}", ago(n.lastHeard))}</span>` +
+      `<span style="opacity:.6;">${t("VISTO")}</span><span title="${fechaHora(n.lastHeard * 1000)}">${t("hace {0}", ago(n.lastHeard))}</span>` +
       `</div>`;
 
     for (const group of byCoord.values()) {

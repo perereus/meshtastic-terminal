@@ -375,7 +375,10 @@ function Detail(props: {
         t("SIN GPS FIX")
       ),
     ],
-    [t("VISTO HACE"), ago(n.lastHeard)],
+    [
+      t("VISTO HACE"),
+      <span title={fechaHora(n.lastHeard * 1000)}>{ago(n.lastHeard)}</span>,
+    ],
   ];
   return (
     <div className="panel hot" style={{ width: 300, flexShrink: 0 }}>
@@ -399,7 +402,11 @@ function Detail(props: {
         {n.longName}
         {props.isMe && ` · (${t("YO")})`}
       </div>
-      <div className="dim" style={{ padding: "2px 12px 12px", fontSize: 11 }}>
+      <div
+        className="dim"
+        style={{ padding: "2px 12px 12px", fontSize: 11 }}
+        title={fechaHora(n.lastHeard * 1000)}
+      >
         {t("ÚLTIMO PAQUETE HACE {0}", ago(n.lastHeard))}
       </div>
       <div className="kv" style={{ borderTop: "1px solid var(--border)" }}>
@@ -739,7 +746,7 @@ export default function Nodes({
                       t("SIN GPS FIX")
                     )}
                   </td>
-                  <td>{ago(n.lastHeard)}</td>
+                  <td title={fechaHora(n.lastHeard * 1000)}>{ago(n.lastHeard)}</td>
                 </tr>
               ))}
             </tbody>
