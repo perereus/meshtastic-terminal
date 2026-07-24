@@ -1,6 +1,7 @@
 import { Component, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getVersion } from "@tauri-apps/api/app";
 import { Types } from "@meshtastic/core";
 import { listSerialPorts } from "./transport/serial";
 import { scanBleDevices, type BleDeviceInfo } from "./transport/ble";
@@ -72,6 +73,10 @@ const appWindow = getCurrentWindow();
 
 function Titlebar() {
   const [fs, setFs] = useState(false);
+  const [ver, setVer] = useState("");
+  useEffect(() => {
+    getVersion().then(setVer).catch(() => {});
+  }, []);
   const toggleFullscreen = async () => {
     const next = !(await appWindow.isFullscreen());
     await appWindow.setFullscreen(next);
@@ -81,6 +86,7 @@ function Titlebar() {
     <div className="titlebar" data-tauri-drag-region>
       <span className="titlebar-label" data-tauri-drag-region>
         ◊ MESHTASTIC ·· MESH·NET TERMINAL
+        {ver && <span className="titlebar-ver">v{ver}</span>}
       </span>
       <div className="titlebar-btns">
         <button
