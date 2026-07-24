@@ -92,10 +92,13 @@ lets you see how the route to a node shifts over days.
   and restore from file.
 - **System tray**: closing the window doesn't quit the app, which keeps
   recording what the mesh says.
-- **Bilingual (ES/EN), auto-detected** from the system language, with automated
-  verification: a self-check walks the translation calls in the source and fails
-  if any string is missing from the dictionary, because an untranslated key
-  silently falls back to Spanish.
+- **Bilingual (ES/EN), auto-detected** from the system language, down to the
+  diagnostic log: log lines are stored untranslated (key + arguments) and
+  rendered in the current language, so the DEBUG panel and the footer re-translate
+  live on a language change like the rest of the UI. A self-check walks the
+  translation calls in the source —including the log calls— and fails if any
+  string is missing from the dictionary, because an untranslated key silently
+  falls back to Spanish.
 - **12/24-hour clock**, following the system locale or forced either way.
 - **Five muted color themes**; the color propagates to the charts, the mesh
   graph and even the map tiles, not just the markers.
@@ -114,8 +117,10 @@ lets you see how the route to a node shifts over days.
 ## Screens
 
 - **CHAT** — channels and direct messages, send state (queued / sent /
-  delivered / failed) with retry, day separators between messages, and a search
-  across the whole history that jumps to the conversation of each result.
+  delivered / failed) with retry, day separators between messages, a search
+  across the whole history that jumps to the conversation of each result, and
+  per-conversation clear (with a two-step confirmation) alongside the text
+  export.
 - **NODES** — sortable and filterable list, detail with traceroute and history,
   battery forecast, distance from your node next to each GPS position, position
   request, favorites, ignored nodes, plus remote reboot and shutdown over the

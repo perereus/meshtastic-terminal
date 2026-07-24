@@ -94,10 +94,13 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
   incluidos, y restauración desde archivo.
 - **Bandeja del sistema**: cerrar la ventana no cierra la app, que sigue
   registrando lo que oye la malla.
-- **Bilingüe (ES/EN), autodetectado** según el idioma del sistema, con
-  verificación automática: un self-check recorre las llamadas de traducción del
-  código y falla si alguna cadena no está en el diccionario, porque una clave
-  sin traducir cae al español en silencio.
+- **Bilingüe (ES/EN), autodetectado** según el idioma del sistema, hasta el log
+  de diagnóstico: las líneas del log se guardan sin traducir (clave + argumentos)
+  y se pintan en el idioma actual, así que el panel DEBUG y el pie se retraducen
+  en vivo al cambiar de idioma, como el resto de la interfaz. Un self-check
+  recorre las llamadas de traducción del código —incluidas las del log— y falla
+  si alguna cadena no está en el diccionario, porque una clave sin traducir cae
+  al español en silencio.
 - **Reloj de 12/24 h**, siguiendo el locale del sistema o forzado a uno u otro.
 - **Cinco temas de color** sobrios; el color se propaga a las gráficas, al grafo
   de malla e incluso a las teselas del mapa, no solo a los marcadores.
@@ -116,8 +119,9 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
 ## Pantallas
 
 - **CHAT** — canales y mensajes directos, estado de envío (en cola / enviado /
-  entregado / fallo) con reintento, separadores de día entre mensajes, y
-  búsqueda sobre todo el historial que salta a la conversación del resultado.
+  entregado / fallo) con reintento, separadores de día entre mensajes, búsqueda
+  sobre todo el historial que salta a la conversación del resultado, y limpieza
+  por conversación (con confirmación en dos pasos) junto al exportar a texto.
 - **NODOS** — lista ordenable y filtrable, detalle con traceroute e historial,
   previsión de batería, distancia a tu nodo junto a cada posición GPS, petición
   de posición, favoritos, ignorados, y reboot y apagado remotos por canal admin.
