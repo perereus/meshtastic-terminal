@@ -1,5 +1,5 @@
 import { MeshDevice, Protobuf, Types } from "@meshtastic/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow, UserAttentionType } from "@tauri-apps/api/window";
 import {
   isPermissionGranted,
   requestPermission,
@@ -77,9 +77,35 @@ export async function notify(title: string, body: string): Promise<void> {
 // Incoming messages: only when the window isn't focused (if you're looking at
 // the chat there's no need). Node alerts always notify: they don't depend on
 // you looking at the right screen.
-async function notifyIncoming(title: string, body: string): Promise<void> {
+async function notifyIncoming(title: string, body: string, isDm: boolean): Promise<void> {
   if (await getCurrentWindow().isFocused().catch(() => false)) return;
   await notify(title, body);
+  // A DM is worth more than a channel message: also flash the taskbar/tray
+  // (only visible when the window is open but unfocused) and beep.
+  if (isDm) {
+    getCurrentWindow()
+      .requestUserAttention(UserAttentionType.Critical)
+      .catch(() => {});
+    beep();
+  }
+}
+
+// Short beep via Web Audio, no asset. Silently no-ops if audio is unavailable.
+function beep(): void {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.value = 0.05;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.12);
+    osc.onended = () => ctx.close();
+  } catch {
+    // no audio: not critical
+  }
 }
 
 function upsertNode(num: number, patch: Partial<NodeEntry>): void {
@@ -354,7 +380,7 @@ function wireEvents(d: MeshDevice): void {
     const muted =
       !isDm &&
       (channels.get(pkt.channel)?.settings?.moduleSettings?.isMuted ?? false);
-    if (!muted) void notifyIncoming(`${who} · ${where}`, pkt.data);
+    if (!muted) void notifyIncoming(`${who} · ${where}`, pkt.data, isDm);
   });
 
   d.events.onTraceRoutePacket.subscribe((pkt) => {
