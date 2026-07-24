@@ -34,6 +34,7 @@ export default function MapView({
   const loggedRef = useRef(-1);
   const [draft, setDraft] = useState<Draft>();
   const [wpMsg, setWpMsg] = useState("");
+  const [filter, setFilter] = useState<"all" | "fav" | "active">("all");
 
   useEffect(() => {
     if (!divRef.current || mapRef.current) return;
@@ -70,12 +71,16 @@ export default function MapView({
     if (!layer || !map) return;
     layer.clearLayers();
 
+    const nowS = Date.now() / 1000;
     const positioned = [...s.nodes.values()].filter(
       (n) =>
         n.lat !== undefined &&
         n.lon !== undefined &&
         // junk GPS: positions stuck at (0,0)
-        (Math.abs(n.lat) > 0.1 || Math.abs(n.lon) > 0.1),
+        (Math.abs(n.lat) > 0.1 || Math.abs(n.lon) > 0.1) &&
+        (filter === "all" ||
+          (filter === "fav" && n.fav) ||
+          (filter === "active" && nowS - n.lastHeard < 3600)),
     );
 
     // The firmware reduces position precision → MANY nodes share the exact
@@ -201,7 +206,7 @@ export default function MapView({
         byCoord.size,
       );
     }
-  }, [s, tema, horaFmt, idioma]);
+  }, [s, tema, horaFmt, idioma, filter]);
 
   const all = [...s.nodes.values()];
   const withFix = all.filter(
@@ -228,7 +233,25 @@ export default function MapView({
             {junk > 0 && ` · ${t("{0} DESCARTADOS (0,0)", junk)}`}
             {s.waypoints.size > 0 && ` · ${s.waypoints.size} WAYPOINTS`}
           </span>
-          <span>{t("CAPA: OSCURA")}</span>
+          <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {(
+              [
+                ["all", t("TODOS")],
+                ["fav", t("★ FAV")],
+                ["active", t("ACTIVOS 1H")],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                className={filter === key ? "primary" : ""}
+                style={{ fontSize: 10, padding: "0 6px" }}
+                onClick={() => setFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+            <span style={{ marginLeft: 4 }}>{t("CAPA: OSCURA")}</span>
+          </span>
         </div>
         <div className="map-wrap">
           <div ref={divRef} style={{ height: "100%" }} />
