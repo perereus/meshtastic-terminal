@@ -120,6 +120,7 @@ const en: Record<string, string> = {
   "sólo PSK del canal": "channel PSK only",
   POSICIÓN: "POSITION",
   "SIN GPS FIX": "NO GPS FIX",
+  "Clic para copiar": "Click to copy",
   "(SIN GPS FIX)": "(NO GPS FIX)",
   "VISTO HACE": "LAST SEEN",
   "DETALLE // NODO": "DETAIL // NODE",

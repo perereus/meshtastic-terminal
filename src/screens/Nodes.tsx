@@ -19,6 +19,30 @@ import { loadHopChanges, loadTelemetry, loadTraceroutes } from "../db";
 import { preverBateria, textoPrevision, type Prevision } from "../battery";
 import { t } from "../i18n";
 
+// Click to copy the underlying text; a ✓ flashes for ~1 s. The visible label
+// and the copied value can differ (coords show 4 decimals, copy full precision).
+function Copy({ text, children }: { text: string; children: React.ReactNode }) {
+  const [done, setDone] = useState(false);
+  return (
+    <span
+      title={t("Clic para copiar")}
+      style={{ cursor: "pointer" }}
+      onClick={() => {
+        navigator.clipboard?.writeText(text).then(
+          () => {
+            setDone(true);
+            setTimeout(() => setDone(false), 1200);
+          },
+          () => {},
+        );
+      }}
+    >
+      {children}
+      {done && <span className="dim"> ✓</span>}
+    </span>
+  );
+}
+
 type SortKey = "visto" | "nombre" | "corto" | "saltos" | "snr" | "bateria" | "pos";
 
 // default direction the first time each column is clicked
@@ -280,7 +304,10 @@ function Detail(props: {
   };
 
   const rows: [string, React.ReactNode][] = [
-    ["ID", `!${n.num.toString(16)}`],
+    [
+      "ID",
+      <Copy text={`!${n.num.toString(16)}`}>{`!${n.num.toString(16)}`}</Copy>,
+    ],
     ["HARDWARE", hwName(n.hwModel)],
     [
       "SNR",
@@ -337,9 +364,16 @@ function Detail(props: {
     [t("CIFRADO DM"), n.hasKey ? "PKI 🔒" : t("sólo PSK del canal")],
     [
       t("POSICIÓN"),
-      n.lat !== undefined && n.lon !== undefined
-        ? `${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E${distDesde(n, props.me, props.isMe)}`
-        : t("SIN GPS FIX"),
+      n.lat !== undefined && n.lon !== undefined ? (
+        <>
+          <Copy text={`${n.lat}, ${n.lon}`}>
+            {`${n.lat.toFixed(4)}N ${n.lon.toFixed(4)}E`}
+          </Copy>
+          {distDesde(n, props.me, props.isMe)}
+        </>
+      ) : (
+        t("SIN GPS FIX")
+      ),
     ],
     [t("VISTO HACE"), ago(n.lastHeard)],
   ];
