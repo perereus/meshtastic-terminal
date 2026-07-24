@@ -152,11 +152,39 @@ function hms(ms: number): string {
   return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
 }
 
+// Host (this machine) battery via the Battery Status API. Returns null when the
+// webview doesn't expose it (WebView2 often doesn't) — the caller renders nothing.
+function useHostBattery(): { level: number; charging: boolean } | null {
+  const [bat, setBat] = useState<{ level: number; charging: boolean } | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const getBattery = (navigator as any).getBattery?.bind(navigator);
+    if (!getBattery) return;
+    let mgr: { level: number; charging: boolean; removeEventListener: (t: string, f: () => void) => void } | undefined;
+    let cancelled = false;
+    const update = () => mgr && setBat({ level: mgr.level, charging: mgr.charging });
+    getBattery().then((m: typeof mgr & { addEventListener: (t: string, f: () => void) => void }) => {
+      if (cancelled) return;
+      mgr = m;
+      update();
+      m.addEventListener("levelchange", update);
+      m.addEventListener("chargingchange", update);
+    });
+    return () => {
+      cancelled = true;
+      mgr?.removeEventListener("levelchange", update);
+      mgr?.removeEventListener("chargingchange", update);
+    };
+  }, []);
+  return bat;
+}
+
 function App() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
   // at the root: a clock format or language change repaints every screen
   useHourTick();
   useLangTick();
+  const hostBat = useHostBattery();
   const [tab, setTab] = useState<Tab>("CHAT");
   const [chatConvo, setChatConvo] = useState("ch:0");
   // node to preselect when jumping MAP → NODES with [+INFO]
@@ -606,6 +634,15 @@ function App() {
           <span className="time">{clock}</span>
           <span className="uptime">
             UPLINK {connectedAt && connected ? hms(now - connectedAt) : "--:--:--"}
+            {hostBat && !hostBat.charging && (
+              <span
+                className={hostBat.level <= 0.2 ? "err" : "dim"}
+                title={t("Batería del equipo")}
+              >
+                {" · 🔋 "}
+                {Math.round(hostBat.level * 100)}%
+              </span>
+            )}
           </span>
         </div>
       </header>

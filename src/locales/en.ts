@@ -121,6 +121,7 @@ const en: Record<string, string> = {
   POSICIÓN: "POSITION",
   "SIN GPS FIX": "NO GPS FIX",
   "Clic para copiar": "Click to copy",
+  "Batería del equipo": "Host battery",
   "(SIN GPS FIX)": "(NO GPS FIX)",
   "VISTO HACE": "LAST SEEN",
   "DETALLE // NODO": "DETAIL // NODE",
