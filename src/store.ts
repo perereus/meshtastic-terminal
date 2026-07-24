@@ -32,6 +32,7 @@ export interface Message {
   // queued: waiting locally · sent: the radio accepted the packet (own echo) ·
   // delivered: routing ACK received · failed: error/timeout
   state: "queued" | "sent" | "delivered" | "failed";
+  hops?: number; // hops traveled to reach us (hopStart - hopLimit); undefined = unknown
 }
 
 export interface ChannelEntry {

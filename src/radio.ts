@@ -142,7 +142,22 @@ function avisarCambioRuta(n: NodeEntry, antes: number): void {
   );
 }
 
+// PacketMetadata (onMessagePacket) drops the hop counters, so we grab them from
+// the raw MeshPacket, which fires first, and look them up by packet id.
+// ponytail: in-memory only, bounded to the last packets; not persisted to the DB.
+const hopsByPacket = new Map<number, number>();
+
 function wireEvents(d: MeshDevice): void {
+  d.events.onMeshPacket.subscribe((p) => {
+    // hopStart == 0 on older firmware: the distance can't be derived
+    if (p.hopStart > 0) {
+      hopsByPacket.set(p.id, p.hopStart - p.hopLimit);
+      if (hopsByPacket.size > 500) {
+        hopsByPacket.delete(hopsByPacket.keys().next().value as number);
+      }
+    }
+  });
+
   d.events.onDeviceStatus.subscribe((status) => {
     mutate((s) => {
       s.status = status;
@@ -308,7 +323,9 @@ function wireEvents(d: MeshDevice): void {
       ts: pkt.rxTime.getTime() || Date.now(),
       mine: false,
       state: "delivered",
+      hops: hopsByPacket.get(pkt.id),
     };
+    hopsByPacket.delete(pkt.id);
     msg.convo = convoKey(msg);
     mutate((s) => {
       s.messages = [...s.messages, msg];
