@@ -135,12 +135,16 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
   entregado / fallo) con reintento, separadores de día entre mensajes, búsqueda
   sobre todo el historial que salta a la conversación del resultado, y limpieza
   por conversación (con confirmación en dos pasos) junto al exportar a texto.
+  Las respuestas usan el `reply_id` nativo y citan el original en línea, y cada
+  mensaje entrante muestra los saltos que ha dado y el SNR del último salto. Un
+  mensaje directo que llega sin foco hace parpadear la barra y suena un beep.
 - **NODOS** — lista ordenable y filtrable, detalle con traceroute e historial,
   previsión de batería, distancia a tu nodo junto a cada posición GPS, petición
   de posición, favoritos, ignorados, y reboot y apagado remotos por canal admin.
-- **MAPA** — nodos y waypoints sobre OpenStreetMap. El firmware reduce la
-  precisión de las posiciones, así que los nodos que comparten coordenada se
-  agrupan en un marcador con su lista.
+- **MAPA** — nodos y waypoints sobre OpenStreetMap, con filtro rápido (todos /
+  favoritos / activos en la última hora). El firmware reduce la precisión de las
+  posiciones, así que los nodos que comparten coordenada se agrupan en un
+  marcador con su lista.
 - **MALLA** — resumen de la red (activos en 1 h y 24 h, reparto de saltos,
   favoritos callados, batería baja) más las vistas de grafo y de actividad.
 - **TELEMETRÍA** — gráficas con rangos de 6 h a 30 días, **comparación de varios

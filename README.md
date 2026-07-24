@@ -133,14 +133,17 @@ lets you see how the route to a node shifts over days.
   delivered / failed) with retry, day separators between messages, a search
   across the whole history that jumps to the conversation of each result, and
   per-conversation clear (with a two-step confirmation) alongside the text
-  export.
+  export. Replies use the native `reply_id` and quote the original inline, and
+  each incoming message shows the hops it travelled and the last-hop SNR. A
+  direct message that arrives unfocused flashes the taskbar and beeps.
 - **NODES** — sortable and filterable list, detail with traceroute and history,
   battery forecast, distance from your node next to each GPS position, position
   request, favorites, ignored nodes, plus remote reboot and shutdown over the
   admin channel.
-- **MAP** — nodes and waypoints over OpenStreetMap. The firmware reduces
-  position precision, so nodes sharing a coordinate are grouped into a single
-  marker listing all of them.
+- **MAP** — nodes and waypoints over OpenStreetMap, with a quick filter (all /
+  favorites / active in the last hour). The firmware reduces position precision,
+  so nodes sharing a coordinate are grouped into a single marker listing all of
+  them.
 - **MESH** — network summary (active in 1 h and 24 h, hop distribution, silent
   favorites, low battery) plus the graph and activity views.
 - **TELEMETRY** — charts with ranges from 6 h to 30 days, **comparison of
