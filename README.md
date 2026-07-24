@@ -135,7 +135,9 @@ lets you see how the route to a node shifts over days.
   per-conversation clear (with a two-step confirmation) alongside the text
   export. Replies use the native `reply_id` and quote the original inline, and
   each incoming message shows the hops it travelled and the last-hop SNR. A
-  direct message that arrives unfocused flashes the taskbar and beeps.
+  direct message that arrives unfocused flashes the taskbar and beeps. Clicking
+  a sender's name opens node actions: send a DM, view it in the NODES list, or
+  center it on the map.
 - **NODES** — sortable and filterable list, detail with traceroute and history,
   battery forecast, distance from your node next to each GPS position, position
   request, favorites, ignored nodes, plus remote reboot and shutdown over the

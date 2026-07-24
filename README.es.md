@@ -138,6 +138,8 @@ completa. Sirve para ver cómo cambia la ruta a un nodo a lo largo de los días.
   Las respuestas usan el `reply_id` nativo y citan el original en línea, y cada
   mensaje entrante muestra los saltos que ha dado y el SNR del último salto. Un
   mensaje directo que llega sin foco hace parpadear la barra y suena un beep.
+  Al pulsar el nombre del remitente se abre un menú de acciones del nodo:
+  enviar DM, verlo en la lista de NODOS o centrarlo en el mapa.
 - **NODOS** — lista ordenable y filtrable, detalle con traceroute e historial,
   previsión de batería, distancia a tu nodo junto a cada posición GPS, petición
   de posición, favoritos, ignorados, y reboot y apagado remotos por canal admin.
