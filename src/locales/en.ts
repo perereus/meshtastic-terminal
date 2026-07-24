@@ -127,6 +127,10 @@ const en: Record<string, string> = {
   "ACTIVOS 1H": "ACTIVE 1H",
   "{0} NODOS · {1} ACTIVOS 1H": "{0} NODES · {1} ACTIVE 1H",
   Responder: "Reply",
+  "Acciones del nodo": "Node actions",
+  "✉ Enviar DM": "✉ Send DM",
+  "☷ Ver en NODOS": "☷ View in NODES",
+  "⚲ Ver en MAPA": "⚲ View on MAP",
   "respondiendo a": "replying to",
   "(mensaje original)": "(original message)",
   "Saltos hasta nosotros (hopStart − hopLimit) · SNR del último salto":

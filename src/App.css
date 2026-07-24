@@ -505,6 +505,47 @@ div:hover > .quote-btn {
   opacity: 1;
 }
 
+/* clickable sender name in a message */
+.nodelink {
+  cursor: pointer;
+}
+.nodelink:hover {
+  text-decoration: underline;
+}
+
+/* node actions context menu */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+.node-menu {
+  position: fixed;
+  z-index: 2001;
+  background: var(--bg);
+  border: 1px solid var(--fg);
+  box-shadow: 0 0 12px var(--glow);
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+.node-menu-title {
+  font-size: 10px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.node-menu button {
+  text-align: left;
+  border: 0;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.node-menu button:hover {
+  background: color-mix(in srgb, var(--fg) 15%, transparent);
+}
+
 /* reference to the message being replied to, shown above the reply */
 .reply-ref {
   font-size: 10px;

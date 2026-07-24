@@ -19,8 +19,10 @@ interface Draft {
 
 export default function MapView({
   onOpenNode,
+  focusNode,
 }: {
   onOpenNode: (num: number) => void;
+  focusNode?: number;
 }) {
   const s = useSyncExternalStore(subscribe, getSnapshot);
   // the markers are drawn with fg(): they have to be redrawn on a theme change
@@ -32,6 +34,7 @@ export default function MapView({
   const layerRef = useRef<L.LayerGroup | null>(null);
   const fittedRef = useRef(false);
   const loggedRef = useRef(-1);
+  const focusedRef = useRef<number | undefined>(undefined);
   const [draft, setDraft] = useState<Draft>();
   const [wpMsg, setWpMsg] = useState("");
   const [filter, setFilter] = useState<"all" | "fav" | "active">("all");
@@ -123,7 +126,7 @@ export default function MapView({
       for (const btn of box.querySelectorAll<HTMLButtonElement>("button[data-num]")) {
         btn.onclick = () => onOpenNode(Number(btn.dataset.num));
       }
-      L.circleMarker([lat, lon], {
+      const marker = L.circleMarker([lat, lon], {
         radius: group.length > 1 ? 8 : 6,
         color,
         fillColor: color,
@@ -133,6 +136,18 @@ export default function MapView({
         .bindPopup(box, { maxHeight: 260 })
         .bindTooltip(label, { permanent: false, direction: "right" })
         .addTo(layer);
+
+      // Arriving from a message "view on map": center on that node and open its
+      // popup, once per focus value (don't re-center as the store updates).
+      if (
+        focusNode !== undefined &&
+        focusedRef.current !== focusNode &&
+        group.some((n) => n.num === focusNode)
+      ) {
+        focusedRef.current = focusNode;
+        map.setView([lat, lon], 13);
+        marker.openPopup();
+      }
     }
 
     // Waypoints: emoji pin. Popup in the DOM (not HTML) so the edit/delete
@@ -206,7 +221,12 @@ export default function MapView({
         byCoord.size,
       );
     }
-  }, [s, tema, horaFmt, idioma, filter]);
+  }, [s, tema, horaFmt, idioma, filter, focusNode]);
+
+  // A focused node must be visible: drop any active filter when one arrives
+  useEffect(() => {
+    if (focusNode !== undefined) setFilter("all");
+  }, [focusNode]);
 
   const all = [...s.nodes.values()];
   const withFix = all.filter(

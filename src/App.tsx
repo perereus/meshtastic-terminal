@@ -189,6 +189,8 @@ function App() {
   const [chatConvo, setChatConvo] = useState("ch:0");
   // node to preselect when jumping MAP → NODES with [+INFO]
   const [nodeFocus, setNodeFocus] = useState<number | undefined>();
+  // node to center on when jumping to MAP from a message
+  const [mapFocus, setMapFocus] = useState<number | undefined>();
   // counter: each bump asks the chat to focus its search box
   const [focusSearch, setFocusSearch] = useState(0);
   const [mode, setMode] = useState<Mode>("serie");
@@ -229,6 +231,7 @@ function App() {
       if (n >= 1 && n <= TABS.length) {
         e.preventDefault();
         setNodeFocus(undefined);
+        setMapFocus(undefined);
         setTab(TABS[n - 1]);
       } else if (e.key.toLowerCase() === "f") {
         e.preventDefault();
@@ -528,6 +531,7 @@ function App() {
               title={`Ctrl+${i + 1}`}
               onClick={() => {
                 setNodeFocus(undefined);
+                setMapFocus(undefined);
                 setTab(tb);
               }}
             >
@@ -655,6 +659,14 @@ function App() {
           convo={chatConvo}
           setConvo={setChatConvo}
           focusSearch={focusSearch}
+          onViewNode={(num) => {
+            setNodeFocus(num);
+            setTab("NODOS");
+          }}
+          onViewOnMap={(num) => {
+            setMapFocus(num);
+            setTab("MAPA");
+          }}
         />
       )}
       {tab === "NODOS" && (
@@ -668,6 +680,7 @@ function App() {
       )}
       {tab === "MAPA" && (
         <MapView
+          focusNode={mapFocus}
           onOpenNode={(num) => {
             setNodeFocus(num);
             setTab("NODOS");

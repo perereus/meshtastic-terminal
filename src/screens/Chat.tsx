@@ -34,17 +34,23 @@ export default function Chat({
   convo,
   setConvo,
   focusSearch,
+  onViewNode,
+  onViewOnMap,
 }: {
   convo: string;
   setConvo: (c: string) => void;
   // changes on every Ctrl+F, even when the chat was already open
   focusSearch?: number;
+  onViewNode: (num: number) => void;
+  onViewOnMap: (num: number) => void;
 }) {
   const s = useSyncExternalStore(subscribe, getSnapshot);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
+  // context menu opened by clicking a sender name in a message
+  const [menu, setMenu] = useState<{ num: number; x: number; y: number }>();
   const endRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -301,8 +307,13 @@ export default function Chat({
                 })()}
               <span className="dim" title={fechaHora(m.ts)}>[{hora(m.ts)}]</span>{" "}
               <span
-                className={m.mine ? "" : "warn"}
+                className={`nodelink ${m.mine ? "" : "warn"}`}
                 style={m.mine ? { fontWeight: 700 } : undefined}
+                title={t("Acciones del nodo")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenu({ num: m.from, x: e.clientX, y: e.clientY });
+                }}
               >
                 &lt;{nodeShort(m.from)}&gt;
               </span>{" "}
@@ -404,6 +415,52 @@ export default function Chat({
           </span>
         </div>
       </div>
+      {menu &&
+        (() => {
+          const node = s.nodes.get(menu.num);
+          const hasPos =
+            node?.lat !== undefined &&
+            node?.lon !== undefined &&
+            (Math.abs(node.lat) > 0.1 || Math.abs(node.lon) > 0.1);
+          const close = () => setMenu(undefined);
+          return (
+            <>
+              <div className="menu-overlay" onClick={close} />
+              <div className="node-menu" style={{ left: menu.x, top: menu.y }}>
+                <div className="node-menu-title">{nodeShort(menu.num)}</div>
+                {menu.num !== s.myNodeNum && (
+                  <button
+                    onClick={() => {
+                      setConvo(`dm:${menu.num}`);
+                      setSearch("");
+                      close();
+                    }}
+                  >
+                    {t("✉ Enviar DM")}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    onViewNode(menu.num);
+                    close();
+                  }}
+                >
+                  {t("☷ Ver en NODOS")}
+                </button>
+                {hasPos && (
+                  <button
+                    onClick={() => {
+                      onViewOnMap(menu.num);
+                      close();
+                    }}
+                  >
+                    {t("⚲ Ver en MAPA")}
+                  </button>
+                )}
+              </div>
+            </>
+          );
+        })()}
     </main>
   );
 }
