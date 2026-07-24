@@ -714,7 +714,13 @@ function App() {
           <span>{t("REGIÓN")} {regionName(lora.region)}</span>
         )}
         {ch0 && <span>{t("CANAL")} 0 #{ch0.name}</span>}
-        <span>{t("{0} NODOS", s.nodes.size)}</span>
+        {(() => {
+          const nowS = Date.now() / 1000;
+          const act = [...s.nodes.values()].filter(
+            (n) => nowS - n.lastHeard < 3600,
+          ).length;
+          return <span>{t("{0} NODOS · {1} ACTIVOS 1H", s.nodes.size, act)}</span>;
+        })()}
         <span style={{ flex: 1 }} />
         <span>{s.log.length ? fmtLog(s.log[s.log.length - 1]) : "—"}</span>
       </footer>

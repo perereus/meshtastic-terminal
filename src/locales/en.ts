@@ -125,6 +125,7 @@ const en: Record<string, string> = {
   TODOS: "ALL",
   "★ FAV": "★ FAV",
   "ACTIVOS 1H": "ACTIVE 1H",
+  "{0} NODOS · {1} ACTIVOS 1H": "{0} NODES · {1} ACTIVE 1H",
   Responder: "Reply",
   "respondiendo a": "replying to",
   "(mensaje original)": "(original message)",
