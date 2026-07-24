@@ -142,19 +142,21 @@ function avisarCambioRuta(n: NodeEntry, antes: number): void {
   );
 }
 
-// PacketMetadata (onMessagePacket) drops the hop counters, so we grab them from
-// the raw MeshPacket, which fires first, and look them up by packet id.
-// ponytail: in-memory only, bounded to the last packets; not persisted to the DB.
-const hopsByPacket = new Map<number, number>();
+// PacketMetadata (onMessagePacket) drops the hop counters and reply id, so we
+// grab them from the raw MeshPacket, which fires first, keyed by packet id.
+// ponytail: in-memory only, bounded to the last packets.
+const packetMeta = new Map<number, { hops?: number; replyId?: number }>();
 
 function wireEvents(d: MeshDevice): void {
   d.events.onMeshPacket.subscribe((p) => {
     // hopStart == 0 on older firmware: the distance can't be derived
-    if (p.hopStart > 0) {
-      hopsByPacket.set(p.id, p.hopStart - p.hopLimit);
-      if (hopsByPacket.size > 500) {
-        hopsByPacket.delete(hopsByPacket.keys().next().value as number);
-      }
+    const hops = p.hopStart > 0 ? p.hopStart - p.hopLimit : undefined;
+    const reply =
+      p.payloadVariant.case === "decoded" ? p.payloadVariant.value.replyId : 0;
+    if (hops === undefined && !reply) return;
+    packetMeta.set(p.id, { hops, replyId: reply || undefined });
+    if (packetMeta.size > 500) {
+      packetMeta.delete(packetMeta.keys().next().value as number);
     }
   });
 
@@ -323,9 +325,10 @@ function wireEvents(d: MeshDevice): void {
       ts: pkt.rxTime.getTime() || Date.now(),
       mine: false,
       state: "delivered",
-      hops: hopsByPacket.get(pkt.id),
+      hops: packetMeta.get(pkt.id)?.hops,
+      replyId: packetMeta.get(pkt.id)?.replyId,
     };
-    hopsByPacket.delete(pkt.id);
+    packetMeta.delete(pkt.id);
     msg.convo = convoKey(msg);
     mutate((s) => {
       s.messages = [...s.messages, msg];
@@ -777,7 +780,7 @@ export async function retryMessage(msg: Message): Promise<void> {
   };
   setState("queued");
   try {
-    await device.sendText(msg.text, destination, true, msg.channel);
+    await device.sendText(msg.text, destination, true, msg.channel, msg.replyId);
     setState("delivered");
   } catch (e) {
     setState("failed");
@@ -788,6 +791,7 @@ export async function retryMessage(msg: Message): Promise<void> {
 export async function sendText(
   text: string,
   convo: string,
+  replyId?: number,
 ): Promise<void> {
   if (!device) throw new Error("Sin conexión");
   const isDm = convo.startsWith("dm:");
@@ -804,6 +808,7 @@ export async function sendText(
     ts: Date.now(),
     mine: true,
     state: "queued",
+    replyId,
   };
   mutate((s) => {
     msg.from = s.myNodeNum ?? 0;
@@ -821,7 +826,7 @@ export async function sendText(
   };
 
   try {
-    await device.sendText(text, destination, true, channel);
+    await device.sendText(text, destination, true, channel, replyId);
     setState("delivered");
   } catch (e) {
     setState("failed");

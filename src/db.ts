@@ -82,15 +82,16 @@ export async function openDb(): Promise<Database> {
   // migration for older DBs without fav/ignored (fails if they exist: ignore)
   await db.execute(`ALTER TABLE nodes ADD COLUMN fav INTEGER DEFAULT 0`).catch(() => {});
   await db.execute(`ALTER TABLE nodes ADD COLUMN ignored INTEGER DEFAULT 0`).catch(() => {});
+  await db.execute(`ALTER TABLE messages ADD COLUMN reply_id INTEGER`).catch(() => {});
   return db;
 }
 
 export async function saveMessage(m: Message): Promise<void> {
   const d = await openDb();
   await d.execute(
-    `INSERT OR REPLACE INTO messages (id, convo, from_num, to_num, channel, text, ts, mine, state)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-    [m.id, m.convo, m.from, m.to, m.channel, m.text, m.ts, m.mine ? 1 : 0, m.state],
+    `INSERT OR REPLACE INTO messages (id, convo, from_num, to_num, channel, text, ts, mine, state, reply_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [m.id, m.convo, m.from, m.to, m.channel, m.text, m.ts, m.mine ? 1 : 0, m.state, m.replyId ?? null],
   );
 }
 
@@ -125,6 +126,7 @@ export async function loadMessages(limit = 2000): Promise<Message[]> {
       ts: number;
       mine: number;
       state: string;
+      reply_id: number | null;
     }[]
   >(`SELECT * FROM (SELECT * FROM messages ORDER BY ts DESC LIMIT $1) ORDER BY ts ASC`, [limit]);
   return rows.map((r) => ({
@@ -137,6 +139,7 @@ export async function loadMessages(limit = 2000): Promise<Message[]> {
     ts: r.ts,
     mine: r.mine === 1,
     state: r.state as Message["state"],
+    replyId: r.reply_id ?? undefined,
   }));
 }
 

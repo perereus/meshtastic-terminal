@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { clearUnread, getSnapshot, subscribe } from "../store";
+import { clearUnread, getSnapshot, subscribe, type Message } from "../store";
 import { clearConvo, retryMessage, sendText } from "../radio";
 import { saveText, stamp } from "../export";
 import { t } from "../i18n";
@@ -48,15 +48,7 @@ export default function Chat({
   const endRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Quote/forward: prefill the draft with the message as a quoted line. Sent to
-  // the same convo it's a reply with context; switch convo first and it's a
-  // forward with attribution. One control does both.
-  const quoteMsg = (m: (typeof msgs)[number]) => {
-    const line = `> <${nodeShort(m.from)}> ${m.text}\n`;
-    setDraft((d) => (d ? d + line : line));
-    inputRef.current?.focus();
-  };
+  const [replyTo, setReplyTo] = useState<Message | undefined>();
 
   useEffect(() => {
     if (focusSearch) searchRef.current?.select();
@@ -79,9 +71,10 @@ export default function Chat({
     clearUnread(convo);
   }, [convo, msgs.length]);
 
-  // Never carry an armed "clear" across conversations: it would wipe the wrong one
+  // Never carry an armed "clear" or a reply target across conversations
   useEffect(() => {
     setConfirmClear(false);
+    setReplyTo(undefined);
   }, [convo]);
 
   const channelConvos = [...s.channels.values()]
@@ -116,8 +109,10 @@ export default function Chat({
     if (!text) return;
     setDraft("");
     setError("");
+    const rid = replyTo?.id;
+    setReplyTo(undefined);
     try {
-      await sendText(text, convo);
+      await sendText(text, convo, rid);
     } catch (e) {
       setError(t("FALLO TX: {0}", String(e)));
     }
@@ -292,6 +287,18 @@ export default function Chat({
                   <span className="warn">{labelOf(m.convo)}</span>{" "}
                 </>
               )}
+              {m.replyId !== undefined &&
+                (() => {
+                  const orig = s.messages.find((x) => x.id === m.replyId);
+                  return (
+                    <div className="reply-ref dim">
+                      ↩{" "}
+                      {orig
+                        ? `<${nodeShort(orig.from)}> ${orig.text}`
+                        : t("(mensaje original)")}
+                    </div>
+                  );
+                })()}
               <span className="dim">[{hora(m.ts)}]</span>{" "}
               <span
                 className={m.mine ? "" : "warn"}
@@ -337,10 +344,13 @@ export default function Chat({
               {!q && (
                 <button
                   className="quote-btn"
-                  title={t("Citar / reenviar")}
-                  onClick={() => quoteMsg(m)}
+                  title={t("Responder")}
+                  onClick={() => {
+                    setReplyTo(m);
+                    inputRef.current?.focus();
+                  }}
                 >
-                  ❝
+                  ↩
                 </button>
               )}
             </div>
@@ -350,6 +360,20 @@ export default function Chat({
           <div ref={endRef} />
         </div>
         {error && <p className="error">{error}</p>}
+        {replyTo && (
+          <div className="reply-bar">
+            <span className="dim">
+              ↩ {t("respondiendo a")} &lt;{nodeShort(replyTo.from)}&gt;:{" "}
+              {replyTo.text.slice(0, 60)}
+            </span>
+            <button
+              style={{ fontSize: 10, padding: "0 6px" }}
+              onClick={() => setReplyTo(undefined)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <div className="chat-input">
           <span className="prompt">&gt;</span>
           <input

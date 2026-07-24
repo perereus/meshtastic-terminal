@@ -33,6 +33,7 @@ export interface Message {
   // delivered: routing ACK received · failed: error/timeout
   state: "queued" | "sent" | "delivered" | "failed";
   hops?: number; // hops traveled to reach us (hopStart - hopLimit); undefined = unknown
+  replyId?: number; // mesh id of the message this one replies to (Data.reply_id)
 }
 
 export interface ChannelEntry {
