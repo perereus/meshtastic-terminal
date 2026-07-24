@@ -12,6 +12,19 @@ Ese historial local es la diferencia de fondo con las apps oficiales, que
 muestran el estado actual de la malla y poco más: aquí la malla tiene memoria,
 y sobre esa memoria se construye casi todo lo que sigue.
 
+## Capturas
+
+[![Mapa táctico](screenshot/map.png)](screenshot/map.png)
+
+*Mapa táctico — 379 nodos sobre OpenStreetMap, marcadores agrupados por coordenada compartida.*
+
+| | |
+|---|---|
+| [![Lista de nodos](screenshot/chat.png)](screenshot/chat.png) | [![Grafo de la malla](screenshot/mesh.png)](screenshot/mesh.png) |
+| **Nodos** — SNR, batería, saltos, distancia, última vez | **Malla** — resumen de la red y grafo dirigido por fuerzas |
+| [![Telemetría](screenshot/telemetry.png)](screenshot/telemetry.png) | [![Configuración](screenshot/config.png)](screenshot/config.png) |
+| **Telemetría** — actividad del canal en las últimas 6 h | **Config** — canales, módulos, posición fija, backup |
+
 ---
 
 ## Lo que no vas a encontrar en otros clientes

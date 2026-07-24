@@ -12,6 +12,19 @@ difference with the official apps, which show the current state of the mesh and
 little else: here the mesh has a memory, and almost everything below is built
 on top of it.
 
+## Screenshots
+
+[![Tactical map](screenshot/map.png)](screenshot/map.png)
+
+*Tactical map — 379 nodes over OpenStreetMap, markers grouped by shared coordinate.*
+
+| | |
+|---|---|
+| [![Node list](screenshot/chat.png)](screenshot/chat.png) | [![Mesh graph](screenshot/mesh.png)](screenshot/mesh.png) |
+| **Nodes** — SNR, battery, hops, distance, last seen | **Mesh** — network summary and force-directed graph |
+| [![Telemetry](screenshot/telemetry.png)](screenshot/telemetry.png) | [![Configuration](screenshot/config.png)](screenshot/config.png) |
+| **Telemetry** — channel activity over the last 6 h | **Config** — channels, modules, fixed position, backup |
+
 ---
 
 ## What you won't find in other clients
