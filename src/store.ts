@@ -34,6 +34,8 @@ export interface Message {
   state: "queued" | "sent" | "delivered" | "failed";
   hops?: number; // hops traveled to reach us (hopStart - hopLimit); undefined = unknown
   replyId?: number; // mesh id of the message this one replies to (Data.reply_id)
+  snr?: number; // rx SNR of the last hop to us (dB); undefined = unknown
+  rssi?: number; // rx RSSI of the last hop to us (dBm); undefined = unknown
 }
 
 export interface ChannelEntry {

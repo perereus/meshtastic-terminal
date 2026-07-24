@@ -306,19 +306,31 @@ export default function Chat({
               >
                 &lt;{nodeShort(m.from)}&gt;
               </span>{" "}
-              {!m.mine && m.hops !== undefined && (
-                <span
-                  className="dim"
-                  style={{ fontSize: 10 }}
-                  title={t("Saltos para llegar (hopStart − hopLimit)")}
-                >
-                  {m.hops === 0
-                    ? t("[directo]")
-                    : m.hops === 1
-                      ? t("[1 salto]")
-                      : t("[{0} saltos]", m.hops)}{" "}
-                </span>
-              )}
+              {!m.mine &&
+                (m.hops !== undefined || m.snr !== undefined) &&
+                (() => {
+                  const parts = [
+                    m.hops === 0
+                      ? t("directo")
+                      : m.hops === 1
+                        ? t("1 salto")
+                        : m.hops !== undefined
+                          ? t("{0} saltos", m.hops)
+                          : null,
+                    m.snr !== undefined ? `${m.snr.toFixed(1)} dB` : null,
+                  ].filter(Boolean);
+                  return (
+                    <span
+                      className="dim"
+                      style={{ fontSize: 10 }}
+                      title={t(
+                        "Saltos hasta nosotros (hopStart − hopLimit) · SNR del último salto",
+                      )}
+                    >
+                      [{parts.join(" · ")}]{" "}
+                    </span>
+                  );
+                })()}
               {m.text}{" "}
               {m.mine && m.state === "queued" && (
                 <span className="warn">{t("⧗ en cola")}</span>

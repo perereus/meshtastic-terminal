@@ -145,7 +145,10 @@ function avisarCambioRuta(n: NodeEntry, antes: number): void {
 // PacketMetadata (onMessagePacket) drops the hop counters and reply id, so we
 // grab them from the raw MeshPacket, which fires first, keyed by packet id.
 // ponytail: in-memory only, bounded to the last packets.
-const packetMeta = new Map<number, { hops?: number; replyId?: number }>();
+const packetMeta = new Map<
+  number,
+  { hops?: number; replyId?: number; snr?: number; rssi?: number }
+>();
 
 function wireEvents(d: MeshDevice): void {
   d.events.onMeshPacket.subscribe((p) => {
@@ -153,8 +156,13 @@ function wireEvents(d: MeshDevice): void {
     const hops = p.hopStart > 0 ? p.hopStart - p.hopLimit : undefined;
     const reply =
       p.payloadVariant.case === "decoded" ? p.payloadVariant.value.replyId : 0;
-    if (hops === undefined && !reply) return;
-    packetMeta.set(p.id, { hops, replyId: reply || undefined });
+    // rxSnr/rxRssi are 0 for our own packets and MQTT-relayed ones (no radio rx)
+    const snr = p.rxSnr || undefined;
+    const rssi = p.rxRssi || undefined;
+    if (hops === undefined && !reply && snr === undefined && rssi === undefined) {
+      return;
+    }
+    packetMeta.set(p.id, { hops, replyId: reply || undefined, snr, rssi });
     if (packetMeta.size > 500) {
       packetMeta.delete(packetMeta.keys().next().value as number);
     }
@@ -327,6 +335,8 @@ function wireEvents(d: MeshDevice): void {
       state: "delivered",
       hops: packetMeta.get(pkt.id)?.hops,
       replyId: packetMeta.get(pkt.id)?.replyId,
+      snr: packetMeta.get(pkt.id)?.snr,
+      rssi: packetMeta.get(pkt.id)?.rssi,
     };
     packetMeta.delete(pkt.id);
     msg.convo = convoKey(msg);
