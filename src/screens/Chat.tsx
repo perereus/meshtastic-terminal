@@ -47,6 +47,16 @@ export default function Chat({
   const [confirmClear, setConfirmClear] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Quote/forward: prefill the draft with the message as a quoted line. Sent to
+  // the same convo it's a reply with context; switch convo first and it's a
+  // forward with attribution. One control does both.
+  const quoteMsg = (m: (typeof msgs)[number]) => {
+    const line = `> <${nodeShort(m.from)}> ${m.text}\n`;
+    setDraft((d) => (d ? d + line : line));
+    inputRef.current?.focus();
+  };
 
   useEffect(() => {
     if (focusSearch) searchRef.current?.select();
@@ -311,6 +321,15 @@ export default function Chat({
                   </button>
                 </>
               )}
+              {!q && (
+                <button
+                  className="quote-btn"
+                  title={t("Citar / reenviar")}
+                  onClick={() => quoteMsg(m)}
+                >
+                  ❝
+                </button>
+              )}
             </div>
             </Fragment>
             );
@@ -321,6 +340,7 @@ export default function Chat({
         <div className="chat-input">
           <span className="prompt">&gt;</span>
           <input
+            ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSend()}

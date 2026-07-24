@@ -490,6 +490,21 @@ table.grid tbody tr.sel .err {
   border-left-color: var(--err);
 }
 
+/* quote/forward button: dim, revealed on hovering the message */
+.quote-btn {
+  font-size: 10px;
+  padding: 0 5px;
+  margin-left: 6px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+div:hover > .quote-btn {
+  opacity: 0.45;
+}
+.quote-btn:hover {
+  opacity: 1;
+}
+
 /* day separator between chat messages */
 .chat-daysep {
   display: flex;

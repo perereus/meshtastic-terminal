@@ -125,6 +125,7 @@ const en: Record<string, string> = {
   TODOS: "ALL",
   "★ FAV": "★ FAV",
   "ACTIVOS 1H": "ACTIVE 1H",
+  "Citar / reenviar": "Quote / forward",
   "(SIN GPS FIX)": "(NO GPS FIX)",
   "VISTO HACE": "LAST SEEN",
   "DETALLE // NODO": "DETAIL // NODE",
