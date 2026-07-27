@@ -4,7 +4,7 @@ import "uplot/dist/uPlot.min.css";
 import { getSnapshot, subscribe } from "../store";
 import { listMetrics, listTelemetryNodes, loadTelemetry } from "../db";
 import { t, useLangTick } from "../i18n";
-import { ACCENT, fg, useThemeTick } from "../theme";
+import { accent, fg, isLight, useThemeTick } from "../theme";
 import { saveText, stamp } from "../export";
 
 // pseudo-metric: ChUtil + AirUtilTx on the same chart
@@ -29,8 +29,14 @@ const RANGES: [string, number][] = [
 ];
 
 // Colors of the compared series. The first comes from the theme; the rest are
-// fixed and legible over any of the five themes.
-const SERIES_COLORS = [ACCENT, "#ffb000", "#5ccfe6", "#b3a5e3"];
+// fixed, in a bright set for the dark themes and a darkened one for the light.
+const SERIES_MAX = 4;
+const seriesColors = (): string[] => [
+  accent(),
+  ...(isLight()
+    ? ["#9a6a00", "#0f6f86", "#54459c"]
+    : ["#ffb000", "#5ccfe6", "#b3a5e3"]),
+];
 
 export default function Telemetry() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
@@ -179,14 +185,14 @@ export default function Telemetry() {
               ? [
                   {
                     label: t("AIRE TX (%)"),
-                    stroke: ACCENT,
+                    stroke: accent(),
                     width: 2,
                     points: { show: false },
                   },
                 ]
               : compare.map((n, i) => ({
                   label: shortName(n),
-                  stroke: SERIES_COLORS[i % SERIES_COLORS.length],
+                  stroke: seriesColors()[i % SERIES_MAX],
                   width: 2,
                   points: { show: false },
                   spanGaps: true,
@@ -293,15 +299,15 @@ export default function Telemetry() {
         <select
           value=""
           title={t("Añadir otro nodo a la misma gráfica")}
-          disabled={compare.length >= SERIES_COLORS.length}
+          disabled={compare.length >= SERIES_MAX}
           onChange={(e) => {
             const n = Number(e.target.value);
             if (n) setCompare((c) => (c.includes(n) ? c : [...c, n]));
           }}
         >
           <option value="">
-            {compare.length >= SERIES_COLORS.length
-              ? t("MÁXIMO {0}", SERIES_COLORS.length)
+            {compare.length >= SERIES_MAX
+              ? t("MÁXIMO {0}", SERIES_MAX)
               : t("+ COMPARAR")}
           </option>
           {nodes
@@ -318,8 +324,8 @@ export default function Telemetry() {
             style={{
               fontSize: 10,
               padding: "0 6px",
-              borderColor: SERIES_COLORS[i % SERIES_COLORS.length],
-              color: SERIES_COLORS[i % SERIES_COLORS.length],
+              borderColor: seriesColors()[i % SERIES_MAX],
+              color: seriesColors()[i % SERIES_MAX],
             }}
             title={t("Quitar de la comparación")}
             onClick={() => setCompare((c) => c.filter((x) => x !== n))}

@@ -7,19 +7,29 @@ import { useEffect, useState } from "react";
  *  reproduces the chain and checks each one lands on its theme's hue. The rest
  *  of the filter chain lives in App.css.
  *
- *  `hc` is the same hue at full saturation, used with a pure black background
- *  when high contrast is on. Violet is lighter than the rest because that hue
- *  is intrinsically dark: saturating it costs luminance, and the point of the
- *  mode is to gain it. theme.test.ts checks every one really contrasts more. */
+ *  `hc` is the same hue at full saturation, over `hcBg` (pure black on the dark
+ *  themes, pure white on the light one) when high contrast is on. Violet is
+ *  lighter than the rest because that hue is intrinsically dark: saturating it
+ *  costs luminance, and the point of the mode is to gain it. theme.test.ts
+ *  checks every one really contrasts more. */
 export const THEMES = {
-  verde: { fg: "#39ff5a", hc: "#4dff6a", bg: "#0a0f0a", panel: "#0b110b", tint: "hue-rotate(83deg) saturate(2.2)" },
-  ambar: { fg: "#e8a84c", hc: "#ffb64d", bg: "#0f0c07", panel: "#130f09", tint: "hue-rotate(-9deg) saturate(2)" },
-  cian: { fg: "#5ccfe6", hc: "#4de1ff", bg: "#070f13", panel: "#091316", tint: "hue-rotate(141deg) saturate(1.8)" },
-  hueso: { fg: "#cfcfc2", hc: "#ffffff", bg: "#0d0d0c", panel: "#111110", tint: "saturate(0.3)" },
-  violeta: { fg: "#b3a5e3", hc: "#b9a3ff", bg: "#0c0a12", panel: "#0f0c16", tint: "hue-rotate(216deg) saturate(1.5)" },
+  verde: { fg: "#39ff5a", hc: "#4dff6a", bg: "#0a0f0a", panel: "#0b110b", hcBg: "#000000", tint: "hue-rotate(83deg) saturate(2.2)" },
+  ambar: { fg: "#e8a84c", hc: "#ffb64d", bg: "#0f0c07", panel: "#130f09", hcBg: "#000000", tint: "hue-rotate(-9deg) saturate(2)" },
+  cian: { fg: "#5ccfe6", hc: "#4de1ff", bg: "#070f13", panel: "#091316", hcBg: "#000000", tint: "hue-rotate(141deg) saturate(1.8)" },
+  hueso: { fg: "#cfcfc2", hc: "#ffffff", bg: "#0d0d0c", panel: "#111110", hcBg: "#000000", tint: "saturate(0.3)" },
+  huesoinv: { fg: "#2b2b26", hc: "#000000", bg: "#e8e6dd", panel: "#dcdad0", hcBg: "#ffffff", tint: "saturate(0.3)" },
+  violeta: { fg: "#b3a5e3", hc: "#b9a3ff", bg: "#0c0a12", panel: "#0f0c16", hcBg: "#000000", tint: "hue-rotate(216deg) saturate(1.5)" },
 } as const;
 
 export type Theme = keyof typeof THEMES;
+
+/** Light-background themes: the map filter chain and the second color flip.
+ *  Everything else derives from --fg/--bg and needs no special case. */
+const CLAROS = new Set<Theme>(["huesoinv"]);
+
+export function isLight(): boolean {
+  return CLAROS.has(getTheme());
+}
 
 const THEME_KEY = "theme";
 const HC_KEY = "hicontrast";
@@ -39,12 +49,14 @@ export function applyTheme(): void {
   const hc = getHiContrast();
   const root = document.documentElement.style;
   root.setProperty("--fg", hc ? th.hc : th.fg);
-  root.setProperty("--bg", hc ? "#000000" : th.bg);
-  root.setProperty("--panel", hc ? "#000000" : th.panel);
+  root.setProperty("--bg", hc ? th.hcBg : th.bg);
+  root.setProperty("--panel", hc ? th.hcBg : th.panel);
   root.setProperty("--map-tint", th.tint);
   // the stronger --fg-dim/--border/--glow mixes, and dropping the CRT overlay,
   // live in App.css under :root.hc
   document.documentElement.classList.toggle("hc", hc);
+  // map tiles, color-scheme and a softer CRT overlay live under :root.light
+  document.documentElement.classList.toggle("light", isLight());
 }
 
 /** Text color of the active theme, for canvas/SVG that can't read CSS vars
@@ -54,8 +66,11 @@ export function fg(alpha = ""): string {
   return (getHiContrast() ? th.hc : th.fg) + alpha;
 }
 
-/** Second color, legible over any of the themes. */
-export const ACCENT = "#e6e6e6";
+/** Second color, legible over any of the themes: the neutral extreme opposite
+ *  to the background (near-white on the dark themes, near-black on the light). */
+export function accent(): string {
+  return isLight() ? "#111111" : "#e6e6e6";
+}
 
 export function setTheme(name: Theme): void {
   localStorage.setItem(THEME_KEY, name);

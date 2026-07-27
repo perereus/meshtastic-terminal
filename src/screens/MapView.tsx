@@ -5,7 +5,7 @@ import { addLog, getSnapshot, subscribe } from "../store";
 import { deleteWaypoint, sendWaypoint } from "../radio";
 import { ago, asciiBattery, fechaHora, useHourTick } from "../fmt";
 import { t, useLangTick } from "../i18n";
-import { ACCENT, fg, useThemeTick } from "../theme";
+import { accent, fg, useThemeTick } from "../theme";
 
 interface Draft {
   id?: number; // defined = editing
@@ -65,6 +65,9 @@ export default function MapView({
       map.remove();
       mapRef.current = null;
       fittedRef.current = false;
+      // the new map starts blank: whatever was centered/fitted has to happen
+      // again (StrictMode remounts twice in dev, and this ref outlives the map)
+      focusedRef.current = undefined;
     };
   }, []);
 
@@ -111,7 +114,7 @@ export default function MapView({
 
     for (const group of byCoord.values()) {
       const hasMe = group.some((n) => n.num === s.myNodeNum);
-      const color = hasMe ? ACCENT : fg();
+      const color = hasMe ? accent() : fg();
       const lat = group[0].lat as number;
       const lon = group[0].lon as number;
       const label =

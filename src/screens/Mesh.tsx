@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { getSnapshot, subscribe } from "../store";
 import { loadActividad, loadAllTraceroutes, loadNeighbors } from "../db";
 import { t } from "../i18n";
-import { ACCENT, fg, useThemeTick } from "../theme";
+import { accent, fg, useThemeTick } from "../theme";
 import { buildEdges, edgeKey as key, summarize, type Edge } from "../mesh";
 import { ago, fechaHora } from "../fmt";
 
@@ -109,7 +109,7 @@ const H = 800;
 
 export default function Mesh() {
   const s = useSyncExternalStore(subscribe, getSnapshot);
-  // the SVG uses fg()/ACCENT, which no CSS var repaints
+  // the SVG uses fg()/accent(), which no CSS var repaints
   useThemeTick();
   const [neighbors, setNeighbors] = useState<
     { node: number; neighbor: number; snr: number }[]
@@ -441,8 +441,8 @@ export default function Mesh() {
                         cx={p.x}
                         cy={p.y}
                         r={isMe ? 9 : 6}
-                        fill={isMe ? ACCENT : fg()}
-                        stroke={id === sel ? ACCENT : "none"}
+                        fill={isMe ? accent() : fg()}
+                        stroke={id === sel ? accent() : "none"}
                         strokeWidth={2}
                       />
                       {label && (

@@ -62,6 +62,7 @@ const THEME_LABELS: Record<Theme, string> = {
   ambar: "ÁMBAR",
   cian: "CIAN",
   hueso: "HUESO",
+  huesoinv: "HUESO INVERTIDO",
   violeta: "VIOLETA",
 };
 

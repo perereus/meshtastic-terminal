@@ -42,6 +42,19 @@
   --err: #ff6b61;
 }
 
+/* Tema claro: el aviso y el error tienen que oscurecerse para leerse sobre el
+   papel, y el glow (halo del mismo color que el texto) sobra sobre fondo claro. */
+:root.light {
+  color-scheme: light;
+  --warn: #9a6a00;
+  --err: #b3261e;
+  --glow: transparent;
+}
+:root.light.hc {
+  --warn: #7a5200;
+  --err: #8c1d18;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -136,6 +149,13 @@ body {
    lo primero que sobra en alto contraste */
 :root.hc .app::after {
   display: none;
+}
+
+/* sobre fondo claro ese mismo 16 % ensucia el papel: quedan como trama tenue */
+:root.light .app::after {
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 70%, rgba(0, 0, 0, 0.1) 100%);
 }
 
 /* ── titlebar personalizada (decorations:false) ── */
@@ -723,6 +743,11 @@ div:hover > .quote-btn {
 .map-wrap .leaflet-tile {
   filter: grayscale(1) invert(1) sepia(1) var(--map-tint)
     brightness(0.5) contrast(1.15);
+}
+/* la cadena de arriba invierte para que el mapa case con un fondo oscuro; en el
+   tema claro no se invierte: papel claro con el trazo en gris */
+:root.light .map-wrap .leaflet-tile {
+  filter: grayscale(1) sepia(0.3) var(--map-tint) brightness(1.05) contrast(0.9);
 }
 .map-wrap .leaflet-control-zoom a {
   background: var(--bg);
