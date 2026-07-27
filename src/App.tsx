@@ -229,6 +229,11 @@ function App() {
     return () => clearInterval(t);
   }, []);
 
+  // Leaving the map drops the focus: the ring shouldn't outlive the jump
+  useEffect(() => {
+    if (tab !== "MAPA") setMapFocus(undefined);
+  }, [tab]);
+
   // Ctrl+1…7 switches tabs · Ctrl+F searches the chat
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
