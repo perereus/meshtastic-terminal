@@ -137,16 +137,26 @@ export default function MapView({
         .bindTooltip(label, { permanent: false, direction: "right" })
         .addTo(layer);
 
-      // Arriving from a message "view on map": center on that node and open its
-      // popup, once per focus value (don't re-center as the store updates).
+      // Arriving from a message "view on map": ring the node, center on it and
+      // open its popup, once per focus value (don't re-center on store updates).
       if (
         focusNode !== undefined &&
-        focusedRef.current !== focusNode &&
         group.some((n) => n.num === focusNode)
       ) {
-        focusedRef.current = focusNode;
-        map.setView([lat, lon], 13);
-        marker.openPopup();
+        L.circleMarker([lat, lon], {
+          radius: 14,
+          color,
+          weight: 2,
+          dashArray: "4 4",
+          fill: false,
+        }).addTo(layer);
+        if (focusedRef.current !== focusNode) {
+          focusedRef.current = focusNode;
+          map.setView([lat, lon], 13);
+          marker.openPopup();
+          // fitBounds below runs in this same pass and would undo the centering
+          fittedRef.current = true;
+        }
       }
     }
 
