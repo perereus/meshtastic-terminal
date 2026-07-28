@@ -25,6 +25,7 @@ import {
   getTheme,
   setHiContrast,
   setTheme,
+  THEME_LABELS,
   THEMES,
   type Theme,
 } from "../theme";
@@ -56,15 +57,6 @@ const PRECISION_OPTS: [number, string][] = [
   [19, "±45 m"],
   [32, t("EXACTA")],
 ];
-
-const THEME_LABELS: Record<Theme, string> = {
-  verde: "VERDE FÓSFORO",
-  ambar: "ÁMBAR",
-  cian: "CIAN",
-  hueso: "HUESO",
-  huesoinv: "HUESO INVERTIDO",
-  violeta: "VIOLETA",
-};
 
 function enumOptions(schema: {
   values: readonly { name: string; number: number }[];

@@ -23,6 +23,19 @@ export const THEMES = {
 
 export type Theme = keyof typeof THEMES;
 
+/** Menu names, in Spanish (the base language) so t() translates them. They live
+ *  here and not in Config.tsx so i18n.test.ts can walk them: t(THEME_LABELS[x])
+ *  hides the literals from its source scan, and a new theme went untranslated
+ *  because the check kept its own hand-written copy of the list. */
+export const THEME_LABELS: Record<Theme, string> = {
+  verde: "VERDE FÓSFORO",
+  ambar: "ÁMBAR",
+  cian: "CIAN",
+  hueso: "HUESO",
+  huesoinv: "HUESO INVERTIDO",
+  violeta: "VIOLETA",
+};
+
 /** Light-background themes: the map filter chain and the second color flip.
  *  Everything else derives from --fg/--bg and needs no special case. */
 const CLAROS = new Set<Theme>(["huesoinv"]);

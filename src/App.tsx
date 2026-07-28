@@ -703,7 +703,9 @@ function App() {
       {tab === "TELEMETRÍA" && <Telemetry />}
       {tab === "DEBUG" && (
         <main>
-          <div className="panel" style={{ flex: 1, background: "#050905" }}>
+          {/* no background of its own: hardcoding a near-black left the light
+              theme's dark text unreadable */}
+          <div className="panel" style={{ flex: 1 }}>
             <div className="panel-title">
               <span>PANEL // DEBUG · SERIAL 115200 8N1</span>
               <span style={{ display: "flex", gap: 10, alignItems: "center" }}>

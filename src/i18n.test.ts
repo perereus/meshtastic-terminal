@@ -5,6 +5,7 @@ import assert from "node:assert";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import en from "./locales/en.ts";
+import { THEME_LABELS } from "./theme.ts";
 
 // t("...") / t('...') and addLog("...") / addLog('...'), keeping the literal.
 // addLog stores the key untranslated (fmtLog translates it at render), so its
@@ -13,17 +14,14 @@ const CALL = /\b(?:t|addLog)\(\s*(["'])(.*?)(?<!\\)\1/gs;
 
 // keys that never appear as a literal because they're built at runtime:
 // tabs (t(tab)), theme names (t(THEME_LABELS[x])) and the battery forecast
-// texts, which battery.ts returns as a key
+// texts, which battery.ts returns as a key. The theme names come from the real
+// table: a copy by hand is what let INVERTED BONE ship untranslated.
 const DINAMICAS = [
   "NODOS",
   "MAPA",
   "MALLA",
   "TELEMETRÍA",
-  "VERDE FÓSFORO",
-  "ÁMBAR",
-  "CIAN",
-  "HUESO",
-  "VIOLETA",
+  ...Object.values(THEME_LABELS),
   "BATERÍA IRREGULAR · sin previsión fiable",
   "CARGANDO · {0} %/h",
   "ESTABLE · sin descarga apreciable",

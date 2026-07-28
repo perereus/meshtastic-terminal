@@ -334,6 +334,7 @@ const en: Record<string, string> = {
   ÁMBAR: "AMBER",
   CIAN: "CYAN",
   HUESO: "BONE",
+  "HUESO INVERTIDO": "INVERTED BONE",
   VIOLETA: "VIOLET",
   "TX ACTIVADO": "TX ENABLED",
   "CONFIG // DISPOSITIVO": "CONFIG // DEVICE",
