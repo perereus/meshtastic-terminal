@@ -339,7 +339,9 @@ button.danger:hover:not(:disabled) {
   height: 9px;
   border-radius: 50%;
   display: inline-block;
-  background: #3a463a;
+  /* apagado = tenue sobre el fondo, sea cual sea: un gris fijo se leía como
+     punto oscuro (encendido) en el tema claro */
+  background: color-mix(in srgb, var(--fg) 22%, transparent);
 }
 .led.on {
   background: var(--fg);
