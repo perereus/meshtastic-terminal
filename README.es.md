@@ -193,5 +193,7 @@ huérfano. La app instalada y la de desarrollo comparten esa misma base.
 
 ## Licencia
 
+GPL-3.0 — ver [LICENSE](LICENSE).
+
 La fuente JetBrains Mono va empaquetada bajo la OFL; ver
 `src/assets/fonts/OFL.txt`.

@@ -192,5 +192,6 @@ installed app and the development one share the same database.
 
 ## License
 
+GPL-3.0 — see [LICENSE](LICENSE).
 The bundled JetBrains Mono font is licensed under the OFL; see
 `src/assets/fonts/OFL.txt`.

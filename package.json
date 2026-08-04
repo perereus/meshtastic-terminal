@@ -38,6 +38,6 @@
     "typescript": "~5.8.3",
     "vite": "^7.0.4"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "description": "Desktop client for Meshtastic mesh networks with local history, mesh graph and battery runtime forecast"
 }
